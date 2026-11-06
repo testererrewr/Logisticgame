@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';
+import {newState,build,purchaseVehicle,purchaseTrailers,detachTrailer,attachTrailer,createLine,assignVehicle,cargoCapacity,checkIntegrity,normalizeFreightState as normalize} from '../lib/logistics/engine.ts';
+import {sellTrailers} from '../lib/logistics/vehicle-sales.ts';
+import {recordTransportedEh} from '../lib/logistics/vehicle-statistics.ts';
+import {VEHICLES} from '../lib/logistics/engine.ts';
+const s=newState();s.live=true;s.cash=1e9;const d=build(s,'depot',47.07,15.44);
+const semi=VEHICLES.find(m=>m.attachment==='semi'),body=VEHICLES.find(m=>m.attachment==='body');
+const t=purchaseVehicle(s,semi.id);assert.equal(t.trailerId,undefined);assert.ok(t.trailerDetached,'Zugmaschine ohne Auflieger kaufbar');
+assert.equal(cargoCapacity(t,'bread'),0);
+const a=build(s,'warehouseSmall',47.071,15.44),b=build(s,'warehouseSmall',47.072,15.44);
+const l=createLine(s,{name:'L',mode:semi.mode,good:'all',duration:null,stops:[{siteId:a.id,action:'load',good:'all',quantity:1},{siteId:b.id,action:'unload',good:'all',quantity:1}],legs:[]});
+assert.throws(()=>assignVehicle(s,t.id,l.id),/ohne Auflieger/);
+purchaseTrailers(s,'krone-profi',d.id,2);assert.equal(s.trailers.length,2);
+attachTrailer(s,t.id,s.trailers[0].id);assert.equal(t.trailerId,'krone-profi');assert.equal(s.trailers.length,1);assert.ok(cargoCapacity(t,'bread')>0);
+recordTransportedEh(t,12,a.id,b.id);assert.equal(t.trailerUnit.transportedEh,12);
+detachTrailer(s,t.id);assert.equal(t.trailerId,undefined);assert.equal(s.trailers.length,2);assert.equal(s.trailers.find(x=>x.transportedEh===12).locationId,d.id,'Auflieger behält eigene Statistik');
+const n=normalize(structuredClone(s));assert.equal(n.vehicles[0].trailerId,undefined,'Normalisierung hängt keinen Auflieger an');
+if(body){const r=purchaseVehicle(s,body.id,'body-box');assert.throws(()=>detachTrailer(s,r.id),/fester Aufbau/);}
+const cash=s.cash;sellTrailers(s,[s.trailers[0].id]);assert.ok(s.cash>cash);assert.equal(s.trailers.length,1);
+checkIntegrity(s);
+console.log('PASS v52 Auflieger: Zugmaschine ohne Auflieger, Auflieger einzeln kaufen/verkaufen, an-/abhängen mit eigener Statistik, Aufbau fest.');

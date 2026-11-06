@@ -15,9 +15,9 @@ export function ensureVehicleStatistics(v:Vehicle,day:number,now=Date.now()){
 }
 export function recordVehicleDistance(v:Vehicle,day:number){
  const distance=legDistance(v,day);
- v.odometerKm=(v.odometerKm||0)+Math.max(0,distance-(v.legRecordedKm||0));
+ const delta=Math.max(0,distance-(v.legRecordedKm||0));v.odometerKm=(v.odometerKm||0)+delta;if(v.trailerUnit)v.trailerUnit.odometerKm=(v.trailerUnit.odometerKm||0)+delta;
  v.legRecordedKm=distance;
 }
 export function recordTransportedEh(v:Vehicle,quantity:number,origin:string|undefined,destination:string){
- if(quantity>0&&origin!==destination)v.transportedEh=Math.round(((v.transportedEh||0)+quantity)*1000000)/1000000;
+ if(quantity>0&&origin!==destination){v.transportedEh=Math.round(((v.transportedEh||0)+quantity)*1000000)/1000000;if(v.trailerUnit)v.trailerUnit.transportedEh=Math.round(((v.trailerUnit.transportedEh||0)+quantity)*1000000)/1000000;}
 }

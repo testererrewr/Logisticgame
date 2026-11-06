@@ -1,0 +1,732 @@
+{
+ "note": "Prompts für fehlende Güterbilder – Datei unter file ablegen.",
+ "sharedStyle": "Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product.",
+ "missing": [
+  {
+   "id": "chocolate",
+   "name": "Schokolade",
+   "file": "public/logistics-products/chocolate.webp",
+   "prompt": "a stack of plain dark chocolate bars, one broken open. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "roastedCoffee",
+   "name": "Röstkaffee",
+   "file": "public/logistics-products/roastedCoffee.webp",
+   "prompt": "a plain kraft coffee bag with roasted coffee beans spilling out. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "paper",
+   "name": "Papier",
+   "file": "public/logistics-products/paper.webp",
+   "prompt": "a shrink-wrapped ream stack of white office paper with one large paper roll. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "textiles",
+   "name": "Textilien",
+   "file": "public/logistics-products/textiles.webp",
+   "prompt": "folded bolts of colorful woven fabric. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "clothing",
+   "name": "Bekleidung",
+   "file": "public/logistics-products/clothing.webp",
+   "prompt": "a neat stack of folded shirts and jeans. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "furniture",
+   "name": "Möbel",
+   "file": "public/logistics-products/furniture.webp",
+   "prompt": "a flat-pack wooden chair and small cabinet. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "glass",
+   "name": "Glas",
+   "file": "public/logistics-products/glass.webp",
+   "prompt": "several stacked clear float-glass sheets on an A-frame rack. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "bottles",
+   "name": "Glasflaschen",
+   "file": "public/logistics-products/bottles.webp",
+   "prompt": "a crate of empty clear and green glass bottles. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "tires",
+   "name": "Reifen",
+   "file": "public/logistics-products/tires.webp",
+   "prompt": "a stack of three new car tires. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "spareParts",
+   "name": "Ersatzteile",
+   "file": "public/logistics-products/spareParts.webp",
+   "prompt": "an assortment of metal machine spare parts in a plain cardboard tray. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "medicalSupplies",
+   "name": "Medizinischer Bedarf",
+   "file": "public/logistics-products/medicalSupplies.webp",
+   "prompt": "a plain white medical supply box with gloves and masks. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "bandages",
+   "name": "Verbandmaterial",
+   "file": "public/logistics-products/bandages.webp",
+   "prompt": "rolled gauze bandages and plaster packs. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "syringes",
+   "name": "Spritzen / Einwegmaterial",
+   "file": "public/logistics-products/syringes.webp",
+   "prompt": "sealed disposable syringes in a plain tray. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "soap",
+   "name": "Seife",
+   "file": "public/logistics-products/soap.webp",
+   "prompt": "stacked bars of plain soap and a pump bottle. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "cleaners",
+   "name": "Reinigungsmittel",
+   "file": "public/logistics-products/cleaners.webp",
+   "prompt": "plain plastic bottles of cleaning liquid. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "woodPellets",
+   "name": "Holzpellets (Säcke)",
+   "file": "public/logistics-products/woodPellets.webp",
+   "prompt": "a plain plastic sack of wood pellets with pellets spilled in front. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "plasticGranules",
+   "name": "Kunststoffgranulat (Säcke)",
+   "file": "public/logistics-products/plasticGranules.webp",
+   "prompt": "a plain woven sack of plastic granules with pellets spilled. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "batteries",
+   "name": "Batteriesysteme (gesichert)",
+   "file": "public/logistics-products/batteries.webp",
+   "prompt": "a secured grey industrial battery module on a pallet. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "solarPanels",
+   "name": "Solarmodule",
+   "file": "public/logistics-products/solarPanels.webp",
+   "prompt": "a small stack of photovoltaic solar panels. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "computers",
+   "name": "Computer",
+   "file": "public/logistics-products/computers.webp",
+   "prompt": "a desktop computer tower with a plain shipping box. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "machineryParts",
+   "name": "Maschinenkomponenten",
+   "file": "public/logistics-products/machineryParts.webp",
+   "prompt": "heavy steel machine components on a pallet. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "rubber",
+   "name": "Kautschuk",
+   "file": "public/logistics-products/rubber.webp",
+   "prompt": "stacked bales of natural rubber. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "cotton",
+   "name": "Baumwolle",
+   "file": "public/logistics-products/cotton.webp",
+   "prompt": "a compressed cotton bale with raw cotton bolls. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "aluminium",
+   "name": "Aluminium",
+   "file": "public/logistics-products/aluminium.webp",
+   "prompt": "stacked aluminium ingots. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "copper",
+   "name": "Kupfer",
+   "file": "public/logistics-products/copper.webp",
+   "prompt": "copper cathode plates and a coil of copper wire. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "steelCoils",
+   "name": "Stahlcoils",
+   "file": "public/logistics-products/steelCoils.webp",
+   "prompt": "a large hot-rolled steel coil. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "steelBeams",
+   "name": "Stahlträger",
+   "file": "public/logistics-products/steelBeams.webp",
+   "prompt": "a bundle of steel I-beams. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "concreteElements",
+   "name": "Betonfertigteile",
+   "file": "public/logistics-products/concreteElements.webp",
+   "prompt": "precast concrete wall elements. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "bricks",
+   "name": "Ziegel",
+   "file": "public/logistics-products/bricks.webp",
+   "prompt": "a pallet of red clay bricks. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "machines",
+   "name": "Maschinen",
+   "file": "public/logistics-products/machines.webp",
+   "prompt": "an industrial CNC machine. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "vehicles",
+   "name": "PKW / Nutzfahrzeuge",
+   "file": "public/logistics-products/vehicles.webp",
+   "prompt": "a generic passenger car without badges. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "scrapMetal",
+   "name": "Metallschrott",
+   "file": "public/logistics-products/scrapMetal.webp",
+   "prompt": "a pile of mixed scrap metal. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "water",
+   "name": "Trinkwasser",
+   "file": "public/logistics-products/water.webp",
+   "prompt": "a stack of large plain drinking-water jugs. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "beer",
+   "name": "Bier (Tank)",
+   "file": "public/logistics-products/beer.webp",
+   "prompt": "a stainless steel beer keg and tank section. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "wine",
+   "name": "Wein (Tank)",
+   "file": "public/logistics-products/wine.webp",
+   "prompt": "a wooden wine barrel with a plain glass of red wine. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "vegetableOil",
+   "name": "Pflanzenöl",
+   "file": "public/logistics-products/vegetableOil.webp",
+   "prompt": "a plain plastic container of golden vegetable oil. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "molasses",
+   "name": "Melasse",
+   "file": "public/logistics-products/molasses.webp",
+   "prompt": "a drum with thick dark molasses dripping. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "crudeOil",
+   "name": "Rohöl",
+   "file": "public/logistics-products/crudeOil.webp",
+   "prompt": "a black steel oil barrel with a crude oil drip. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "diesel",
+   "name": "Diesel",
+   "file": "public/logistics-products/diesel.webp",
+   "prompt": "a plain yellow diesel jerry can. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "petrol",
+   "name": "Benzin",
+   "file": "public/logistics-products/petrol.webp",
+   "prompt": "a plain red petrol jerry can. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "kerosene",
+   "name": "Kerosin",
+   "file": "public/logistics-products/kerosene.webp",
+   "prompt": "a plain metal aviation fuel drum. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "chemicals",
+   "name": "Industriechemikalien",
+   "file": "public/logistics-products/chemicals.webp",
+   "prompt": "a white IBC chemical tote container with hazard-orange cap. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "solvents",
+   "name": "Lösungsmittel",
+   "file": "public/logistics-products/solvents.webp",
+   "prompt": "plain metal solvent cans. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "industrialGases",
+   "name": "Industriegase",
+   "file": "public/logistics-products/industrialGases.webp",
+   "prompt": "a group of industrial gas cylinders. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "antibiotics",
+   "name": "Antibiotika",
+   "file": "public/logistics-products/antibiotics.webp",
+   "prompt": "plain blister packs and a pill bottle of antibiotics. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "painkillers",
+   "name": "Schmerzmittel",
+   "file": "public/logistics-products/painkillers.webp",
+   "prompt": "plain white tablets and a blister pack. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "insulin",
+   "name": "Insulin",
+   "file": "public/logistics-products/insulin.webp",
+   "prompt": "insulin pens and vials in a cooled box. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "vaccines",
+   "name": "Impfstoffe",
+   "file": "public/logistics-products/vaccines.webp",
+   "prompt": "vaccine vials in an insulated cool box. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "infusions",
+   "name": "Infusionslösungen",
+   "file": "public/logistics-products/infusions.webp",
+   "prompt": "IV infusion bags. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "medicalOxygen",
+   "name": "Medizinischer Sauerstoff",
+   "file": "public/logistics-products/medicalOxygen.webp",
+   "prompt": "green-white medical oxygen cylinders. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "cattle",
+   "name": "Rinder",
+   "file": "public/logistics-products/cattle.webp",
+   "prompt": "a single brown cow standing. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "pigs",
+   "name": "Schweine",
+   "file": "public/logistics-products/pigs.webp",
+   "prompt": "a single pink pig standing. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "livePoultry",
+   "name": "Lebendgeflügel",
+   "file": "public/logistics-products/livePoultry.webp",
+   "prompt": "a ventilated poultry crate with chickens. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "engineBlock",
+   "name": "Motorblock",
+   "file": "public/logistics-products/engineBlock.webp",
+   "prompt": "a bare car engine block. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "pistons",
+   "name": "Kolben",
+   "file": "public/logistics-products/pistons.webp",
+   "prompt": "a set of engine pistons with rods. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "crankshaft",
+   "name": "Kurbelwelle",
+   "file": "public/logistics-products/crankshaft.webp",
+   "prompt": "a polished crankshaft. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "camshaft",
+   "name": "Nockenwelle",
+   "file": "public/logistics-products/camshaft.webp",
+   "prompt": "a polished camshaft. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "cylinderHead",
+   "name": "Zylinderkopf",
+   "file": "public/logistics-products/cylinderHead.webp",
+   "prompt": "an aluminium cylinder head. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "engineValves",
+   "name": "Motorventile",
+   "file": "public/logistics-products/engineValves.webp",
+   "prompt": "a row of engine valves. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "fuelInjectors",
+   "name": "Einspritzdüsen",
+   "file": "public/logistics-products/fuelInjectors.webp",
+   "prompt": "a set of fuel injectors. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "turbocharger",
+   "name": "Turbolader",
+   "file": "public/logistics-products/turbocharger.webp",
+   "prompt": "a turbocharger. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "gearbox",
+   "name": "Getriebe",
+   "file": "public/logistics-products/gearbox.webp",
+   "prompt": "a car gearbox. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "clutch",
+   "name": "Kupplung",
+   "file": "public/logistics-products/clutch.webp",
+   "prompt": "a clutch disc and pressure plate. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "driveShaft",
+   "name": "Antriebswelle",
+   "file": "public/logistics-products/driveShaft.webp",
+   "prompt": "a drive shaft. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "differential",
+   "name": "Differential",
+   "file": "public/logistics-products/differential.webp",
+   "prompt": "an axle differential. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "axles",
+   "name": "Achsen",
+   "file": "public/logistics-products/axles.webp",
+   "prompt": "a vehicle axle. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "wheelRims",
+   "name": "Felgen",
+   "file": "public/logistics-products/wheelRims.webp",
+   "prompt": "stacked alloy wheel rims. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "brakeDiscs",
+   "name": "Bremsscheiben",
+   "file": "public/logistics-products/brakeDiscs.webp",
+   "prompt": "a pair of brake discs. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "brakePads",
+   "name": "Bremsbeläge",
+   "file": "public/logistics-products/brakePads.webp",
+   "prompt": "a set of brake pads. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "brakeCalipers",
+   "name": "Bremssättel",
+   "file": "public/logistics-products/brakeCalipers.webp",
+   "prompt": "brake calipers. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "steeringRack",
+   "name": "Lenkgetriebe",
+   "file": "public/logistics-products/steeringRack.webp",
+   "prompt": "a steering rack. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "shockAbsorbers",
+   "name": "Stoßdämpfer",
+   "file": "public/logistics-products/shockAbsorbers.webp",
+   "prompt": "a pair of shock absorbers. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "springs",
+   "name": "Fahrwerksfedern",
+   "file": "public/logistics-products/springs.webp",
+   "prompt": "coil suspension springs. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "exhaustSystem",
+   "name": "Abgasanlage",
+   "file": "public/logistics-products/exhaustSystem.webp",
+   "prompt": "a car exhaust system with muffler. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "radiator",
+   "name": "Kühler",
+   "file": "public/logistics-products/radiator.webp",
+   "prompt": "a car radiator. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "waterPump",
+   "name": "Wasserpumpe",
+   "file": "public/logistics-products/waterPump.webp",
+   "prompt": "an engine water pump. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "oilPump",
+   "name": "Ölpumpe",
+   "file": "public/logistics-products/oilPump.webp",
+   "prompt": "an engine oil pump. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "fuelPump",
+   "name": "Kraftstoffpumpe",
+   "file": "public/logistics-products/fuelPump.webp",
+   "prompt": "a fuel pump. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "wiringHarness",
+   "name": "Kabelbaum",
+   "file": "public/logistics-products/wiringHarness.webp",
+   "prompt": "a bundled vehicle wiring harness. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "alternator",
+   "name": "Lichtmaschine",
+   "file": "public/logistics-products/alternator.webp",
+   "prompt": "a car alternator. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "starterMotor",
+   "name": "Anlasser",
+   "file": "public/logistics-products/starterMotor.webp",
+   "prompt": "a starter motor. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "headlights",
+   "name": "Scheinwerfer",
+   "file": "public/logistics-products/headlights.webp",
+   "prompt": "a pair of car headlight units. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "tailLights",
+   "name": "Rückleuchten",
+   "file": "public/logistics-products/tailLights.webp",
+   "prompt": "a pair of car tail light units. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "windshield",
+   "name": "Windschutzscheiben",
+   "file": "public/logistics-products/windshield.webp",
+   "prompt": "a car windshield on a rack. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "sideWindows",
+   "name": "Seitenscheiben",
+   "file": "public/logistics-products/sideWindows.webp",
+   "prompt": "car side window glass panes. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "carSeats",
+   "name": "Fahrzeugsitze",
+   "file": "public/logistics-products/carSeats.webp",
+   "prompt": "a car seat. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "dashboard",
+   "name": "Armaturenbrett",
+   "file": "public/logistics-products/dashboard.webp",
+   "prompt": "a car dashboard module. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "doorPanels",
+   "name": "Türverkleidungen",
+   "file": "public/logistics-products/doorPanels.webp",
+   "prompt": "car interior door panels. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "bodyPanels",
+   "name": "Karosserieteile",
+   "file": "public/logistics-products/bodyPanels.webp",
+   "prompt": "primed car body panels (door and fender). Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "chassis",
+   "name": "Fahrzeugrahmen",
+   "file": "public/logistics-products/chassis.webp",
+   "prompt": "a bare vehicle frame chassis. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "controlUnits",
+   "name": "Steuergeräte",
+   "file": "public/logistics-products/controlUnits.webp",
+   "prompt": "automotive electronic control units. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "sensors",
+   "name": "Fahrzeugsensoren",
+   "file": "public/logistics-products/sensors.webp",
+   "prompt": "assorted automotive sensors. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "electricMotor",
+   "name": "Elektromotor",
+   "file": "public/logistics-products/electricMotor.webp",
+   "prompt": "an electric vehicle motor. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "inverter",
+   "name": "Leistungselektronik",
+   "file": "public/logistics-products/inverter.webp",
+   "prompt": "an automotive power inverter module. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "batteryCells",
+   "name": "Batteriezellen",
+   "file": "public/logistics-products/batteryCells.webp",
+   "prompt": "cylindrical and pouch battery cells. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "evBatteryPack",
+   "name": "Traktionsbatterie",
+   "file": "public/logistics-products/evBatteryPack.webp",
+   "prompt": "an EV traction battery pack. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "chargingPort",
+   "name": "Ladebuchse",
+   "file": "public/logistics-products/chargingPort.webp",
+   "prompt": "an EV charging port socket. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "trailerAxles",
+   "name": "Anhängerachsen",
+   "file": "public/logistics-products/trailerAxles.webp",
+   "prompt": "a heavy trailer axle with wheels hubs. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "fifthWheel",
+   "name": "Sattelkupplung",
+   "file": "public/logistics-products/fifthWheel.webp",
+   "prompt": "a truck fifth-wheel coupling. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "airBrakeSystem",
+   "name": "Druckluftbremse",
+   "file": "public/logistics-products/airBrakeSystem.webp",
+   "prompt": "truck air brake chambers and tank. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "truckCab",
+   "name": "LKW-Fahrerhaus",
+   "file": "public/logistics-products/truckCab.webp",
+   "prompt": "a bare truck cab without branding. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "truckEngine",
+   "name": "LKW-Motor",
+   "file": "public/logistics-products/truckEngine.webp",
+   "prompt": "a heavy truck diesel engine. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "truckGearbox",
+   "name": "LKW-Getriebe",
+   "file": "public/logistics-products/truckGearbox.webp",
+   "prompt": "a heavy truck gearbox. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "transformer",
+   "name": "Großtransformator",
+   "file": "public/logistics-products/transformer.webp",
+   "prompt": "a large power transformer. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "excavator",
+   "name": "Großbagger",
+   "file": "public/logistics-products/excavator.webp",
+   "prompt": "a large generic excavator without logos. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "craneModule",
+   "name": "Raupenkran-Baugruppe",
+   "file": "public/logistics-products/craneModule.webp",
+   "prompt": "a crawler crane boom section. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "windTurbineBlade",
+   "name": "Windradflügel",
+   "file": "public/logistics-products/windTurbineBlade.webp",
+   "prompt": "a wind turbine blade section. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "windTurbineTower",
+   "name": "Windrad-Turmsegment",
+   "file": "public/logistics-products/windTurbineTower.webp",
+   "prompt": "a wind turbine tower segment. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "industrialPress",
+   "name": "Industriepresse",
+   "file": "public/logistics-products/industrialPress.webp",
+   "prompt": "a large industrial press. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "bridgeGirder",
+   "name": "Brücken-Großträger",
+   "file": "public/logistics-products/bridgeGirder.webp",
+   "prompt": "a steel bridge girder. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "books",
+   "name": "Bücher",
+   "file": "public/logistics-products/books.webp",
+   "prompt": "a stack of hardcover books without titles. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "stationery",
+   "name": "Schreibwaren",
+   "file": "public/logistics-products/stationery.webp",
+   "prompt": "pens, notebooks and a stapler. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "cutFlowers",
+   "name": "Schnittblumen",
+   "file": "public/logistics-products/cutFlowers.webp",
+   "prompt": "a bucket of fresh cut flowers. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "petFood",
+   "name": "Tiernahrung",
+   "file": "public/logistics-products/petFood.webp",
+   "prompt": "a plain bag of pet food with kibble. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "toys",
+   "name": "Spielwaren",
+   "file": "public/logistics-products/toys.webp",
+   "prompt": "assorted wooden and plastic toys. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "sportsEquipment",
+   "name": "Sportartikel",
+   "file": "public/logistics-products/sportsEquipment.webp",
+   "prompt": "a football, tennis racket and dumbbell. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "cosmetics",
+   "name": "Kosmetik",
+   "file": "public/logistics-products/cosmetics.webp",
+   "prompt": "plain cosmetic jars and bottles. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "footwear",
+   "name": "Schuhe",
+   "file": "public/logistics-products/footwear.webp",
+   "prompt": "a pair of sneakers and a boot. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "smartphones",
+   "name": "Smartphones",
+   "file": "public/logistics-products/smartphones.webp",
+   "prompt": "a stack of generic smartphones. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "paint",
+   "name": "Farben & Lacke",
+   "file": "public/logistics-products/paint.webp",
+   "prompt": "plain paint buckets with a drip of color. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  },
+  {
+   "id": "tools",
+   "name": "Werkzeuge",
+   "file": "public/logistics-products/tools.webp",
+   "prompt": "a set of hand tools. Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product."
+  }
+ ]
+}

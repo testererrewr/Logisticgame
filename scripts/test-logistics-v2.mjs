@@ -9,7 +9,7 @@ for(const medicine of ['antibiotics','painkillers','insulin','vaccines','infusio
 assert.ok(Math.abs(clockTarget({day:5,last_tick:1000,tick_ms:60000,time_scale:1,status:'running'},61000)-(5+1/1440))<1e-10,'default live time is 1:1');
 assert.equal(clockTarget({day:5,last_tick:1000,tick_ms:60000,time_scale:1,status:'paused'},61000),5);
 const s=newState();s.cash=100000000;build(s,'depot',47.07,15.44);
-assert.throws(()=>purchaseVehicle(s,'truck'),/Auflieger/);
+{const bare=purchaseVehicle(s,'truck');assert.ok(bare.trailerDetached&&!bare.trailerId,'Zugmaschine ohne Auflieger');s.vehicles=s.vehicles.filter(v=>v.id!==bare.id);}
 const truck=purchaseVehicle(s,'truck','schwarzmueller-timber');assert.ok(cargoCapacity(truck,'timber')>0);assert.equal(cargoCapacity(truck,'steel'),0);assert.equal(cargoCapacity(truck,'vaccines'),0);
 assert.throws(()=>configureTrailer(s,truck.id,'schmitz-cool'),/deaktiviert/);const coldTruck=purchaseVehicle(s,'truck','schmitz-cool');assert.ok(cargoCapacity(coldTruck,'vaccines')>0);assert.equal(cargoCapacity(coldTruck,'timber'),0);
 assert.throws(()=>purchaseVehicle(s,'cargoShip'),/Depot/);build(s,'port',47.09,15.44);assert.throws(()=>purchaseVehicle(s,'cargoShip'),/Depot/);build(s,'shipDepot',47.10,15.44);assert.ok(purchaseVehicle(s,'cargoShip'));

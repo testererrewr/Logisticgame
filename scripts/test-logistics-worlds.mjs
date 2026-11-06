@@ -4,7 +4,7 @@ import {writeFileSync} from 'node:fs';
 import {companyAtDay,clockTarget,advanceCompany} from '../lib/logistics/world-clock.ts';
 import {build,profile} from '../lib/logistics/engine.ts';
 
-assert.equal(clockTarget({day:7,last_tick:1000,tick_ms:60000},181000),10);
+assert.ok(Math.abs(clockTarget({day:7,last_tick:1000,tick_ms:60000},181000)-(7+180/86400))<1e-9,'Echtzeit 1:1');
 assert.equal(clockTarget({day:7,last_tick:1000,tick_ms:60000},0),7);
 assert.equal(companyAtDay(200).day,200);
 assert.equal(advanceCompany(companyAtDay(1),12).day,12);

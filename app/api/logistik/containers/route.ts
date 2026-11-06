@@ -1,4 +1,4 @@
-import {kmBetween} from '../../../../lib/logistics/engine';
+import {kmBetween,GOODS} from '../../../../lib/logistics/engine';
 import {NextRequest,NextResponse} from 'next/server';
 import {env} from 'cloudflare:workers';
 import {currentUser,settleWorld} from '../online/route';
@@ -18,6 +18,7 @@ export async function GET(req:NextRequest){try{
  if(minKm>maxKm)throw Error('Die minimale Entfernung darf nicht über der maximalen Entfernung liegen.');
  const where=["o.world_id=?","((o.day=? AND o.status='open' AND o.accepted_by IS NULL) OR (?=1 AND o.status='accepted' AND o.deadline>=?))"],args:(string|number)[]=[worldId,Math.floor(world.day),siteId?1:0,world.day];
  if(siteId){where.push('o.source_id=?');args.push(siteId);}
+ const goodFilter=text('good');if(goodFilter&&goodFilter!=='all'){if(goodFilter==='containers'){where.push("o.good='containers'");}else if(goodFilter==='goods'){where.push("o.good<>'containers'");}else if(goodFilter.startsWith('type:')){const ids=GOODS.filter(g=>g.type===goodFilter.slice(5)&&g.id!=='containers').map(g=>g.id);where.push('o.good IN (SELECT value FROM json_each(?))');args.push(JSON.stringify(ids));}else{where.push('o.good=?');args.push(goodFilter);}}
  if(q){where.push('(a.name LIKE ? OR b.name LIKE ? OR o.source_city LIKE ? OR o.destination_city LIKE ? OR o.id LIKE ?)');args.push(...Array(5).fill('%'+q+'%'));}
  for(const [column,value,partial]of [['source_country',sourceCountry,false],['destination_country',destinationCountry,false],['source_city',sourceCity,true],['destination_city',destinationCity,true]] as const)if(value){where.push(`o.${column} ${partial?'LIKE':'='} ? COLLATE NOCASE`);args.push(partial?'%'+value+'%':value);}
  const distance="CASE WHEN o.distance_km>0 THEN o.distance_km ELSE MAX(0,(o.fee-18)/.09) END";

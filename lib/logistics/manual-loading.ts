@@ -1,4 +1,4 @@
-import {kmBetween,availableToLoad,cargoCapacity,vehicleCargo,type State,type Vehicle,type Line,type Stop,type GoodId} from './engine';
+import {kmBetween,availableToLoad,freeStock,cargoCapacity,vehicleCargo,type State,type Vehicle,type Line,type Stop,type GoodId} from './engine';
 import {isTransferTerminal,queueTerminalTransfer} from './terminal-transfer';
 import {activeContainerOrder,loadingContainerOrders} from './container-routing';
 import {receivingCapacity} from './cargo-routing';
@@ -19,7 +19,7 @@ export function stageManualFreight(s:State,v:Vehicle,line:Line,stop:Stop,goods:G
  const reserve=(siteId:string,send:boolean,goodId:GoodId)=>{
   for(const id of Object.keys(s.inventory[siteId]||{}).filter(id=>id===goodId&&accepts(id))){
    const cap=cargoCapacity(v,id);if(cap<=0)continue;
-   const lots=id==='containers'?loadingContainerOrders(s,v,line,stop,siteId).map(r=>({orderId:r.order.id,quantity:r.quantity})):[{orderId:undefined,quantity:availableToLoad(s,siteId,id)}];
+   const orderLots=loadingContainerOrders(s,v,line,stop,siteId,id).map(r=>({orderId:r.order.id as string|undefined,quantity:r.quantity})),lots=id==='containers'?orderLots:[...orderLots,{orderId:undefined,quantity:freeStock(s,siteId,id)}];
    for(const lot of lots){const key=id+'/'+(lot.orderId||''),already=planned.get(key)||0;
     let qty=Math.min(lot.quantity,availableToLoad(s,siteId,id),Math.max(0,(1-used)*cap),Math.max(0,stop.quantity-already),Math.max(0,receivingCapacity(s,v,line,stop,id,undefined,lot.orderId)-already));
     if(send)qty=Math.min(qty,Math.max(0,s.cash/.25));

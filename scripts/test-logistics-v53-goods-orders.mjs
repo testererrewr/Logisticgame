@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import {newState,build,purchaseVehicle,createLine,assignVehicle,stepTime,stock,freeStock,checkIntegrity,profile} from '../lib/logistics/engine.ts';
+import {acceptContainerOrder as acceptOrderForTest} from '../lib/logistics/order-accept.ts';
+const s=newState();s.live=true;s.cash=1e9;build(s,'depot',47.07,15.44);
+const a=build(s,'warehouseSmall',47.071,15.44);
+const shop={id:'shop-1',kind:'supermarket',name:'Markt',lat:47.08,lon:15.44,tags:{}};s.sites.push(shop);
+assert.ok(profile(shop).demand.includes('bread'),'Testkunde fragt Brot nach');
+s.inventory[a.id]={bread:20};
+acceptOrderForTest(s,{id:'w:1:'+a.id+':0',world_id:'w',day:Math.floor(s.day),source_id:a.id,destination_id:shop.id,slot:0,quantity:30,fee:5,deadline:s.day+10,status:'open',accepted_by:null,good:'bread'});
+assert.equal(stock(s,a.id,'bread'),50);assert.equal(freeStock(s,a.id,'bread'),20,'Auftragsware ist reserviert');
+assert.equal(s.contracts.at(-1).good,'bread');
+const road=(x,y)=>({fromId:x.id,toId:y.id,km:.5,path:[[x.lat,x.lon],[y.lat,y.lon]],source:'osm-strassen',geometryVersion:2});
+s.roadRoutes=s.sites.flatMap(x=>s.sites.filter(y=>x.id!==y.id).map(y=>road(x,y)));
+const v=purchaseVehicle(s,'truck','krone-profi');
+const l=createLine(s,{name:'Auftrag',mode:'truck',good:'bread',duration:null,stops:[{siteId:a.id,action:'load',good:'bread',quantity:1e9},{siteId:shop.id,action:'unload',good:'bread',quantity:1e9}],legs:s.roadRoutes});
+assignVehicle(s,v.id,l.id);
+let w=s,t=s.day;for(let i=0;i<3000&&!(w.contracts.at(-1).delivered>=30);i++){t+=.0005;w=stepTime(w,t);}
+const order=w.contracts.at(-1);
+assert.equal(order.delivered,30,'gesamte Auftragsmenge geliefert');
+assert.ok(order.paid>=150,'Transportvergütung gezahlt');
+assert.ok(w.events.some(e=>e.text.includes('Auftragslieferung')&&e.text.includes('Brot')),'Lieferung als Auftrag markiert');
+checkIntegrity(w);
+console.log('PASS v53 Frachtaufträge für beliebige Güter: Ware reserviert, mit Auftragsnummer geladen und am Ziel gegen Vergütung geliefert.');
