@@ -35,6 +35,7 @@ bash "$APP/deploy/backup.sh" || echo "(Sicherung übersprungen)"
 echo "==> systemd-Dienste aktualisieren und neu starten"
 install -m 644 "$APP"/deploy/systemd/*.service "$APP"/deploy/systemd/*.timer /etc/systemd/system/
 systemctl daemon-reload
+systemctl enable logistik >/dev/null 2>&1   # Autostart nach Server-Neustart
 systemctl restart logistik
 systemctl enable --now logistik-tick.timer logistik-backup.timer >/dev/null
 
