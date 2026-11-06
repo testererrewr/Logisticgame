@@ -61,7 +61,11 @@ export async function adjustAdminCompanyCash(actor:User,body:{worldId:string;use
 }
 // Advance every company in one atomic world batch. Wall clock determines the
 // target even while nobody is online; requests materialize the elapsed days.
-export async function settleWorld(id:string):Promise<World>{
+// Single-flight: concurrent requests for the same world share one settlement
+// instead of each recomputing (and conflicting on) the whole world.
+const settling=new Map<string,Promise<World>>();
+export function settleWorld(id:string):Promise<World>{const running=settling.get(id);if(running)return running;const job=settleWorldNow(id).finally(()=>settling.delete(id));settling.set(id,job);return job;}
+async function settleWorldNow(id:string):Promise<World>{
  const settleAt=Date.now();
  for(let attempt=0;attempt<12;attempt++){
   const world=await readWorld(id);if(!world)throw Error('Diese Welt existiert nicht.');if(settleAt-world.last_tick<1000)return world;

@@ -11,7 +11,8 @@ export async function savePartners(sites:Site[]){
 }
 export async function registryArea(lat:number,lon:number,radius:number){
  const dy=radius/111000,dx=dy/Math.max(.05,Math.cos(lat*Math.PI/180)),sites:Site[]=[];
- for(let offset=0;;offset+=1000){const rows=await env.DB!.prepare('SELECT payload FROM logistics_partner_registry WHERE lat BETWEEN ? AND ? AND lon BETWEEN ? AND ? ORDER BY id LIMIT 1000 OFFSET ?').bind(lat-dy,lat+dy,lon-dx,lon+dx,offset).all<{payload:string}>();sites.push(...rows.results.map(r=>JSON.parse(r.payload) as Site));if(rows.results.length<1000)break;}
+ // Keyset pagination (id > last) instead of OFFSET: OFFSET re-sorted and skipped all earlier rows for every page.
+ for(let after='';;){const rows=await env.DB!.prepare('SELECT id,payload FROM logistics_partner_registry WHERE lat BETWEEN ? AND ? AND lon BETWEEN ? AND ? AND id>? ORDER BY id LIMIT 1000').bind(lat-dy,lat+dy,lon-dx,lon+dx,after).all<{id:string;payload:string}>();sites.push(...rows.results.map(r=>JSON.parse(r.payload) as Site));if(rows.results.length<1000)break;after=rows.results[rows.results.length-1].id;}
  return applyRules(sites,await readPartnerRules());
 }
 export async function registryByIds(ids:string[]){if(!ids.length)return [];const rows=await env.DB!.prepare('SELECT payload FROM logistics_partner_registry WHERE id IN (SELECT value FROM json_each(?))').bind(JSON.stringify(ids)).all<{payload:string}>();return applyRules(rows.results.map(r=>JSON.parse(r.payload) as Site),await readPartnerRules());}
