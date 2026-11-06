@@ -1,4 +1,6 @@
 import {sameOrigin} from '../../../../lib/same-origin';
+import {validateSettings,parseSettings,settingsSummary} from '../../../../lib/logistics/world-settings';
+import {ensureWorldSettingsColumn} from '../../../../lib/logistics/world-region-server';
 import {readWorldImport,worldImportStatus,setWorldImportEnabled,continueWorldImport,retryWorldImport} from '../../../../lib/logistics/world-import';
 import {NextRequest,NextResponse} from 'next/server';
 import {env} from 'cloudflare:workers';
@@ -8,14 +10,14 @@ const db=()=>env.DB!;
 const reply=(data:unknown,status=200)=>NextResponse.json(data,{status,headers:{'Cache-Control':'no-store'}});
 export async function GET(req:NextRequest){try{
  const u=await currentUser(req);if(!u||u.status!=='active'||!['owner','admin'].includes(u.role))return reply({error:'Nur für Administratoren.'},403);
- continueWorldImport();
+ continueWorldImport();await ensureWorldSettingsColumn();
  const [worlds,users,runtime,areas,partners]=await db().batch([
   db().prepare('SELECT w.*,(SELECT count(*) FROM logistics_world_companies c WHERE c.world_id=w.id) AS companies FROM logistics_worlds w ORDER BY created DESC'),
   db().prepare('SELECT id,name,email,role,status,created FROM users ORDER BY created DESC LIMIT 100'),
   db().prepare("SELECT * FROM logistics_runtime WHERE id='simulation'"),
   db().prepare('SELECT * FROM logistics_loaded_areas ORDER BY loaded DESC LIMIT 40'),
   db().prepare('SELECT count(*) AS n FROM logistics_partner_registry'),
- ]);return reply({worldImport:worldImportStatus(await readWorldImport()),worlds:worlds.results,users:users.results,runtime:runtime.results[0]||null,areas:areas.results,partnerCount:(partners.results[0] as any)?.n||0,role:u.role});
+ ]);return reply({worldImport:worldImportStatus(await readWorldImport()),worlds:worlds.results.map((w:any)=>({...w,settings:settingsSummary(parseSettings(w.settings))})),users:users.results,runtime:runtime.results[0]||null,areas:areas.results,partnerCount:(partners.results[0] as any)?.n||0,role:u.role});
  }catch(e:any){return reply({error:e.message},422);}}
 export async function POST(req:NextRequest){try{
  const raw=await req.text();if(raw.length>50000)return reply({error:'Anfrage zu groß.'},413);
@@ -27,7 +29,8 @@ export async function POST(req:NextRequest){try{
  else if(body.action==='createWorld'){
   const name=String(body.name||'').trim();if(name.length<3||name.length>60)throw Error('Weltname: 3–60 Zeichen.');
   const scale=body.timeScale===undefined?1:Number(body.timeScale);if(!Number.isFinite(scale)||scale<.1||scale>1440)throw Error('Zeitfaktor: 0,1–1440.');
-  const id=crypto.randomUUID();await db().prepare("INSERT INTO logistics_worlds(id,name,description,owner_id,day,last_tick,tick_ms,time_scale,status,created) VALUES(?,?,?,?,1,?,?,?,'draft',?)").bind(id,name,String(body.description||'Gemeinsame Online-Welt').slice(0,300),u.id,now,86400000/scale,scale,now).run();result={worldId:id};
+  const settings=validateSettings(body.settings||{});await ensureWorldSettingsColumn();
+  const id=crypto.randomUUID();await db().prepare("INSERT INTO logistics_worlds(id,name,description,owner_id,day,last_tick,tick_ms,time_scale,status,created,settings) VALUES(?,?,?,?,1,?,?,?,'draft',?,?)").bind(id,name,String(body.description||'Gemeinsame Online-Welt').slice(0,300),u.id,now,86400000/scale,scale,now,JSON.stringify(settings)).run();result={worldId:id};
  }else if(body.action==='worldSettings'){
   const id=String(body.worldId||''),name=String(body.name||'').trim(),scale=Number(body.timeScale),status=String(body.status||'running');
   if(name.length<3||name.length>60||!Number.isFinite(scale)||scale<.1||scale>1440||!['draft','running','paused','stopped'].includes(status))throw Error('Ungültige Welteinstellungen.');

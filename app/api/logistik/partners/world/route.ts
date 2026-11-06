@@ -7,6 +7,7 @@ import {applyPartnerRule,type PartnerRules} from '../../../../../lib/logistics/b
 import {matchesMapSite,mapClusterKey,servedStationIds} from '../../../../../lib/logistics/map-filtering';
 import {currentUser} from '../../online/route';
 import {decodeCompany} from '../../../../../lib/logistics/company-codec';
+import {worldSettings,regionFilter} from '../../../../../lib/logistics/world-region-server';
 import type {Site,State} from '../../../../../lib/logistics/engine';
 
 interface Compact {id:string;lat:number;lon:number;kind:string;name:string;hidden:boolean}
@@ -22,12 +23,13 @@ async function sitesByIds(ids:string[],rules:PartnerRules){const out:Site[]=[];f
 
 export async function GET(req:NextRequest){try{await seedRegistry();const p=req.nextUrl.searchParams,lat=Number(p.get('lat')||0),lon=Number(p.get('lon')||0),zoom=Number(p.get('zoom')||2),kinds=(p.get('kinds')||'').split(',').filter(k=>/^[a-zA-Z]+$/.test(k)),query=(p.get('q')||'').slice(0,100),good=p.get('good')||'all',unserved=p.get('unserved')==='1',global=await seedGlobalRegistry(0);if(!Number.isFinite(lat)||!Number.isFinite(lon)||!Number.isFinite(zoom)||Math.abs(lat)>85||Math.abs(lon)>180||zoom<2||zoom>19)return NextResponse.json({error:'Ungültige Kartenansicht.'},{status:400});if(!kinds.length)return NextResponse.json({sites:[],clusters:[],global});
  let served=new Set<string>();if(unserved){const u=await currentUser(req),row=u&&await env.DB!.prepare('SELECT state FROM logistics_world_companies WHERE world_id=? AND user_id=?').bind(p.get('world')||'',u.id).first<{state:string}>();if(!row)return NextResponse.json({error:'Bitte der Welt beitreten.'},{status:403});served=servedStationIds(await decodeCompany(row.state));}
+ const worldId=(p.get('world')||'').slice(0,100),inside=worldId?regionFilter(await worldSettings(worldId)):null;
  const dy=Math.min(180,135/2**(zoom-2)),dx=Math.min(360,230/2**(zoom-2)),rules=await readPartnerRules(),sites:Site[]=[],groups=new Map<string,{lat:number;lon:number;count:number;kind:string;site:{kind:string;name:string}}>();let count=0;
- const add=(site:{id:string;lat:number;lon:number;kind:string;name:string},full?:Site)=>{count++;if(full&&sites.length<3001)sites.push(full);const key=mapClusterKey(site as Site,zoom),g=groups.get(key)||{lat:0,lon:0,count:0,kind:'mixed',site};g.lat+=site.lat;g.lon+=site.lon;g.count++;groups.set(key,g);};
+ const add=(site:{id:string;lat:number;lon:number;kind:string;name:string},full?:Site)=>{if(inside&&!inside(site.lat,site.lon))return;count++;if(full&&sites.length<3001)sites.push(full);const key=mapClusterKey(site as Site,zoom),g=groups.get(key)||{lat:0,lon:0,count:0,kind:'mixed',site};g.lat+=site.lat;g.lon+=site.lon;g.count++;groups.set(key,g);};
  if(!query.trim()&&good==='all'){
   const kindSet=new Set(kinds),ids:string[]=[];
   for(const c of await compactRegistry(rules)){if(c.lat<lat-dy||c.lat>lat+dy||dx<180&&(c.lon<lon-dx||c.lon>lon+dx)||c.hidden||!kindSet.has(c.kind)||served.has(c.id))continue;add(c);if(ids.length<3001)ids.push(c.id);}
-  if(!(zoom<8||count>3000))sites.push(...(await sitesByIds(ids,rules)).filter(s=>!s.hidden&&kindSet.has(s.kind)));
+  if(!(zoom<8||count>3000))sites.push(...(await sitesByIds(ids,rules)).filter(s=>!s.hidden&&kindSet.has(s.kind)&&(!inside||inside(s.lat,s.lon))));
  }else{
   for(let after='';;){const rows=(await env.DB!.prepare('SELECT id,payload FROM logistics_partner_registry WHERE lat BETWEEN ? AND ? AND (?=1 OR lon BETWEEN ? AND ?) AND id>? ORDER BY id LIMIT 500').bind(lat-dy,lat+dy,dx>=180?1:0,lon-dx,lon+dx,after).all<{id:string;payload:string}>()).results;for(const row of rows){const site=applyPartnerRule(JSON.parse(row.payload),rules);if(!kinds.includes(site.kind)||served.has(site.id)||!matchesMapSite(site,query,good))continue;add(site,site);}if(rows.length<500)break;after=rows[rows.length-1].id;}
  }

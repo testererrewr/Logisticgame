@@ -1,4 +1,6 @@
 import {kmBetween,GOODS} from '../../../../lib/logistics/engine';
+import {worldSettings} from '../../../../lib/logistics/world-region-server';
+import {allowedCountries} from '../../../../lib/logistics/world-settings';
 import {NextRequest,NextResponse} from 'next/server';
 import {env} from 'cloudflare:workers';
 import {currentUser,settleWorld} from '../online/route';
@@ -18,6 +20,7 @@ export async function GET(req:NextRequest){try{
  if(minKm>maxKm)throw Error('Die minimale Entfernung darf nicht über der maximalen Entfernung liegen.');
  const where=["o.world_id=?","((o.day=? AND o.status='open' AND o.accepted_by IS NULL) OR (?=1 AND o.status='accepted' AND o.deadline>=?))"],args:(string|number)[]=[worldId,Math.floor(world.day),siteId?1:0,world.day];
  if(siteId){where.push('o.source_id=?');args.push(siteId);}
+ const regionAllowed=allowedCountries(await worldSettings(worldId));{const allowed=regionAllowed;if(allowed){const list=JSON.stringify([...allowed]);where.push('o.source_country IN (SELECT value FROM json_each(?))','o.destination_country IN (SELECT value FROM json_each(?))');args.push(list,list);}}
  const goodFilter=text('good');if(goodFilter&&goodFilter!=='all'){if(goodFilter==='containers'){where.push("o.good='containers'");}else if(goodFilter==='goods'){where.push("o.good<>'containers'");}else if(goodFilter.startsWith('type:')){const ids=GOODS.filter(g=>g.type===goodFilter.slice(5)&&g.id!=='containers').map(g=>g.id);where.push('o.good IN (SELECT value FROM json_each(?))');args.push(JSON.stringify(ids));}else{where.push('o.good=?');args.push(goodFilter);}}
  if(q){where.push('(a.name LIKE ? OR b.name LIKE ? OR o.source_city LIKE ? OR o.destination_city LIKE ? OR o.id LIKE ?)');args.push(...Array(5).fill('%'+q+'%'));}
  for(const [column,value,partial]of [['source_country',sourceCountry,false],['destination_country',destinationCountry,false],['source_city',sourceCity,true],['destination_city',destinationCity,true]] as const)if(value){where.push(`o.${column} ${partial?'LIKE':'='} ? COLLATE NOCASE`);args.push(partial?'%'+value+'%':value);}
@@ -32,6 +35,6 @@ export async function GET(req:NextRequest){try{
   env.DB!.prepare("SELECT DISTINCT destination_country AS name FROM logistics_container_offers WHERE world_id=? AND day=? AND status='open' AND destination_country<>'' ORDER BY name").bind(worldId,day),
   env.DB!.prepare("SELECT DISTINCT source_city AS name FROM logistics_container_offers WHERE world_id=? AND day=? AND status='open' AND source_city<>'' AND (?='' OR source_country=?) ORDER BY name LIMIT 500").bind(worldId,day,sourceCountry,sourceCountry),
   env.DB!.prepare("SELECT DISTINCT destination_city AS name FROM logistics_container_offers WHERE world_id=? AND day=? AND status='open' AND destination_city<>'' AND (?='' OR destination_country=?) ORDER BY name LIMIT 500").bind(worldId,day,destinationCountry,destinationCountry)
- ]);const names=(i:number)=>lists[i].results.map((r:any)=>r.name);facets={sourceCountries:names(0),destinationCountries:names(1),sourceCities:names(2),destinationCities:names(3)};}
+ ]);const names=(i:number)=>lists[i].results.map((r:any)=>r.name).filter((n:string)=>i>1||!regionAllowed||regionAllowed.has(n));facets={sourceCountries:names(0),destinationCountries:names(1),sourceCities:names(2),destinationCities:names(3)};}
  return NextResponse.json({day:Math.floor(world.day),offers:rows.filter(r=>lookup.has(r.source_id)&&lookup.has(r.destination_id)).map(r=>({...r,km:Math.round(kmBetween([r.sourceLat,r.sourceLon],[r.destinationLat,r.destinationLon])*10)/10,sourceName:lookup.get(r.source_id)!.name,destinationName:lookup.get(r.destination_id)!.name,mine:r.accepted_by===u.id})),sites:partners,totalOffers:total?.n||0,offset,hasMore:offset+rows.length<(total?.n||0),facets},{headers:{'Cache-Control':'no-store'}});
  }catch(e:any){return NextResponse.json({error:e.message},{status:422});}}

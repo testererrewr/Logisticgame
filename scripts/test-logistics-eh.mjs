@@ -4,7 +4,7 @@ const s=newState();s.cash=50000000;
 const depot=build(s,'depot',47.07,15.44);
 const v=purchaseVehicle(s,'truck','krone-profi');
 assert.equal(cargoCapacity(v,'bread'),240,'24 tonnes are 240 EH');
-assert.equal(good('wheat').purchase,14,'140 euros per tonne becomes 14 per EH');
+assert.equal(good('wheat').purchase,15.4,'140 euros per tonne becomes 14 per EH, plus 10 % purchase markup');
 assert.equal(BUILDINGS.find(b=>b.id==='depot').capacity,800);
 assert.equal(WAGONS.find(w=>w.id==='bulk').capacity,694);
 assert.equal(s.quantityUnit,'EH');

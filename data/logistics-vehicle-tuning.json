@@ -1,0 +1,284 @@
+{
+ "scania-s-serie": {
+  "tier": 3,
+  "speed": 86,
+  "handling": 0.85,
+  "price": 158000
+ },
+ "volvo-fh16": {
+  "tier": 3,
+  "speed": 86,
+  "handling": 0.85,
+  "price": 162000
+ },
+ "volvo-fh16-aero": {
+  "tier": 3,
+  "speed": 86,
+  "handling": 0.85,
+  "price": 168000
+ },
+ "mercedes-benz-actros-l-1848-ls-4x2": {
+  "tier": 3,
+  "speed": 86,
+  "handling": 0.85,
+  "price": 152000
+ },
+ "daf-xgplus": {
+  "tier": 3,
+  "speed": 86,
+  "handling": 0.85,
+  "price": 149000
+ },
+ "truck": {
+  "tier": 2,
+  "speed": 80,
+  "handling": 1,
+  "price": 128000
+ },
+ "volvo-fh": {
+  "tier": 2,
+  "speed": 80,
+  "handling": 1,
+  "price": 126000
+ },
+ "volvo-fh-aero": {
+  "tier": 2,
+  "speed": 80,
+  "handling": 1,
+  "price": 131000
+ },
+ "scania-r-serie": {
+  "tier": 2,
+  "speed": 80,
+  "handling": 1,
+  "price": 129000
+ },
+ "daf-xg": {
+  "tier": 2,
+  "speed": 80,
+  "handling": 1,
+  "price": 127000
+ },
+ "daf-xf": {
+  "tier": 2,
+  "speed": 80,
+  "handling": 1,
+  "price": 121000
+ },
+ "mercedes-benz-actros-f": {
+  "tier": 2,
+  "speed": 80,
+  "handling": 1,
+  "price": 124000
+ },
+ "iveco-s-way": {
+  "tier": 2,
+  "speed": 80,
+  "handling": 1,
+  "price": 118000
+ },
+ "renault-trucks-t-high": {
+  "tier": 2,
+  "speed": 80,
+  "handling": 1,
+  "price": 122000
+ },
+ "ford-f-max": {
+  "tier": 2,
+  "speed": 80,
+  "handling": 1,
+  "price": 112000
+ },
+ "man-tgs": {
+  "tier": 1,
+  "speed": 76,
+  "handling": 1.15,
+  "price": 104000
+ },
+ "mercedes-benz-arocs": {
+  "tier": 1,
+  "speed": 76,
+  "handling": 1.15,
+  "price": 109000
+ },
+ "volvo-fm": {
+  "tier": 1,
+  "speed": 76,
+  "handling": 1.15,
+  "price": 106000
+ },
+ "volvo-fmx": {
+  "tier": 1,
+  "speed": 76,
+  "handling": 1.15,
+  "price": 110000
+ },
+ "scania-g-serie": {
+  "tier": 1,
+  "speed": 76,
+  "handling": 1.15,
+  "price": 108000
+ },
+ "scania-p-serie": {
+  "tier": 1,
+  "speed": 76,
+  "handling": 1.15,
+  "price": 101000
+ },
+ "daf-xd": {
+  "tier": 1,
+  "speed": 76,
+  "handling": 1.15,
+  "price": 99000
+ },
+ "iveco-x-way": {
+  "tier": 1,
+  "speed": 76,
+  "handling": 1.15,
+  "price": 103000
+ },
+ "iveco-t-way": {
+  "tier": 1,
+  "speed": 76,
+  "handling": 1.15,
+  "price": 107000
+ },
+ "renault-trucks-t": {
+  "tier": 1,
+  "speed": 76,
+  "handling": 1.15,
+  "price": 102000
+ },
+ "renault-trucks-c": {
+  "tier": 1,
+  "speed": 76,
+  "handling": 1.15,
+  "price": 105000
+ },
+ "man-etgx": {
+  "tier": 2,
+  "speed": 80,
+  "handling": 1,
+  "price": 285000
+ },
+ "mercedes-benz-eactros-600": {
+  "tier": 2,
+  "speed": 80,
+  "handling": 1,
+  "price": 310000
+ },
+ "volvo-fh-electric": {
+  "tier": 2,
+  "speed": 80,
+  "handling": 1,
+  "price": 298000
+ },
+ "man-tgm": {
+  "tier": 2,
+  "speed": 80,
+  "handling": 1,
+  "price": 92000
+ },
+ "reefer": {
+  "tier": 2,
+  "speed": 80,
+  "handling": 1,
+  "price": 94000
+ },
+ "volvo-fe": {
+  "tier": 2,
+  "speed": 80,
+  "handling": 1,
+  "price": 90000
+ },
+ "scania-l-serie": {
+  "tier": 2,
+  "speed": 80,
+  "handling": 1,
+  "price": 97000
+ },
+ "daf-xb": {
+  "tier": 2,
+  "speed": 80,
+  "handling": 1,
+  "price": 88000
+ },
+ "renault-trucks-d-wide": {
+  "tier": 2,
+  "speed": 80,
+  "handling": 1,
+  "price": 91000
+ },
+ "iveco-eurocargo": {
+  "tier": 2,
+  "speed": 80,
+  "handling": 1,
+  "price": 86000
+ },
+ "man-tgl": {
+  "tier": 1,
+  "speed": 76,
+  "handling": 1.15,
+  "price": 76000
+ },
+ "volvo-fl": {
+  "tier": 1,
+  "speed": 76,
+  "handling": 1.15,
+  "price": 78000
+ },
+ "renault-trucks-d": {
+  "tier": 1,
+  "speed": 76,
+  "handling": 1.15,
+  "price": 74000
+ },
+ "volvo-fm-electric": {
+  "tier": 2,
+  "speed": 80,
+  "handling": 1,
+  "price": 230000
+ },
+ "mercedes-benz-sprinter": {
+  "tier": 3,
+  "speed": 78,
+  "handling": 0.9,
+  "price": 48500
+ },
+ "van": {
+  "tier": 2,
+  "speed": 75,
+  "handling": 1,
+  "price": 44000
+ },
+ "volkswagen-crafter": {
+  "tier": 2,
+  "speed": 75,
+  "handling": 1,
+  "price": 45500
+ },
+ "ford-transit": {
+  "tier": 2,
+  "speed": 75,
+  "handling": 1,
+  "price": 42500
+ },
+ "iveco-daily": {
+  "tier": 2,
+  "speed": 75,
+  "handling": 1,
+  "price": 47000
+ },
+ "renault-trucks-master": {
+  "tier": 1,
+  "speed": 72,
+  "handling": 1.1,
+  "price": 39500
+ },
+ "renault-trucks-trafic": {
+  "tier": 1,
+  "speed": 72,
+  "handling": 1.1,
+  "price": 35500
+ }
+}

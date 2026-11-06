@@ -1,0 +1,157 @@
+[
+ {
+  "id": "tadns",
+  "name": "Tatravagónka Tadns Schüttgutwagen",
+  "types": [
+   "bulk"
+  ],
+  "capacity": 62,
+  "price": 88000,
+  "source": "https://www.tatravagonka.sk/"
+ },
+ {
+  "id": "uacns",
+  "name": "Uacns Zementsilowagen",
+  "types": [
+   "bulk"
+  ],
+  "capacity": 60,
+  "price": 112000,
+  "source": "https://www.tatravagonka.sk/"
+ },
+ {
+  "id": "falns",
+  "name": "Falns Selbstentladewagen",
+  "types": [
+   "bulk",
+   "heavy"
+  ],
+  "capacity": 75,
+  "price": 120000,
+  "source": "https://www.tatravagonka.sk/"
+ },
+ {
+  "id": "sgns",
+  "name": "Sgns 60′ Containertragwagen",
+  "types": [
+   "container",
+   "general"
+  ],
+  "capacity": 82,
+  "price": 135000,
+  "source": "https://www.tatravagonka.sk/"
+ },
+ {
+  "id": "sggmrss",
+  "name": "Sggmrss 90′ Gelenk-Containerwagen",
+  "types": [
+   "container"
+  ],
+  "capacity": 120,
+  "price": 230000,
+  "source": "https://www.tatravagonka.sk/"
+ },
+ {
+  "id": "rgs",
+  "name": "Rgs Flachwagen",
+  "types": [
+   "heavy",
+   "general"
+  ],
+  "capacity": 55,
+  "price": 92000,
+  "source": "https://www.tatravagonka.sk/"
+ },
+ {
+  "id": "samms",
+  "name": "Samms Schwerlastwagen",
+  "types": [
+   "heavy"
+  ],
+  "capacity": 85,
+  "price": 175000,
+  "source": "https://www.tatravagonka.sk/"
+ },
+ {
+  "id": "laaers",
+  "name": "Laaers Autotransportwagen",
+  "types": [
+   "heavy",
+   "general"
+  ],
+  "capacity": 50,
+  "price": 160000,
+  "source": "https://www.tatravagonka.sk/"
+ },
+ {
+  "id": "hbbillns",
+  "name": "Hbbillns Schiebewandwagen",
+  "types": [
+   "general"
+  ],
+  "capacity": 58,
+  "price": 118000,
+  "source": "https://www.tatravagonka.sk/"
+ },
+ {
+  "id": "gbs",
+  "name": "Gbs gedeckter Güterwagen",
+  "types": [
+   "general"
+  ],
+  "capacity": 48,
+  "price": 76000,
+  "source": "https://www.tatravagonka.sk/"
+ },
+ {
+  "id": "ibbhs",
+  "name": "Ibbhs Kühlwagen",
+  "types": [
+   "chilled"
+  ],
+  "capacity": 52,
+  "price": 165000,
+  "source": "https://www.tatravagonka.sk/"
+ },
+ {
+  "id": "zans",
+  "name": "Zans Mineralöl-Kesselwagen",
+  "types": [
+   "liquid",
+   "hazardous"
+  ],
+  "capacity": 70,
+  "price": 148000,
+  "source": "https://www.tatravagonka.sk/"
+ },
+ {
+  "id": "zagns",
+  "name": "Zagns Chemie-Kesselwagen",
+  "types": [
+   "hazardous"
+  ],
+  "capacity": 58,
+  "price": 172000,
+  "source": "https://www.tatravagonka.sk/"
+ },
+ {
+  "id": "uahs",
+  "name": "Uahs Lebensmittel-Kesselwagen",
+  "types": [
+   "liquid"
+  ],
+  "capacity": 60,
+  "price": 140000,
+  "source": "https://www.tatravagonka.sk/"
+ },
+ {
+  "id": "livestock-wagon",
+  "name": "Viehtransportwagen (Hccrrs)",
+  "types": [
+   "livestock"
+  ],
+  "capacity": 40,
+  "price": 110000,
+  "source": "https://www.tatravagonka.sk/"
+ }
+]

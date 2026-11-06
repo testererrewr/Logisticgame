@@ -12,6 +12,7 @@ import {remainingDemand} from './business-rules.ts';
 import {factoryRecipes} from './recipe-categories.ts';
 import {RETAIL,woodKind,stableHash,retailKind,excludedBusiness,fixedDemand,consumeDemand,newMarket,resetMarket,type DailyMarket} from './business-rules';
 import extraGoods from '../../data/logistics-extra-goods.json';
+import productIcons from '../../data/logistics-product-icons.json';
 import extraRecipes from '../../data/logistics-extra-recipes.json';
 import {placement,gridOverlaps,type BuildGrid} from './build-grid.ts';
 import {REAL_VEHICLES,REAL_WAGONS,TRAILERS} from './vehicle-catalog.ts';
@@ -135,7 +136,7 @@ export const GOODS:Good[]=[
  {"id": "livePoultry", "name": "Lebendgeflügel", "type": "livestock", "purchase": 1400, "sale": 2170, "icon": "🐄"}
 ];
 GOODS.push(...extraGoods as Good[]);
-for(const g of GOODS){g.purchase/=10;g.sale/=10;}
+for(const g of GOODS){g.purchase=Math.round(g.purchase*1.1)/10;g.sale/=10;const icon=(productIcons as Record<string,string>)[g.id];if(icon)g.icon=icon;}
 export const good=(id:GoodId)=>GOODS.find(g=>g.id===id)!;
 export interface Recipe {id:string;name:string;output:GoodId;yield:number;inputs:Partial<Record<GoodId,number>>;fee:number}
 export const RECIPES:Recipe[]=[
@@ -447,7 +448,7 @@ export function shortcutStop(s:State,v:Vehicle,line:Line,completedIndex:number,m
  if(line.stops[completedIndex]?.action==='load'&&cargo.length){const used=cargo.reduce((n,c)=>n+c.quantity/Math.max(cargoCapacity(v,c.good),c.legacyCapacity||0,1),0);if(used>=.9999){const destination=line.stops.findIndex((st,i)=>i>completedIndex&&st.action!=='load'&&cargo.some(c=>(st.good||line.good)==='all'||(st.good||line.good)===c.good));if(destination>=next)return destination;}}
  return next;
 }
-export function handlingDays(v:Vehicle,quantity:number){const mode=VEHICLES.find(m=>m.id===v.modelId)?.mode;return quantity<=0?0:((mode==='ship'?90:mode==='rail'?45:mode==='air'?30:15)+quantity*(mode==='ship'?.012:mode==='rail'?.04:mode==='air'?.15:.25))/86400;}
+export function handlingDays(v:Vehicle,quantity:number){const spec=VEHICLES.find(m=>m.id===v.modelId),mode=spec?.mode;return quantity<=0?0:(spec?.handling||1)*((mode==='ship'?90:mode==='rail'?45:mode==='air'?30:15)+quantity*(mode==='ship'?.012:mode==='rail'?.04:mode==='air'?.15:.25))/86400;}
 export const euro=(n:number)=>new Intl.NumberFormat('de-AT',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n);
 const round2=(n:number)=>Math.round(n*100)/100;
 function activeContract(s:State,c:Contract){return !c.cancelled&&c.startDay<=s.day&&c.endDay>=s.day&&(c.kind!=='haulage'||c.delivered<(c.total||0));}
@@ -470,12 +471,13 @@ function loadStop(s:State,v:Vehicle,line:Line,stop:Stop,place:Site,requestedOrde
  }
  }
  qty=round2(qty);if(qty<=0){log(s,`${place.name}: ${good(line.good).name} noch nicht verladebereit.`,'warn');return;}
- consumeService(v,v.nextStop,line.good,qty);setStock(s,place.id,line.good,stock(s,place.id,line.good)-qty);v.cargo={good:line.good,quantity:qty,orderId,loadedAtId:place.id};log(s,`${line.name}: ${qty} EH ${good(line.good).name} bei ${place.name} geladen.`,'good');}
+ consumeService(v,v.nextStop,line.good,qty);setStock(s,place.id,line.good,stock(s,place.id,line.good)-qty);v.cargo={good:line.good,quantity:qty,orderId,loadedAtId:place.id};log(s,`${line.name}: ${qty} EH ${cargoLabel(line.good,orderId)} bei ${place.name} geladen.`,'good');}
+export function cargoLabel(id:GoodId,orderId?:string){return orderId&&id!=='containers'?'Auftrag #'+orderId.slice(-8)+' '+good(id).name:good(id).name;}
 function unloadStop(s:State,v:Vehicle,line:Line,stop:Stop,place:Site,market?:DailyMarket){if(!v.cargo||v.cargo.good!==line.good||v.cargo.quantity<=0)return;
  if(place.hidden)return;const ordered=line.good==='containers'||!!v.cargo.orderId;if(ordered&&!place.owned&&!place.cooperative&&!s.contracts.some(c=>c.kind==='haulage'&&activeContract(s,c)&&c.id===v.cargo?.orderId&&c.destinationId===place.id))return;let qty=Math.min(v.cargo.quantity,stop.quantity,serviceQuantity(s,v,line,v.nextStop,line.good));
  if(ordered&&s.contracts.some(c=>c.kind==='haulage'&&activeContract(s,c)&&c.id===v.cargo?.orderId&&c.destinationId===place.id)){
    const order=s.contracts.find(c=>c.kind==='haulage'&&activeContract(s,c)&&c.id===v.cargo?.orderId&&c.destinationId===place.id)!;
-   qty=Math.min(qty,(order.total||0)-order.delivered);if(qty<=0)return;order.delivered=round2(order.delivered+qty);const payment=round2(qty*order.fee);credit(s,payment,'Transportvergütung');order.paid=round2(order.paid+payment);if(order.delivered>=(order.total||Infinity)-.000001){order.completedDay=s.day;log(s,(line.good==='containers'?'Containerauftrag':'Frachtauftrag '+good(line.good).name)+' abgeschlossen · '+euro(order.paid)+' insgesamt gutgeschrieben.','good');}log(s,`Auftragslieferung: ${qty} EH ${good(line.good).name} an ${place.name} · +${euro(payment)}`,'good');
+   qty=Math.min(qty,(order.total||0)-order.delivered);if(qty<=0)return;order.delivered=round2(order.delivered+qty);const payment=round2(qty*order.fee);credit(s,payment,'Transportvergütung');order.paid=round2(order.paid+payment);if(order.delivered>=(order.total||Infinity)-.000001){order.completedDay=s.day;log(s,(line.good==='containers'?'Containerauftrag':'Frachtauftrag '+good(line.good).name)+' abgeschlossen · '+euro(order.paid)+' insgesamt gutgeschrieben.','good');}log(s,`Auftragslieferung: ${qty} EH ${cargoLabel(line.good,v.cargo?.orderId)} an ${place.name} · +${euro(payment)}`,'good');
  }else if(!place.owned&&!place.cooperative&&!ordered&&(demandFor(place)[line.good]||0)>0&&(stop.action==='sell'||!s.contracts.some(c=>c.kind==='process'&&activeContract(s,c)&&c.siteId===place.id&&!!RECIPES.find(r=>r.id===c.recipeId)?.inputs[line.good]))){
   const book=market||(s.localMarket??=newMarket(s.day));qty=consumeDemand(book,place.id,line.good,demandFor(place)[line.good],qty,s.day);
   if(qty<=0){log(s,place.name+': Tagesbedarf bereits von einer Spedition erfüllt.','warn');return;}

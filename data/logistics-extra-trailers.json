@@ -1,0 +1,294 @@
+[
+ {
+  "id": "kogel-cargo",
+  "name": "Kögel Cargo Coil",
+  "mount": "semi",
+  "types": [
+   "general"
+  ],
+  "capacity": 24,
+  "goods": null,
+  "price": 38500,
+  "source": "https://www.koegel.com/",
+  "factual": "Reale Baureihe. Kapazität, Preis und Güterfreigabe sind Spielwerte."
+ },
+ {
+  "id": "kogel-mega",
+  "name": "Kögel Mega Rail",
+  "mount": "semi",
+  "types": [
+   "general"
+  ],
+  "capacity": 25,
+  "goods": null,
+  "price": 44000,
+  "source": "https://www.koegel.com/",
+  "factual": "Reale Baureihe. Kapazität, Preis und Güterfreigabe sind Spielwerte."
+ },
+ {
+  "id": "wielton-curtain",
+  "name": "Wielton Curtain Master",
+  "mount": "semi",
+  "types": [
+   "general"
+  ],
+  "capacity": 24,
+  "goods": null,
+  "price": 36000,
+  "source": "https://www.wielton.com/",
+  "factual": "Reale Baureihe. Kapazität, Preis und Güterfreigabe sind Spielwerte."
+ },
+ {
+  "id": "kogel-cool",
+  "name": "Kögel Cool – PurFerro",
+  "mount": "semi",
+  "types": [
+   "chilled",
+   "general"
+  ],
+  "capacity": 22,
+  "goods": null,
+  "price": 74000,
+  "source": "https://www.koegel.com/",
+  "factual": "Reale Baureihe. Kapazität, Preis und Güterfreigabe sind Spielwerte."
+ },
+ {
+  "id": "kogel-cool-pharma",
+  "name": "Kögel Cool – PurFerro quantum Pharma",
+  "mount": "semi",
+  "types": [
+   "chilled",
+   "pharma"
+  ],
+  "capacity": 22,
+  "goods": null,
+  "price": 92000,
+  "source": "https://www.koegel.com/",
+  "factual": "Reale Baureihe. Kapazität, Preis und Güterfreigabe sind Spielwerte."
+ },
+ {
+  "id": "kogel-port",
+  "name": "Kögel Port 45 Triplex",
+  "mount": "semi",
+  "types": [
+   "container"
+  ],
+  "capacity": 28,
+  "goods": null,
+  "price": 41000,
+  "source": "https://www.koegel.com/",
+  "factual": "Reale Baureihe. Kapazität, Preis und Güterfreigabe sind Spielwerte."
+ },
+ {
+  "id": "wielton-container",
+  "name": "Wielton Container Carrier",
+  "mount": "semi",
+  "types": [
+   "container"
+  ],
+  "capacity": 27,
+  "goods": null,
+  "price": 39000,
+  "source": "https://www.wielton.com/",
+  "factual": "Reale Baureihe. Kapazität, Preis und Güterfreigabe sind Spielwerte."
+ },
+ {
+  "id": "feldbinder-tsa",
+  "name": "Feldbinder TSA Tank",
+  "mount": "semi",
+  "types": [
+   "liquid"
+  ],
+  "capacity": 27,
+  "goods": null,
+  "price": 76000,
+  "source": "https://www.feldbinder.com/",
+  "factual": "Reale Baureihe. Kapazität, Preis und Güterfreigabe sind Spielwerte."
+ },
+ {
+  "id": "kaessbohrer-ssl",
+  "name": "Kässbohrer K.SSL Lebensmitteltank",
+  "mount": "semi",
+  "types": [
+   "liquid"
+  ],
+  "capacity": 26,
+  "goods": null,
+  "price": 82000,
+  "source": "https://www.kassbohrer.com/",
+  "factual": "Reale Baureihe. Kapazität, Preis und Güterfreigabe sind Spielwerte."
+ },
+ {
+  "id": "feldbinder-adr",
+  "name": "Feldbinder TSA ADR-Tank",
+  "mount": "semi",
+  "types": [
+   "liquid",
+   "hazardous"
+  ],
+  "capacity": 25,
+  "goods": null,
+  "price": 88000,
+  "source": "https://www.feldbinder.com/",
+  "factual": "Reale Baureihe. Kapazität, Preis und Güterfreigabe sind Spielwerte."
+ },
+ {
+  "id": "kaessbohrer-stb",
+  "name": "Kässbohrer K.STB Chemietank",
+  "mount": "semi",
+  "types": [
+   "hazardous",
+   "liquid"
+  ],
+  "capacity": 25,
+  "goods": null,
+  "price": 91000,
+  "source": "https://www.kassbohrer.com/",
+  "factual": "Reale Baureihe. Kapazität, Preis und Güterfreigabe sind Spielwerte."
+ },
+ {
+  "id": "kaessbohrer-ssk",
+  "name": "Kässbohrer K.SSK Silo",
+  "mount": "semi",
+  "types": [
+   "bulk"
+  ],
+  "capacity": 27,
+  "goods": null,
+  "price": 70000,
+  "source": "https://www.kassbohrer.com/",
+  "factual": "Reale Baureihe. Kapazität, Preis und Güterfreigabe sind Spielwerte."
+ },
+ {
+  "id": "langendorf-kipper",
+  "name": "Langendorf SKS Kipper",
+  "mount": "semi",
+  "types": [
+   "bulk"
+  ],
+  "capacity": 27,
+  "goods": null,
+  "price": 55000,
+  "source": "https://www.langendorf.de/",
+  "factual": "Reale Baureihe. Kapazität, Preis und Güterfreigabe sind Spielwerte."
+ },
+ {
+  "id": "wielton-kipper",
+  "name": "Wielton NW Kipper",
+  "mount": "semi",
+  "types": [
+   "bulk"
+  ],
+  "capacity": 26,
+  "goods": null,
+  "price": 52000,
+  "source": "https://www.wielton.com/",
+  "factual": "Reale Baureihe. Kapazität, Preis und Güterfreigabe sind Spielwerte."
+ },
+ {
+  "id": "goldhofer-stz",
+  "name": "Goldhofer STZ-L Tieflader",
+  "mount": "semi",
+  "types": [
+   "heavy"
+  ],
+  "capacity": 45,
+  "goods": null,
+  "price": 140000,
+  "source": "https://www.goldhofer.com/",
+  "factual": "Reale Baureihe. Kapazität, Preis und Güterfreigabe sind Spielwerte.",
+  "heavyOnly": true
+ },
+ {
+  "id": "nooteboom-mco",
+  "name": "Nooteboom MCO Semi-Tieflader",
+  "mount": "semi",
+  "types": [
+   "heavy"
+  ],
+  "capacity": 40,
+  "goods": null,
+  "price": 120000,
+  "source": "https://www.nooteboom.com/",
+  "factual": "Reale Baureihe. Kapazität, Preis und Güterfreigabe sind Spielwerte.",
+  "heavyOnly": true
+ },
+ {
+  "id": "menke-livestock",
+  "name": "Menke Janzen Viehtransporter",
+  "mount": "semi",
+  "types": [
+   "livestock"
+  ],
+  "capacity": 18,
+  "goods": null,
+  "price": 85000,
+  "source": "https://www.menke-janzen.de/",
+  "factual": "Reale Baureihe. Kapazität, Preis und Güterfreigabe sind Spielwerte."
+ },
+ {
+  "id": "pezzaioli-livestock",
+  "name": "Pezzaioli SBA Viehtransporter",
+  "mount": "semi",
+  "types": [
+   "livestock"
+  ],
+  "capacity": 20,
+  "goods": null,
+  "price": 92000,
+  "source": "https://www.pezzaioli.com/",
+  "factual": "Reale Baureihe. Kapazität, Preis und Güterfreigabe sind Spielwerte."
+ },
+ {
+  "id": "body-flatbed",
+  "name": "Pritsche mit Plane",
+  "mount": "body",
+  "types": [
+   "general"
+  ],
+  "capacity": 12,
+  "goods": null,
+  "price": 18000,
+  "source": "https://www.cargobull.com/",
+  "factual": "Reale Baureihe. Kapazität, Preis und Güterfreigabe sind Spielwerte."
+ },
+ {
+  "id": "meiller-tipper",
+  "name": "Meiller Kipperaufbau",
+  "mount": "body",
+  "types": [
+   "bulk"
+  ],
+  "capacity": 12,
+  "goods": null,
+  "price": 32000,
+  "source": "https://www.meiller.com/",
+  "factual": "Reale Baureihe. Kapazität, Preis und Güterfreigabe sind Spielwerte."
+ },
+ {
+  "id": "body-tank",
+  "name": "Tankaufbau",
+  "mount": "body",
+  "types": [
+   "liquid"
+  ],
+  "capacity": 11,
+  "goods": null,
+  "price": 45000,
+  "source": "https://www.cargobull.com/",
+  "factual": "Reale Baureihe. Kapazität, Preis und Güterfreigabe sind Spielwerte."
+ },
+ {
+  "id": "body-livestock",
+  "name": "Viehaufbau",
+  "mount": "body",
+  "types": [
+   "livestock"
+  ],
+  "capacity": 9,
+  "goods": null,
+  "price": 38000,
+  "source": "https://www.cargobull.com/",
+  "factual": "Reale Baureihe. Kapazität, Preis und Güterfreigabe sind Spielwerte."
+ }
+]

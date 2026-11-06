@@ -12,6 +12,8 @@ import {ensureContainerDay,acceptContainerOrder,factoryPartner,type ContainerOff
 import {registryByIds} from '../../../../lib/logistics/partner-registry';
 import {NextRequest,NextResponse} from 'next/server';
 import {env} from 'cloudflare:workers';
+import {parseSettings,settingsSummary,modeGroup,MODE_GROUPS} from '../../../../lib/logistics/world-settings';
+import {ensureWorldSettingsColumn,assertInRegion} from '../../../../lib/logistics/world-region-server';
 import {MAX_FLEET_VEHICLES,GOODS,VEHICLES,depotFor,profile,stock,normalizeFreightState,routePartners,mergeSites,stepSharedWorld,type Coords,type GoodId,type Site,type State,type Track} from '../../../../lib/logistics/engine.ts';
 import {applyAction,type OnlineAction,type OnlineCommand} from '../../../../lib/logistics/online-actions.ts';
 import {settleTrade,tradeTerminal} from '../../../../lib/logistics/cooperation.ts';
@@ -23,7 +25,7 @@ export const dynamic='force-dynamic';
 const reply=(data:unknown,status=200)=>NextResponse.json(data,{status,headers:{'Cache-Control':'no-store'}});
 const db=()=>{if(!env.DB)throw Error('Cloudflare D1 nicht eingerichtet.');return env.DB;};
 interface User {id:string;name:string;status:string;role:string}
-interface World {market:string;description:string;status:string;time_scale:number;id:string;name:string;owner_id:string;day:number;last_tick:number;tick_ms:number;revision:number;created:number}
+interface World {settings?:string;market:string;description:string;status:string;time_scale:number;id:string;name:string;owner_id:string;day:number;last_tick:number;tick_ms:number;revision:number;created:number}
 interface Company {name:string;world_id:string;user_id:string;state:string;revision:number;last_action:string|null;updated:number}
 interface Offer {id:string;world_id:string;sender_id:string;receiver_id:string;site_id:string;good:GoodId;quantity_unit?:string;quantity:number;price:number;status:string;expires:number}
 export async function currentUser(req:Request):Promise<User|null>{
@@ -32,7 +34,7 @@ export async function currentUser(req:Request):Promise<User|null>{
  const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(token))),x=>x.toString(16).padStart(2,'0')).join('');
  return db().prepare('SELECT u.id,u.name,u.status,u.role FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token=? AND s.expires>?').bind(digest,Date.now()).first<User>();
 }
-const readWorld=(id:string)=>db().prepare('SELECT * FROM logistics_worlds WHERE id=?').bind(id).first<World>();
+const readWorld=async(id:string)=>{await ensureWorldSettingsColumn();return db().prepare('SELECT * FROM logistics_worlds WHERE id=?').bind(id).first<World>();};
 const readCompany=(world:string,user:string)=>db().prepare('SELECT * FROM logistics_world_companies WHERE world_id=? AND user_id=?').bind(world,user).first<Company>();
 const readCompanies=async(world:string)=>(await db().prepare('SELECT * FROM logistics_world_companies WHERE world_id=? ORDER BY user_id').bind(world).all<Company>()).results;
 async function borrowedTracks(world:string,user:string):Promise<Track[]>{
@@ -99,7 +101,8 @@ async function join(world:World,u:User,name:string){
  const duplicate=await db().prepare('SELECT user_id FROM logistics_world_companies WHERE world_id=? AND lower(name)=lower(?)').bind(world.id,name.trim()).first();if(duplicate)throw Error('Dieser Speditionsname ist in der Welt bereits vergeben.');
  const count=await db().prepare('SELECT count(*) AS n FROM logistics_world_companies WHERE world_id=?').bind(world.id).first<{n:number}>();
  if((count?.n||0)>=50)throw Error('Diese Welt ist voll (50 Speditionen).');
- await commit(world,[],[db().prepare('INSERT OR IGNORE INTO logistics_world_companies(world_id,user_id,name,state,revision,updated) VALUES(?,?,?,?,0,?)').bind(world.id,u.id,name.trim(),JSON.stringify(companyAtDay(world.day,name.trim())),Date.now())]);
+ const start=companyAtDay(world.day,name.trim()),cfg=parseSettings(world.settings);start.cash=cfg.startCash;
+ await commit(world,[],[db().prepare('INSERT OR IGNORE INTO logistics_world_companies(world_id,user_id,name,state,revision,updated) VALUES(?,?,?,?,0,?)').bind(world.id,u.id,name.trim(),JSON.stringify(start),Date.now())]);
 }
 function geometrySignature(s:State){let h=2166136261;const add=(t:string)=>{for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619);}};for(const r of s.roadRoutes||[])add(r.fromId+'>'+r.toId+':'+r.path.length+';');for(const l of s.lines){add('|'+l.id);for(const r of l.legs||[])add(r.fromId+'>'+r.toId+':'+r.path.length+';');}return (h>>>0).toString(36)+'.'+(s.roadRoutes?.length||0)+'.'+s.lines.length;}
 async function snapshot(u:User,worldId:string,geo=''){
@@ -114,7 +117,7 @@ async function snapshot(u:User,worldId:string,geo=''){
  if(!row)throw Error('Bitte zuerst dieser Welt beitreten.');
  const rules=await readPartnerRules();const state=applyStateRules(normalizeFreightState(await decodeCompany(row.state)),rules);state.borrowedTracks=await borrowedTracks(worldId,u.id);
  const geometrySig=geometrySignature(state),geometryOmitted=!!geo&&geo===geometrySig;if(geometryOmitted){delete state.roadRoutes;for(const l of state.lines)delete l.legs;}
- return {geometrySig,geometryOmitted,state,partnerRules:rules,market:{...newMarket(world.day),...JSON.parse(world.market||'{}')},companyName:row.name||state.companyName||u.name,revision:row.revision,user:u.name,userId:u.id,role:u.role,serverNow:Date.now(),world:{catchUpHours:Math.round(catchUpHours(world)*10)/10,catchUpSeconds:catchUpSeconds(world),revision:world.revision,id:world.id,name:world.name,day:world.day,timeScale:world.time_scale,simTime:world.created+(world.day-1)*86400000,status:world.status,tickMs:worldTickMs(world)},companies:results[2].results,offers:results[3].results.map((raw:unknown)=>{const o=raw as Offer;return ({...o,quantity:Number(o.quantity)*(o.quantity_unit==='EH'?1:10)});}),permissions:results[4].results};
+ return {geometrySig,geometryOmitted,state,partnerRules:rules,market:{...newMarket(world.day),...JSON.parse(world.market||'{}')},companyName:row.name||state.companyName||u.name,revision:row.revision,user:u.name,userId:u.id,role:u.role,serverNow:Date.now(),world:{catchUpHours:Math.round(catchUpHours(world)*10)/10,catchUpSeconds:catchUpSeconds(world),revision:world.revision,id:world.id,name:world.name,day:world.day,timeScale:world.time_scale,simTime:world.created+(world.day-1)*86400000,status:world.status,tickMs:worldTickMs(world),settings:settingsSummary(parseSettings(world.settings))},companies:results[2].results,offers:results[3].results.map((raw:unknown)=>{const o=raw as Offer;return ({...o,quantity:Number(o.quantity)*(o.quantity_unit==='EH'?1:10)});}),permissions:results[4].results};
 }
 function validPoint(p:unknown):p is Coords{return Array.isArray(p)&&p.length===2&&p.every(x=>typeof x==='number'&&Number.isFinite(x))&&Math.abs(p[0])<=85&&Math.abs(p[1])<=180;}
 async function verifySites(command:OnlineAction):Promise<Site[]|undefined>{
@@ -150,12 +153,29 @@ export async function GET(req:NextRequest){try{
  const u=await currentUser(req);if(!u||u.status!=='active')return reply({error:'Bitte anmelden.'},401);
  const id=req.nextUrl.searchParams.get('world');
  if(!id){
-  const rows=await db().prepare('SELECT w.*,(SELECT count(*) FROM logistics_world_companies c WHERE c.world_id=w.id) AS companies,EXISTS(SELECT 1 FROM logistics_world_companies c WHERE c.world_id=w.id AND c.user_id=?) AS joined FROM logistics_worlds w ORDER BY created DESC LIMIT 100').bind(u.id).all<World&{companies:number;joined:number}>();
-  return reply({user:u.name,worlds:rows.results.filter(w=>['owner','admin'].includes(u.role)||w.status!=='draft').map(w=>({...w,day:clockTarget(w,Date.now())})),singleplayerEnabled:false,isAdmin:['owner','admin'].includes(u.role)});
+  await ensureWorldSettingsColumn();const rows=await db().prepare('SELECT w.*,(SELECT count(*) FROM logistics_world_companies c WHERE c.world_id=w.id) AS companies,EXISTS(SELECT 1 FROM logistics_world_companies c WHERE c.world_id=w.id AND c.user_id=?) AS joined FROM logistics_worlds w ORDER BY created DESC LIMIT 100').bind(u.id).all<World&{companies:number;joined:number}>();
+  return reply({user:u.name,worlds:rows.results.filter(w=>['owner','admin'].includes(u.role)||w.status!=='draft').map(w=>({...w,settings:settingsSummary(parseSettings(w.settings)),day:clockTarget(w,Date.now())})),singleplayerEnabled:false,isAdmin:['owner','admin'].includes(u.role)});
  }
  await settleWorld(id);if(!await readCompany(id,u.id))return reply({error:'Bitte zuerst dieser Welt beitreten.'},403);
  return reply(await snapshot(u,id,(req.nextUrl.searchParams.get('geo')||'').slice(0,60)));
  }catch(e:any){return reply({error:e.message||'Welt nicht erreichbar.'},503);}}
+
+async function enforceWorldRules(cmd:OnlineCommand,state:State,cfg:ReturnType<typeof parseSettings>,worldId:string){
+ const c:any=cmd;
+ if(c.type==='buy'||c.type==='buyFleet'){const m=VEHICLES.find(v=>v.id===c.modelId);if(m&&!cfg.modes.includes(modeGroup(m.mode)))throw Error((MODE_GROUPS.find(g=>g.id===modeGroup(m.mode))?.name||'Diese Fahrzeugart')+' sind in dieser Welt nicht erlaubt.');}
+ if(c.type==='line'&&c.mode&&!cfg.modes.includes(modeGroup(c.mode)))throw Error('Diese Verkehrsart ist in dieser Welt nicht erlaubt.');
+ if(cfg.region.kind==='world')return;
+ const pts:{lat:number;lon:number;name?:string}[]=[];
+ if(c.type==='build'&&Array.isArray(c.point))pts.push({lat:c.point[0],lon:c.point[1]});
+ if(c.type==='track'){for(const p of [c.from,c.to])if(Array.isArray(p))pts.push({lat:p[0],lon:p[1]});}
+ if(c.type==='trackPlan'&&Array.isArray(c.points))for(const p of c.points)if(Array.isArray(p))pts.push({lat:p[0],lon:p[1]});
+ let ids:string[]=[];
+ if((c.type==='line'||c.type==='updateLineStops')&&Array.isArray(c.stops))ids=c.stops.map((st:any)=>st.siteId).filter(Boolean);
+ if(c.type==='supply'||c.type==='process')ids=[c.siteId];
+ if(c.type==='acceptContainer'){const o=await db().prepare('SELECT source_id,destination_id FROM logistics_container_offers WHERE world_id=? AND id=?').bind(worldId,c.offerId).first<{source_id:string;destination_id:string}>();if(o)ids=[o.source_id,o.destination_id];}
+ if(ids.length){const known=new Map(state.sites.map(p=>[p.id,p])),missing=ids.filter(i=>!known.has(i));for(const p of missing.length?await registryByIds(missing):[])known.set(p.id,p);for(const i of ids){const p=known.get(i);if(p)pts.push({lat:p.lat,lon:p.lon,name:p.name});}}
+ assertInRegion(cfg,pts);
+}
 export async function POST(req:NextRequest){try{
  const raw=await req.text();if(raw.length>1000000)return reply({error:'Aktion zu groß.'},413);
  const u=await currentUser(req);if(!u||u.status!=='active')return reply({error:'Anmeldung erforderlich.'},401);
@@ -176,6 +196,7 @@ export async function POST(req:NextRequest){try{
  if(row.last_action===body.requestId)return reply({...await snapshot(u,id),duplicate:true});
  if(row.revision!==body.revision)return reply({...await snapshot(u,id),error:'Die Welt wurde inzwischen aktualisiert. Bitte erneut versuchen.'},409);
  const rules=await readPartnerRules();const now=Date.now(),state=applyStateRules(normalizeFreightState(await decodeCompany(row.state)),rules);
+ await enforceWorldRules(cmd as OnlineCommand,state,parseSettings(world.settings),id);
  const update=async(r:Company,s:State)=>db().prepare('UPDATE logistics_world_companies SET state=?,revision=revision+1,last_action=?,updated=? WHERE world_id=? AND user_id=?').bind(await encodeCompany(s),body.requestId,now,id,r.user_id);
  const statements:D1PreparedStatement[]=[];let checked=[row];
  if(cmd.type==='offerUsedVehicle'){
@@ -188,7 +209,7 @@ export async function POST(req:NextRequest){try{
   const made=ids.map((vid,i)=>{const v=state.vehicles.find(x=>x.id===vid);if(!v)throw Error('Eigenes Fahrzeug auswählen.');return makeUsedOffer(state,vid,Math.max(1,Math.round(dealerValue(v)*(1+pct/100))),id,u.id,row.name||u.name,body.requestId+'-'+i);});
   statements.push(await update(row,state),...made.map(saveUsedVehicleOffer));
  }else if(cmd.type==='buyUsedVehicle'){
-  const offer=await readUsedVehicleOffer(id,cmd.offerId);if(offer.status!=='open'||offer.sellerId===u.id)throw Error('Dieses Angebot ist nicht mehr verfügbar.');const seller=await readCompany(id,offer.sellerId);if(!seller)throw Error('Anbietende Spedition nicht gefunden.');const sellerState=applyStateRules(normalizeFreightState(await decodeCompany(seller.state)),rules);buyUsedVehicle(state,sellerState,offer,id,u.id,cmd.depotId);checked=[row,seller];statements.push(await update(row,state),await update(seller,sellerState),saveUsedVehicleOffer(offer));
+  const offer=await readUsedVehicleOffer(id,cmd.offerId);if(offer.status!=='open'||offer.sellerId===u.id)throw Error('Dieses Angebot ist nicht mehr verfügbar.');{const cfg=parseSettings(world.settings),m=VEHICLES.find(v=>v.id===offer.vehicle.modelId);if(m&&!cfg.modes.includes(modeGroup(m.mode)))throw Error('Diese Fahrzeugart ist in dieser Welt nicht erlaubt.');}const seller=await readCompany(id,offer.sellerId);if(!seller)throw Error('Anbietende Spedition nicht gefunden.');const sellerState=applyStateRules(normalizeFreightState(await decodeCompany(seller.state)),rules);buyUsedVehicle(state,sellerState,offer,id,u.id,cmd.depotId);checked=[row,seller];statements.push(await update(row,state),await update(seller,sellerState),saveUsedVehicleOffer(offer));
  }else if(cmd.type==='withdrawUsedVehicle'){
   const offer=await readUsedVehicleOffer(id,cmd.offerId);withdrawUsedVehicle(state,offer,id,u.id,cmd.depotId);statements.push(await update(row,state),saveUsedVehicleOffer(offer));
  }else if(cmd.type==='acceptContainer'){

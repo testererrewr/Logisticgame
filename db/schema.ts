@@ -11,7 +11,7 @@ export const audit = sqliteTable("admin_audit", {id:text("id").primaryKey(),acto
 export const vehicleCatalogs = sqliteTable("vehicle_catalogs", {revision:integer("revision").primaryKey(),created:integer("created").notNull(),payload:text("payload").notNull(),digest:text("digest").notNull()});
 
 export const logisticsWorlds = sqliteTable('logistics_worlds', {
- market:text('market').notNull().default('{}'),description:text('description').notNull().default(''),status:text('status').notNull().default('running'),timeScale:real('time_scale').notNull().default(1),id:text('id').primaryKey(), name:text('name').notNull(), ownerId:text('owner_id').notNull().references(()=>users.id),
+ settings:text('settings').notNull().default('{}'),market:text('market').notNull().default('{}'),description:text('description').notNull().default(''),status:text('status').notNull().default('running'),timeScale:real('time_scale').notNull().default(1),id:text('id').primaryKey(), name:text('name').notNull(), ownerId:text('owner_id').notNull().references(()=>users.id),
  day:integer('day').notNull().default(1), lastTick:integer('last_tick').notNull(), tickMs:integer('tick_ms').notNull(), revision:integer('revision').notNull().default(0),created:integer('created').notNull(),
 });
 export const logisticsWorldCompanies = sqliteTable('logistics_world_companies', {
