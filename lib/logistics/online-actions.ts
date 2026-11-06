@@ -1,4 +1,5 @@
-import {sellVehicle} from './vehicle-sales';
+import {sellVehicle,sellFleet} from './vehicle-sales';
+import type {UnloadPlanEntry} from './engine';
 import {requestManualDeparture} from './engine';
 import {queueTerminalTransfer} from './terminal-transfer';
 import {addTrackPlan,setVehicleContainerOrders,MAX_FLEET_VEHICLES} from './engine.ts';
@@ -7,7 +8,8 @@ import {setReturnLine,updateLineStops,assignFleet,updateLine,renameVehicle,type 
 import {newState,mergeSites,signSupply,signProcess,signSale,signHaulage,build,addTrack,purchaseVehicle,purchaseFleet,warehouseUpgrade,renameBuilding,cancelContract,configureTrailer,configureTrain,createLine,assignVehicle,cancelLine,stepDay,checkIntegrity, type State,type Site,type Coords,type BuildingKind,type GoodId,type VehicleModelId,type WagonSet,type Mode,type Stop,type RouteLeg} from './engine.ts';
 export type OnlineAction=
  |{type:'sellVehicle';vehicleId:string}
- |{type:'manualGo';vehicleId:string;goods:GoodId[]|'all';orderIds?:string[];sourceIds?:string[]}
+ |{type:'sellFleet';vehicleIds:string[]}
+ |{type:'manualGo';unload?:UnloadPlanEntry[];vehicleId:string;goods:GoodId[]|'all';orderIds?:string[];sourceIds?:string[]}
  |{type:'terminalTransfer';fromId:string;toId:string;good:GoodId;quantity:number;orderId?:string}
  |{type:'discover';center:Coords;radius?:number;query?:string}
  |{type:'supply';siteId:string;good:GoodId;daily:number}
@@ -49,7 +51,8 @@ export function applyAction(state:State,command:OnlineAction,verifiedSites?:Site
  const s=structuredClone(state);
  switch(command.type){
  case 'sellVehicle':sellVehicle(s,command.vehicleId);break;
- case 'manualGo':requestManualDeparture(s,command.vehicleId,command.goods,command.orderIds,command.sourceIds);break;
+ case 'manualGo':requestManualDeparture(s,command.vehicleId,command.goods,command.orderIds,command.sourceIds,command.unload);break;
+ case 'sellFleet':sellFleet(s,command.vehicleIds);break;
  case 'terminalTransfer':queueTerminalTransfer(s,command.fromId,command.toId,command.good,command.quantity,command.orderId);break;
  case 'discover': if(!verifiedSites)throw Error('Unternehmensdaten müssen auf dem Server geprüft werden.');mergeSites(s,verifiedSites);break;
  case 'supply':signSupply(s,command.siteId,command.good,command.daily);break;

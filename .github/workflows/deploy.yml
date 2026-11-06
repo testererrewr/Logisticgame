@@ -1,11 +1,5 @@
 name: Deploy auf VPS
 
-# Optional: Nach jedem Push auf main aktualisiert sich der Server automatisch.
-# Dafür unter GitHub → Settings → Secrets and variables → Actions anlegen:
-#   VPS_HOST     IP oder Hostname des Servers
-#   VPS_USER     SSH-Benutzer (z. B. root)
-#   VPS_SSH_KEY  privater SSH-Schlüssel (dessen öffentlicher Teil in ~/.ssh/authorized_keys liegt)
-# Ohne diese Secrets wird der Schritt einfach übersprungen.
 
 on:
   push:

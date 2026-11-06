@@ -10,7 +10,6 @@ export default function ContainerSelection({state,value,onChange,siteId,siteIds,
  <p className="log-help">{allByGo?'Beim Go werden alle vorhandenen Containeraufträge geladen. Eine Auswahl begrenzt das Laden auf diese Aufträge.':manual?'Go: Container nur nach bewusster Auftragsauswahl laden.':'Ohne Auswahl werden automatisch alle passenden Container geladen. Eine Auswahl begrenzt das Laden auf diese Aufträge.'} {locations?'Hier stehen nur Aufträge mit Fracht an diesem Standort'+(locations.length>1?' oder direkt benachbarten Stationen':'')+'.':''}</p>
  {inherit&&<button type="button" className="log-secondary" onClick={()=>onChange(undefined)}>Auftragsauswahl der Linie verwenden</button>}
  {goAll?<>
-  {/* Go mit „alle Güter“: drei klare Zustände – alle (Standard), keine, Auswahl. */}
   <button type="button" className="log-secondary" aria-pressed={value===undefined} disabled={value===undefined} onClick={()=>onChange(undefined)}>{value===undefined?'✓ Alle vorhandenen Container werden beim Go geladen':'Zurück zu: alle vorhandenen Container laden'}</button>
   {value?.length!==0&&<button type="button" className="log-secondary" onClick={()=>onChange([])}>Keine Container laden</button>}
  </>:<button type="button" className="log-secondary" onClick={()=>onChange(allByGo?undefined:[])}>{allByGo?'Alle vorhandenen Container beim Go laden':manual?'Keine Container auswählen':'Alle passenden automatisch laden'}</button>}

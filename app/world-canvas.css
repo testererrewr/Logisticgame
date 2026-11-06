@@ -23,7 +23,7 @@
 .world-canvas:has(.live-inspector) .area-demand-card{display:none}.lines-page-map .live-control,.lines-page-map .live-inspector{display:none}.live-inspector-actions{position:sticky;bottom:-14px;background:#fff;padding:10px 0;margin-bottom:0}.live-inspector{z-index:1001}.live-control{z-index:1001}
 .live-inspector-title{position:sticky;top:-14px;background:#fff;z-index:1;padding:3px 0 8px}
 
-/* Construction always has an unobstructed input area. */
+
 .world-canvas.is-building .live-control,.world-canvas.is-building .live-inspector{display:none}
 .world-canvas.is-building .live-vehicle-marker{pointer-events:none}
 .vehicle-symbol,.vehicle-body{width:24px;height:24px}.vehicle-body{border-width:1px;outline-width:1px}.vehicle-direction{width:20px;height:20px}.vehicle-load{left:20px;top:0;padding:2px 4px;font-size:8px;border-radius:3px}.live-vehicle-marker.is-selected .vehicle-body{outline-width:2px;box-shadow:0 0 0 3px #2d9ad32e}

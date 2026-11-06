@@ -12,7 +12,6 @@ import {type World,type Company,type Line,linePath} from '../lib/game';
 import type {Vehicle} from '../lib/fleet';
 type Entry={company:Company;vehicle:Vehicle;line:Line;run:VehicleRun;plan:RunPlan;model:VehicleModel};
 type Marker={marker:any;body:HTMLElement;arrow:HTMLElement;badge:HTMLElement;heading:number;entry:Entry};
-// Top-down silhouettes point north. Passenger badges stay horizontal.
 const silhouettes={bus:'<rect x="8" y="3" width="16" height="26" rx="4"/><path d="M11 7h10v6H11zM11 24h3m4 0h3"/>',train:'<rect x="7" y="2" width="18" height="28" rx="6"/><path d="M10 7h12v6H10zM11 18h10M11 24h10"/>',plane:'<path d="m16 2 3 11 11 7v3l-11-3v6l4 3v2l-7-2-7 2v-2l4-3v-6L2 23v-3l11-7z"/>',ship:'<path d="m16 2 9 10v13l-9 6-9-6V12z"/><path d="M12 12h8v11h-8zM16 6v3"/>'};
 export default function LiveVehicles({map,L,world,myId,focusVehicle,foreign=false,onForeignChange,selected,onSelect}:{selected:string;onSelect:(id:string)=>void;foreign?:boolean;onForeignChange?:(value:boolean)=>void;map:any;L:any;world:World;myId:string;focusVehicle?:string}){
  const money=useMoney();const [labels,setLabels]=useState(true),[follow,setFollow]=useState(false),[now,setNow]=useState(Date.now());
