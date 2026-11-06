@@ -21,3 +21,6 @@ assert.ok(order.paid>=150,'Transportvergütung gezahlt');
 assert.ok(w.events.some(e=>e.text.includes('Auftragslieferung')&&e.text.includes('Brot')),'Lieferung als Auftrag markiert');
 checkIntegrity(w);
 console.log('PASS v53 Frachtaufträge für beliebige Güter: Ware reserviert, mit Auftragsnummer geladen und am Ziel gegen Vergütung geliefert.');
+{const {cancelContract}=await import('../lib/logistics/engine.ts');const s2=newState();s2.cash=1e9;const a2=build(s2,'warehouseSmall',47.071,15.44);const shop2={id:'shop-2',kind:'supermarket',name:'Markt',lat:47.08,lon:15.44,tags:{}};s2.sites.push(shop2);s2.inventory[a2.id]={bread:5};
+ acceptOrderForTest(s2,{id:'w:1:'+a2.id+':1',world_id:'w',day:Math.floor(s2.day),source_id:a2.id,destination_id:shop2.id,slot:1,quantity:30,fee:5,deadline:s2.day+10,status:'open',accepted_by:null,good:'bread'});
+ assert.equal(stock(s2,a2.id,'bread'),35);cancelContract(s2,'w:1:'+a2.id+':1');assert.equal(stock(s2,a2.id,'bread'),5,'Abbruch vernichtet nur die Auftragsfracht');assert.equal(s2.consignments[a2.id]['w:1:'+a2.id+':1'],undefined);checkIntegrity(s2);console.log('PASS v53b Auftrag abbrechen vernichtet zugehörige Fracht.');}

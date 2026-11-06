@@ -1,284 +1,488 @@
 {
- "scania-s-serie": {
-  "tier": 3,
-  "speed": 86,
-  "handling": 0.85,
-  "price": 158000
- },
- "volvo-fh16": {
-  "tier": 3,
-  "speed": 86,
-  "handling": 0.85,
-  "price": 162000
- },
- "volvo-fh16-aero": {
-  "tier": 3,
-  "speed": 86,
-  "handling": 0.85,
-  "price": 168000
- },
- "mercedes-benz-actros-l-1848-ls-4x2": {
-  "tier": 3,
-  "speed": 86,
-  "handling": 0.85,
-  "price": 152000
- },
- "daf-xgplus": {
-  "tier": 3,
-  "speed": 86,
-  "handling": 0.85,
-  "price": 149000
- },
  "truck": {
-  "tier": 2,
-  "speed": 80,
-  "handling": 1,
-  "price": 128000
- },
- "volvo-fh": {
-  "tier": 2,
-  "speed": 80,
-  "handling": 1,
-  "price": 126000
- },
- "volvo-fh-aero": {
-  "tier": 2,
-  "speed": 80,
-  "handling": 1,
-  "price": 131000
- },
- "scania-r-serie": {
-  "tier": 2,
-  "speed": 80,
-  "handling": 1,
-  "price": 129000
- },
- "daf-xg": {
-  "tier": 2,
-  "speed": 80,
-  "handling": 1,
-  "price": 127000
- },
- "daf-xf": {
-  "tier": 2,
-  "speed": 80,
-  "handling": 1,
-  "price": 121000
- },
- "mercedes-benz-actros-f": {
-  "tier": 2,
-  "speed": 80,
-  "handling": 1,
-  "price": 124000
- },
- "iveco-s-way": {
-  "tier": 2,
-  "speed": 80,
-  "handling": 1,
-  "price": 118000
- },
- "renault-trucks-t-high": {
-  "tier": 2,
-  "speed": 80,
-  "handling": 1,
-  "price": 122000
- },
- "ford-f-max": {
-  "tier": 2,
-  "speed": 80,
-  "handling": 1,
-  "price": 112000
+  "price": 132500,
+  "speed": 82,
+  "cost": 268,
+  "fuel": 29.5,
+  "energy": "diesel"
  },
  "man-tgs": {
-  "tier": 1,
-  "speed": 76,
-  "handling": 1.15,
-  "price": 104000
- },
- "mercedes-benz-arocs": {
-  "tier": 1,
-  "speed": 76,
-  "handling": 1.15,
-  "price": 109000
- },
- "volvo-fm": {
-  "tier": 1,
-  "speed": 76,
-  "handling": 1.15,
-  "price": 106000
- },
- "volvo-fmx": {
-  "tier": 1,
-  "speed": 76,
-  "handling": 1.15,
-  "price": 110000
- },
- "scania-g-serie": {
-  "tier": 1,
-  "speed": 76,
-  "handling": 1.15,
-  "price": 108000
- },
- "scania-p-serie": {
-  "tier": 1,
-  "speed": 76,
-  "handling": 1.15,
-  "price": 101000
- },
- "daf-xd": {
-  "tier": 1,
-  "speed": 76,
-  "handling": 1.15,
-  "price": 99000
- },
- "iveco-x-way": {
-  "tier": 1,
-  "speed": 76,
-  "handling": 1.15,
-  "price": 103000
- },
- "iveco-t-way": {
-  "tier": 1,
-  "speed": 76,
-  "handling": 1.15,
-  "price": 107000
- },
- "renault-trucks-t": {
-  "tier": 1,
-  "speed": 76,
-  "handling": 1.15,
-  "price": 102000
- },
- "renault-trucks-c": {
-  "tier": 1,
-  "speed": 76,
-  "handling": 1.15,
-  "price": 105000
+  "price": 118900,
+  "speed": 80,
+  "cost": 259,
+  "fuel": 31.0,
+  "energy": "diesel"
  },
  "man-etgx": {
-  "tier": 2,
+  "price": 338000,
   "speed": 80,
-  "handling": 1,
-  "price": 285000
+  "cost": 212,
+  "fuel": 105,
+  "energy": "strom"
+ },
+ "mercedes-benz-actros-l-1848-ls-4x2": {
+  "price": 149700,
+  "speed": 84,
+  "cost": 281,
+  "fuel": 28.6,
+  "energy": "diesel"
+ },
+ "mercedes-benz-actros-f": {
+  "price": 126400,
+  "speed": 81,
+  "cost": 264,
+  "fuel": 30.2,
+  "energy": "diesel"
+ },
+ "mercedes-benz-arocs": {
+  "price": 128800,
+  "speed": 77,
+  "cost": 276,
+  "fuel": 33.4,
+  "energy": "diesel"
  },
  "mercedes-benz-eactros-600": {
-  "tier": 2,
+  "price": 384500,
+  "speed": 81,
+  "cost": 218,
+  "fuel": 110,
+  "energy": "strom"
+ },
+ "volvo-fh": {
+  "price": 136200,
+  "speed": 83,
+  "cost": 271,
+  "fuel": 29.1,
+  "energy": "diesel"
+ },
+ "volvo-fh16": {
+  "price": 171300,
+  "speed": 86,
+  "cost": 302,
+  "fuel": 32.8,
+  "energy": "diesel"
+ },
+ "volvo-fh-aero": {
+  "price": 143900,
+  "speed": 84,
+  "cost": 274,
+  "fuel": 27.9,
+  "energy": "diesel"
+ },
+ "volvo-fh16-aero": {
+  "price": 178600,
+  "speed": 86,
+  "cost": 306,
+  "fuel": 31.7,
+  "energy": "diesel"
+ },
+ "volvo-fm": {
+  "price": 121700,
   "speed": 80,
-  "handling": 1,
-  "price": 310000
+  "cost": 262,
+  "fuel": 30.6,
+  "energy": "diesel"
+ },
+ "volvo-fmx": {
+  "price": 133400,
+  "speed": 76,
+  "cost": 279,
+  "fuel": 34.1,
+  "energy": "diesel"
  },
  "volvo-fh-electric": {
-  "tier": 2,
+  "price": 326900,
   "speed": 80,
-  "handling": 1,
-  "price": 298000
+  "cost": 214,
+  "fuel": 112,
+  "energy": "strom"
+ },
+ "scania-s-serie": {
+  "price": 154200,
+  "speed": 85,
+  "cost": 288,
+  "fuel": 28.9,
+  "energy": "diesel"
+ },
+ "scania-r-serie": {
+  "price": 141600,
+  "speed": 83,
+  "cost": 277,
+  "fuel": 29.4,
+  "energy": "diesel"
+ },
+ "scania-g-serie": {
+  "price": 127300,
+  "speed": 80,
+  "cost": 266,
+  "fuel": 30.8,
+  "energy": "diesel"
+ },
+ "scania-p-serie": {
+  "price": 114800,
+  "speed": 78,
+  "cost": 255,
+  "fuel": 31.6,
+  "energy": "diesel"
+ },
+ "daf-xf": {
+  "price": 119600,
+  "speed": 81,
+  "cost": 258,
+  "fuel": 30.3,
+  "energy": "diesel"
+ },
+ "daf-xg": {
+  "price": 134100,
+  "speed": 83,
+  "cost": 267,
+  "fuel": 29.0,
+  "energy": "diesel"
+ },
+ "daf-xgplus": {
+  "price": 146800,
+  "speed": 84,
+  "cost": 279,
+  "fuel": 28.4,
+  "energy": "diesel"
+ },
+ "daf-xd": {
+  "price": 108900,
+  "speed": 79,
+  "cost": 247,
+  "fuel": 30.9,
+  "energy": "diesel"
+ },
+ "iveco-s-way": {
+  "price": 117300,
+  "speed": 82,
+  "cost": 251,
+  "fuel": 29.8,
+  "energy": "diesel"
+ },
+ "iveco-x-way": {
+  "price": 112600,
+  "speed": 78,
+  "cost": 257,
+  "fuel": 32.2,
+  "energy": "diesel"
+ },
+ "iveco-t-way": {
+  "price": 124900,
+  "speed": 75,
+  "cost": 273,
+  "fuel": 35.0,
+  "energy": "diesel"
+ },
+ "renault-trucks-t": {
+  "price": 113400,
+  "speed": 80,
+  "cost": 249,
+  "fuel": 30.4,
+  "energy": "diesel"
+ },
+ "renault-trucks-t-high": {
+  "price": 129700,
+  "speed": 83,
+  "cost": 263,
+  "fuel": 29.7,
+  "energy": "diesel"
+ },
+ "renault-trucks-c": {
+  "price": 119800,
+  "speed": 76,
+  "cost": 268,
+  "fuel": 33.6,
+  "energy": "diesel"
+ },
+ "ford-f-max": {
+  "price": 104300,
+  "speed": 81,
+  "cost": 244,
+  "fuel": 30.7,
+  "energy": "diesel"
  },
  "man-tgm": {
-  "tier": 2,
-  "speed": 80,
-  "handling": 1,
-  "price": 92000
- },
- "reefer": {
-  "tier": 2,
-  "speed": 80,
-  "handling": 1,
-  "price": 94000
- },
- "volvo-fe": {
-  "tier": 2,
-  "speed": 80,
-  "handling": 1,
-  "price": 90000
- },
- "scania-l-serie": {
-  "tier": 2,
-  "speed": 80,
-  "handling": 1,
-  "price": 97000
- },
- "daf-xb": {
-  "tier": 2,
-  "speed": 80,
-  "handling": 1,
-  "price": 88000
- },
- "renault-trucks-d-wide": {
-  "tier": 2,
-  "speed": 80,
-  "handling": 1,
-  "price": 91000
- },
- "iveco-eurocargo": {
-  "tier": 2,
-  "speed": 80,
-  "handling": 1,
-  "price": 86000
+  "price": 94600,
+  "speed": 79,
+  "cost": 206,
+  "fuel": 24.3,
+  "energy": "diesel"
  },
  "man-tgl": {
-  "tier": 1,
-  "speed": 76,
-  "handling": 1.15,
-  "price": 76000
+  "price": 71800,
+  "speed": 77,
+  "cost": 171,
+  "fuel": 19.2,
+  "energy": "diesel"
+ },
+ "reefer": {
+  "price": 88400,
+  "speed": 79,
+  "cost": 198,
+  "fuel": 22.6,
+  "energy": "diesel"
+ },
+ "volvo-fe": {
+  "price": 91300,
+  "speed": 78,
+  "cost": 203,
+  "fuel": 24.9,
+  "energy": "diesel"
  },
  "volvo-fl": {
-  "tier": 1,
-  "speed": 76,
-  "handling": 1.15,
-  "price": 78000
- },
- "renault-trucks-d": {
-  "tier": 1,
-  "speed": 76,
-  "handling": 1.15,
-  "price": 74000
+  "price": 68900,
+  "speed": 77,
+  "cost": 168,
+  "fuel": 18.7,
+  "energy": "diesel"
  },
  "volvo-fm-electric": {
-  "tier": 2,
-  "speed": 80,
-  "handling": 1,
-  "price": 230000
+  "price": 276500,
+  "speed": 79,
+  "cost": 181,
+  "fuel": 92,
+  "energy": "strom"
  },
- "mercedes-benz-sprinter": {
-  "tier": 3,
+ "scania-l-serie": {
+  "price": 102700,
+  "speed": 80,
+  "cost": 214,
+  "fuel": 24.1,
+  "energy": "diesel"
+ },
+ "daf-xb": {
+  "price": 83900,
   "speed": 78,
-  "handling": 0.9,
-  "price": 48500
+  "cost": 189,
+  "fuel": 21.4,
+  "energy": "diesel"
+ },
+ "iveco-eurocargo": {
+  "price": 79600,
+  "speed": 77,
+  "cost": 184,
+  "fuel": 21.9,
+  "energy": "diesel"
+ },
+ "renault-trucks-d": {
+  "price": 76300,
+  "speed": 77,
+  "cost": 178,
+  "fuel": 20.6,
+  "energy": "diesel"
+ },
+ "renault-trucks-d-wide": {
+  "price": 92800,
+  "speed": 78,
+  "cost": 201,
+  "fuel": 23.8,
+  "energy": "diesel"
  },
  "van": {
-  "tier": 2,
-  "speed": 75,
-  "handling": 1,
-  "price": 44000
+  "price": 47900,
+  "speed": 76,
+  "cost": 82,
+  "fuel": 10.4,
+  "energy": "diesel"
  },
- "volkswagen-crafter": {
-  "tier": 2,
-  "speed": 75,
-  "handling": 1,
-  "price": 45500
- },
- "ford-transit": {
-  "tier": 2,
-  "speed": 75,
-  "handling": 1,
-  "price": 42500
+ "mercedes-benz-sprinter": {
+  "price": 51300,
+  "speed": 78,
+  "cost": 86,
+  "fuel": 9.8,
+  "energy": "diesel"
  },
  "iveco-daily": {
-  "tier": 2,
-  "speed": 75,
-  "handling": 1,
-  "price": 47000
+  "price": 49600,
+  "speed": 74,
+  "cost": 84,
+  "fuel": 11.3,
+  "energy": "diesel"
  },
  "renault-trucks-master": {
-  "tier": 1,
-  "speed": 72,
-  "handling": 1.1,
-  "price": 39500
+  "price": 42700,
+  "speed": 74,
+  "cost": 78,
+  "fuel": 10.6,
+  "energy": "diesel"
  },
  "renault-trucks-trafic": {
-  "tier": 1,
-  "speed": 72,
-  "handling": 1.1,
-  "price": 35500
+  "price": 36800,
+  "speed": 77,
+  "cost": 71,
+  "fuel": 8.4,
+  "energy": "diesel"
+ },
+ "volkswagen-crafter": {
+  "price": 48900,
+  "speed": 77,
+  "cost": 83,
+  "fuel": 10.1,
+  "energy": "diesel"
+ },
+ "ford-transit": {
+  "price": 44300,
+  "speed": 76,
+  "cost": 79,
+  "fuel": 10.2,
+  "energy": "diesel"
+ },
+ "bulkRail": {
+  "price": 3650000,
+  "speed": 160,
+  "cost": 1820,
+  "fuel": 1450,
+  "energy": "strom"
+ },
+ "containerRail": {
+  "price": 3380000,
+  "speed": 140,
+  "cost": 1760,
+  "fuel": 1520,
+  "energy": "strom"
+ },
+ "flatRail": {
+  "price": 4250000,
+  "speed": 120,
+  "cost": 1940,
+  "fuel": 1380,
+  "energy": "strom"
+ },
+ "vossloh-dm20": {
+  "price": 2380000,
+  "speed": 100,
+  "cost": 1490,
+  "fuel": 420,
+  "energy": "diesel"
+ },
+ "siemens-vectron-dual": {
+  "price": 3920000,
+  "speed": 160,
+  "cost": 1870,
+  "fuel": 1410,
+  "energy": "strom"
+ },
+ "bombardier-traxx-ac3": {
+  "price": 3290000,
+  "speed": 140,
+  "cost": 1735,
+  "fuel": 1490,
+  "energy": "strom"
+ },
+ "stadler-euro6000": {
+  "price": 3080000,
+  "speed": 120,
+  "cost": 1655,
+  "fuel": 1560,
+  "energy": "strom"
+ },
+ "cargoShip": {
+  "price": 18400000,
+  "speed": 31.5,
+  "cost": 5200,
+  "fuel": 2.9,
+  "energy": "schweröl"
+ },
+ "bulkShip": {
+  "price": 13900000,
+  "speed": 22.2,
+  "cost": 4300,
+  "fuel": 2.1,
+  "energy": "schweröl"
+ },
+ "damen-cc2750": {
+  "price": 8700000,
+  "speed": 19.6312,
+  "cost": 2950,
+  "fuel": 1.4,
+  "energy": "schweröl"
+ },
+ "damen-cf3850": {
+  "price": 11200000,
+  "speed": 21.9,
+  "cost": 3600,
+  "fuel": 1.8,
+  "energy": "schweröl"
+ },
+ "cessna-408-skycourier-freighter": {
+  "fuel": 60,
+  "energy": "kerosin"
+ },
+ "atr-72-600f": {
+  "fuel": 230,
+  "energy": "kerosin"
+ },
+ "embraer-e190f": {
+  "fuel": 450,
+  "energy": "kerosin"
+ },
+ "airbus-a320p2f": {
+  "fuel": 600,
+  "energy": "kerosin"
+ },
+ "airbus-a321p2f": {
+  "fuel": 700,
+  "energy": "kerosin"
+ },
+ "boeing-737-800bcf": {
+  "fuel": 650,
+  "energy": "kerosin"
+ },
+ "boeing-767-300f": {
+  "fuel": 1300,
+  "energy": "kerosin"
+ },
+ "cargoPlane": {
+  "fuel": 1900,
+  "energy": "kerosin"
+ },
+ "airbus-a330-200f": {
+  "fuel": 1500,
+  "energy": "kerosin"
+ },
+ "concordia-damen-cds110": {
+  "fuel": 0.45,
+  "energy": "diesel"
+ },
+ "concordia-damen-parsifal": {
+  "fuel": 0.5,
+  "energy": "diesel"
+ },
+ "meyer-neptun-inland": {
+  "fuel": 0.42,
+  "energy": "diesel"
+ },
+ "damen-cf7000-ice": {
+  "fuel": 2.6,
+  "energy": "schweröl"
+ },
+ "damen-cf8200-ice": {
+  "fuel": 3.0,
+  "energy": "schweröl"
+ },
+ "damen-cf12000-ice": {
+  "fuel": 3.9,
+  "energy": "schweröl"
+ },
+ "sietas-type-178": {
+  "fuel": 3.1,
+  "energy": "schweröl"
+ },
+ "hyundai-mipo-1800teu": {
+  "fuel": 5.6,
+  "energy": "schweröl"
+ },
+ "oshima-ultramax": {
+  "fuel": 4.4,
+  "energy": "schweröl"
+ },
+ "tsuneishi-kamsarmax": {
+  "fuel": 5.0,
+  "energy": "schweröl"
+ },
+ "hyundai-mipo-mr-tanker": {
+  "fuel": 4.8,
+  "energy": "schweröl"
  }
 }

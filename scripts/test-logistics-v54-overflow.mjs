@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {newState,build,stepTime,stock,purchaseVehicle,createLine,assignVehicle,vehicleCargo,storageCapacity,checkIntegrity} from '../lib/logistics/engine.ts';
+const s=newState();s.cash=1e9;s.live=true;build(s,'depot',47.07,15.44);
+const a=build(s,'warehouseSmall',47.06,15.44),st=build(s,'warehouseSmall',47.08,15.44),nb=build(s,'warehouseSmall',47.082,15.44);
+s.inventory[a.id]={wheat:200};s.inventory[st.id]={sand:storageCapacity(st)-50};
+const road=(x,y)=>({fromId:x.id,toId:y.id,km:1,path:[[x.lat,x.lon],[y.lat,y.lon]],source:'osm-strassen',geometryVersion:2});
+s.roadRoutes=s.sites.flatMap(x=>s.sites.filter(y=>x.id!==y.id).map(y=>road(x,y)));
+const v=purchaseVehicle(s,'truck','schmitz-kipper');const l=createLine(s,{name:'T',mode:'truck',good:'wheat',duration:null,stops:[{siteId:a.id,action:'load',good:'wheat',quantity:1e9},{siteId:st.id,action:'unload',good:'wheat',quantity:1e9}],legs:s.roadRoutes});assignVehicle(s,v.id,l.id);
+let x=s;for(let i=0;i<30&&!(stock(x,nb.id,'wheat')>0);i++)x=stepTime(x,x.day+0.002);
+console.log('station',stock(x,st.id,'wheat'),'neighbour',stock(x,nb.id,'wheat'),'cargo',vehicleCargo(x.vehicles[0]).map(c=>c.quantity));
+assert.equal(stock(x,st.id,'wheat'),50);assert.ok(stock(x,nb.id,'wheat')>0);checkIntegrity(x);console.log('PASS v54 Volles Ziel: Rest automatisch ins freie Nachbargebäude umgeladen.');

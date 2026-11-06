@@ -16,7 +16,7 @@ const until=(s,test,limit=400)=>{let t=s.day;for(let i=0;i<limit;i++){t+=.0005;s
  assert.equal(vehicleCargo(w.vehicles[0]).length,0);
  assert.equal(w.vehicles[0].manualHold.index,0,'zurück am Ladestopp wartet das Fahrzeug wieder auf Go');checkIntegrity(w);}
 
-{const s=fresh();build(s,'depot',47.07,15.44);const a=build(s,'warehouseSmall',47.071,15.44),b=build(s,'warehouseSmall',47.072,15.44);
+{const s=fresh();build(s,'depot',47.07,15.44);const a=build(s,'warehouseSmall',47.071,15.44),b=build(s,'warehouseSmall',47.09,15.44);
  s.inventory[a.id]={bread:40};s.roadRoutes=s.sites.flatMap(x=>s.sites.filter(y=>x.id!==y.id).map(y=>road(x,y)));
  const v=purchaseVehicle(s,'truck','krone-profi'),l=createLine(s,{name:'Voll',mode:'truck',good:'all',manualDeparture:true,duration:null,stops:[st(a,'load'),st(b,'unload')],legs:s.roadRoutes});
  assignVehicle(s,v.id,l.id);let w=until(s,x=>!!x.vehicles[0].manualHold);const room=1e9;w.inventory[b.id]={sand:room};

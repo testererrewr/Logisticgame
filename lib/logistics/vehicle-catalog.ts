@@ -3,7 +3,7 @@ import extraVehicles from '../../data/logistics-extra-vehicles.json';
 import extraTrailers from '../../data/logistics-extra-trailers.json';
 import extraWagons from '../../data/logistics-extra-wagons.json';
 import vehicleTuning from '../../data/logistics-vehicle-tuning.json';
-export interface VehicleSpec {tier?:1|2|3;handling?:number;inland?:boolean;id:string;name:string;manufacturer:string;role:string;mode:Mode;types:FreightType[];capacity:number;price:number;cost:number;speed:number;icon:string;attachment?:string|null;source:string;factual:string}
+export interface VehicleSpec {fuel?:number;energy?:string;handling?:number;inland?:boolean;id:string;name:string;manufacturer:string;role:string;mode:Mode;types:FreightType[];capacity:number;price:number;cost:number;speed:number;icon:string;attachment?:string|null;source:string;factual:string}
 export interface TrailerSpec {id:string;name:string;mount:string;types:FreightType[];capacity:number;goods:string[]|null;heavyOnly?:boolean;price:number;source:string;factual:string}
 export interface WagonSpec {id:string;name:string;types:FreightType[];capacity:number;price:number;source:string}
 export const REAL_VEHICLES:VehicleSpec[]=[
@@ -1185,7 +1185,7 @@ export const REAL_WAGONS:WagonSpec[]=[
 REAL_VEHICLES.push(...extraVehicles as VehicleSpec[]);
 TRAILERS.push(...(extraTrailers as TrailerSpec[]).filter(t=>!TRAILERS.some(x=>x.id===t.id)));
 REAL_WAGONS.push(...(extraWagons as WagonSpec[]).filter(w=>!REAL_WAGONS.some(x=>x.id===w.id)));
-for(const v of REAL_VEHICLES){const t=(vehicleTuning as Record<string,{tier:1|2|3;speed:number;handling:number;price:number}>)[v.id];if(t){v.tier=t.tier;v.speed=t.speed;v.handling=t.handling;v.price=t.price;}else if(v.mode==='ship'||v.mode==='air'||v.mode==='rail'){v.tier=v.mode==='rail'?(v.speed>=140?3:v.speed>=110?2:1):2;v.handling=v.mode==='rail'?(v.speed>=140?.9:v.speed>=110?1:1.1):1;}}
+for(const v of REAL_VEHICLES){const t=(vehicleTuning as Record<string,{price:number;speed:number;cost:number;fuel:number;energy:string}>)[v.id];if(t){if(t.price)v.price=t.price;if(t.speed)v.speed=t.speed;if(t.cost)v.cost=t.cost;v.fuel=t.fuel;v.energy=t.energy;}}
 for(const v of REAL_VEHICLES)v.capacity*=10;
 for(const t of TRAILERS)t.capacity*=10;
 for(const w of REAL_WAGONS)w.capacity*=10;
