@@ -5,7 +5,6 @@ const project=(p:Coords,z:number)=>{const n=256*2**z,r=p[0]*Math.PI/180;return [
 export function shoreArea(point:Coords,kind:BuildingKind,rotation=0){const grid=placement(point,kind,rotation).grid,[sw,ne]=gridBounds(grid),lat=150/111320,lon=lat/Math.cos(point[0]*Math.PI/180);return {grid,sw,ne,bounds:[sw[0]-lat,sw[1]-lon,ne[0]+lat,ne[1]+lon],key:`logistics-shore-v19:${grid.tile}:${grid.cell}:${kind}:${grid.rotation}`};}
 export function rasterPlan(point:Coords,kind:BuildingKind,rotation=0){const area=shoreArea(point,kind,rotation);for(let zoom=16;zoom>=10;zoom--){const [s,w,n,e]=area.bounds,a=project([n,w],zoom),b=project([s,e],zoom),tiles=[];for(let y=Math.floor(a[1]/256);y<=Math.floor(b[1]/256);y++)for(let x=Math.floor(a[0]/256);x<=Math.floor(b[0]/256);x++)tiles.push({x,y,zoom});if(tiles.length<=12)return {...area,zoom,tiles,box:[...project(area.sw,zoom),...project(area.ne,zoom)],extent:[Math.floor(a[0]),Math.floor(a[1]),Math.ceil(b[0]),Math.ceil(b[1])],metresPerPixel:40075016.686*Math.cos(point[0]*Math.PI/180)/(256*2**zoom)};}throw Error('Baufläche zu groß für Kartenprüfung.');}
 
-/** Small, bounded PNG reader for the OSM Carto fallback. No native Node dependency. */
 export async function pngWaterMask(bytes:Uint8Array){
  const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength),idat:Uint8Array[]=[];let width=0,height=0,depth=0,type=0,interlace=0;let palette:Uint8Array=new Uint8Array(),alpha:Uint8Array=new Uint8Array();
  if(bytes.length<33||view.getUint32(0)!==0x89504e47||view.getUint32(4)!==0x0d0a1a0a)throw Error('Keine gültige Kartenkachel.');
@@ -17,7 +16,6 @@ export async function pngWaterMask(bytes:Uint8Array){
  const paeth=(a:number,b:number,c:number)=>{const p=a+b-c,pa=Math.abs(p-a),pb=Math.abs(p-b),pc=Math.abs(p-c);return pa<=pb&&pa<=pc?a:pb<=pc?b:c;};
  for(let y=0;y<height;y++){const filter=raw[y*(stride+1)];if(filter>4)throw Error('Ungültiger PNG-Filter.');for(let x=0;x<stride;x++){const i=y*stride+x,left=x>=bpp?scan[i-bpp]:0,up=y?scan[i-stride]:0,corner=y&&x>=bpp?scan[i-stride-bpp]:0;scan[i]=(raw[y*(stride+1)+1+x]+(filter===1?left:filter===2?up:filter===3?Math.floor((left+up)/2):filter===4?paeth(left,up,corner):0))&255;}
   for(let x=0;x<width;x++){let r:number,g:number,b:number,a=255;const i=y*stride+x*channels;if(type===3){const bit=x*depth,index=scan[y*stride+(bit>>3)]>>(8-depth-bit%8)&((1<<depth)-1);r=palette[index*3];g=palette[index*3+1];b=palette[index*3+2];a=alpha[index]??255;}else if(type===0||type===4){r=g=b=scan[i];if(type===4)a=scan[i+1];}else{r=scan[i];g=scan[i+1];b=scan[i+2];if(type===6)a=scan[i+3];}
-   // Standard Carto water fill (#aad3df), allowing antialiasing but excluding blue text.
    if(a>220&&Math.abs(r-170)<=10&&Math.abs(g-211)<=10&&Math.abs(b-223)<=10)mask[(y*256+x)>>3]|=1<<((y*256+x)&7);
   }
  }

@@ -4,8 +4,6 @@ import {queueTerminalTransfer} from './terminal-transfer';
 import {addTrackPlan,setVehicleContainerOrders,MAX_FLEET_VEHICLES} from './engine.ts';
 import {railRoute} from './routing.ts';
 import {setReturnLine,updateLineStops,assignFleet,updateLine,renameVehicle,type Line} from './engine.ts';
-/** Server-authoritative, allowlisted changes to the independent logistics company.
- * Never accept a client-supplied final economy state. */
 import {newState,mergeSites,signSupply,signProcess,signSale,signHaulage,build,addTrack,purchaseVehicle,purchaseFleet,warehouseUpgrade,renameBuilding,cancelContract,configureTrailer,configureTrain,createLine,assignVehicle,cancelLine,stepDay,checkIntegrity, type State,type Site,type Coords,type BuildingKind,type GoodId,type VehicleModelId,type WagonSet,type Mode,type Stop,type RouteLeg} from './engine.ts';
 export type OnlineAction=
  |{type:'sellVehicle';vehicleId:string}
@@ -78,8 +76,6 @@ export function applyAction(state:State,command:OnlineAction,verifiedSites?:Site
  case 'assign':assignVehicle(s,command.vehicleId,command.lineId);break;
  case 'cancel':cancelLine(s,command.lineId);break;
  case 'tick':if(!Number.isInteger(command.days)||command.days<1||command.days>4)throw Error('Maximal vier Tage pro Schritt.');
-  // Revoking another company's rail permission must prevent further service
-  // on a route that the player's remaining own/permitted track cannot serve.
   for(const line of s.lines.filter(l=>l.active&&l.mode==='rail')){
    const locations=line.stops.map(st=>s.sites.find(site=>site.id===st.siteId));
    if(locations.some(x=>!x)||locations.some((a,i)=>!railRoute([...s.tracks,...(s.borrowedTracks||[])],[a!.lat,a!.lon],[locations[(i+1)%locations.length]!.lat,locations[(i+1)%locations.length]!.lon])))cancelLine(s,line.id);

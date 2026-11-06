@@ -7,8 +7,6 @@ const worker = {
   async scheduled(event:ScheduledController,env:Cloudflare.Env,ctx:ExecutionContext){try{await settleAllWorlds('scheduled');}catch(error){console.error('Logistics scheduled settlement failed',error);throw error;}},
   fetch(request: Request, env: Cloudflare.Env, ctx: ExecutionContext<{ CONNECTORS?: ConnectorBinding }>) {
     let binding = ctx.props?.CONNECTORS;
-    // Local preview emulates the same request-scoped capability. This branch and
-    // the auxiliary service binding are absent from production builds.
     if (import.meta.env.DEV && !binding && env.CONNECTORS) {
       const preview = env.CONNECTORS;
       const expiresAt = Date.now() + 60_000;

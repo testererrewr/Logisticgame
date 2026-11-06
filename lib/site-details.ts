@@ -5,8 +5,6 @@ import {tileCenter,sphericalDistance} from './geography';
 import {configOf} from './world-config';
 export type SiteRef={company:string;id:string;kind:'stop'|'facility'};
 export const facilityNames={station:'Bahnhof',airport:'Flughafen',port:'Hafen',busdepot:'Busdepot',traindepot:'Zugdepot',airdepot:'Flugzeugdepot',shipdepot:'Schiffsdepot'};
-// The stored point is the centre of the first cell, not the airport centre.
-// Reconstruct from that anchor so facilities remain visible without OSM downloads.
 export function facilityGeometry(f:Facility){
  const m=getMap(f.city),latitude=m?.lat??tileCenter(f.city)?.[0]??placePoint(f.city)?.[0]??f.point[0],dLat=m?.dLat??50/111320,dLon=m?.dLon??50/(111320*Math.cos(latitude*Math.PI/180));
  const cells=(f.footprint.length?f.footprint:[f.cell]).map(id=>{const p:LatLon=[f.point[0]+(Math.floor(id/80)-Math.floor(f.cell/80))*dLat,f.point[1]+(id%80-f.cell%80)*dLon];return {id,point:p,bounds:[[p[0]-dLat/2,p[1]-dLon/2],[p[0]+dLat/2,p[1]+dLon/2]] as [LatLon,LatLon]};});

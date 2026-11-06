@@ -1,4 +1,3 @@
-/** Deduplicated, bounded requests with a minimum gap between request starts. */
 export class RoadRequestPool {
  private inFlight=new Map<string,Promise<unknown>>();private queue:(()=>void)[]=[];private active=0;private last=0;private timer:ReturnType<typeof setTimeout>|undefined;
  constructor(private gapMs=1200,private concurrency=2){}

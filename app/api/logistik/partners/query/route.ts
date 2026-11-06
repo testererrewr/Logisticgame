@@ -3,7 +3,6 @@ import {NextRequest,NextResponse} from 'next/server';
 import {savePartners,seedRegistry} from '../../../../../lib/logistics/partner-registry';
 import {env} from 'cloudflare:workers';
 import {identifyPartner,type Site} from '../../../../../lib/logistics/engine';
-// Explicit name searches only. Never use Nominatim to enumerate an area.
 export async function GET(req:NextRequest){try{
  const query=(req.nextUrl.searchParams.get('q')||'').trim();if(query.length<3||query.length>120)return NextResponse.json({error:'Betriebsname mit Ort eingeben (3–120 Zeichen).'},{status:400});
  await seedRegistry();const registry=await env.DB!.prepare('SELECT payload FROM logistics_partner_registry WHERE name LIKE ? ORDER BY name LIMIT 200').bind('%'+query+'%').all<{payload:string}>();const known=applyRules(registry.results.map(r=>JSON.parse(r.payload)),await readPartnerRules());if(known.length)return NextResponse.json({sites:known,source:'Weltweites Serverregister'},{headers:{'Cache-Control':'no-store'}});

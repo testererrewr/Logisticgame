@@ -58,8 +58,6 @@ export function recommendedFare(l:Pick<Line,'city'|'mode'|'a'|'b'>&Partial<Line>
 export function ticket(l:Line,km=l.length??(l.city?1:distance(l.a,l.b))){return distanceFare(l,km);}
 export function capacity(l:Line,company?:Company){return lineFleetStats(company||{fleet:[]} as unknown as Company,l,l.length??distance(l.a,l.b)).capacity;}
 export type LineResult={company:string;id:string;passengers:number;revenue:number;expenses:number;profit:number;share:number;pool:number;capacity:number};
-// One finite passenger pool per origin/destination pair, across every company AND transport mode.
-// Iterative proportional allocation redistributes excess only to routes with available seats.
 export function economy(state:WorldState,config?:Partial<WorldConfig>,time?:number):LineResult[]{return networkForecast(state,config,time).lines;}
 export function advance(state:WorldState,days=1){if(days<=0)return state;const e=economy(state);for(const c of state.companies){const rows=e.filter(x=>x.company===c.id);const profit=rows.reduce((s,x)=>s+x.profit,0)-Math.round(c.loan*.001);c.cash+=profit*days;c.earned+=profit*days;c.passengers+=rows.reduce((s,x)=>s+x.passengers,0)*days;c.history=[...c.history,...Array(Math.min(days,20)).fill(profit)].slice(-20);}state.day+=days;return state;}
 export type Action={type:string;[key:string]:any};

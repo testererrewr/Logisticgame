@@ -8,9 +8,6 @@ import {matchesMapSite,mapClusterKey,servedStationIds} from '../../../../../lib/
 import {currentUser} from '../../online/route';
 import type {Site,State} from '../../../../../lib/logistics/engine';
 
-/* Compact in-memory index of the whole register (id, position, effective kind).
- * On a single long-running server this replaces re-reading and re-parsing up to
- * ~100k JSON payloads for every map move, which blocked all other requests. */
 interface Compact {id:string;lat:number;lon:number;kind:string;name:string;hidden:boolean}
 let compactCache:{key:string;built:number;items:Compact[]}|undefined,compactBuild:Promise<Compact[]>|undefined;
 async function compactRegistry(rules:PartnerRules):Promise<Compact[]>{
@@ -27,7 +24,6 @@ export async function GET(req:NextRequest){try{await seedRegistry();const p=req.
  const dy=Math.min(180,135/2**(zoom-2)),dx=Math.min(360,230/2**(zoom-2)),rules=await readPartnerRules(),sites:Site[]=[],groups=new Map<string,{lat:number;lon:number;count:number;kind:string;site:{kind:string;name:string}}>();let count=0;
  const add=(site:{id:string;lat:number;lon:number;kind:string;name:string},full?:Site)=>{count++;if(full&&sites.length<3001)sites.push(full);const key=mapClusterKey(site as Site,zoom),g=groups.get(key)||{lat:0,lon:0,count:0,kind:'mixed',site};g.lat+=site.lat;g.lon+=site.lon;g.count++;groups.set(key,g);};
  if(!query.trim()&&good==='all'){
-  // Standardansicht: aus dem Speicherindex, ohne Payloads zu parsen.
   const kindSet=new Set(kinds),ids:string[]=[];
   for(const c of await compactRegistry(rules)){if(c.lat<lat-dy||c.lat>lat+dy||dx<180&&(c.lon<lon-dx||c.lon>lon+dx)||c.hidden||!kindSet.has(c.kind)||served.has(c.id))continue;add(c);if(ids.length<3001)ids.push(c.id);}
   if(!(zoom<8||count>3000))sites.push(...(await sitesByIds(ids,rules)).filter(s=>!s.hidden&&kindSet.has(s.kind)));

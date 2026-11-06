@@ -9,8 +9,6 @@ export async function catalogHistory(revision=0):Promise<CatalogSnapshot[]>{cons
 export async function currentCatalog():Promise<CatalogSnapshot>{const r=await env.DB!.prepare('SELECT revision,created,payload FROM vehicle_catalogs ORDER BY revision DESC LIMIT 1').first<any>();return r?{revision:r.revision,created:r.created,models:JSON.parse(r.payload)}:{revision:0,created:0,models:vehicleModels};}
 async function boundedText(req:Request){if(Number(req.headers.get('content-length')||0)>CATALOG_BODY_BYTES)fail('Katalog zu groß.',413);const reader=req.body?.getReader(),chunks:Uint8Array[]=[];let size=0;if(!reader)fail('JSON erwartet.',400);while(true){const {done,value}=await reader!.read();if(done)break;size+=value.byteLength;if(size>CATALOG_BODY_BYTES){await reader!.cancel();fail('Katalog zu groß.',413);}chunks.push(value);}const bytes=new Uint8Array(size);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength;}return new TextDecoder().decode(bytes);}
 export async function internalCatalog(req:Request){
- // Drain bounded PUT bodies before responding, including rejected authentication.
- // This also keeps HTTP proxies from aborting an unread request stream.
  const text=req.method==='PUT'?await boundedText(req):'';
  if(!sameOrigin(req))fail('Ungültiger Ursprung.',403);
  if(!env.CATALOG_PUSH_HASH)fail('Katalog-Veröffentlichung ist nicht eingerichtet.',503);

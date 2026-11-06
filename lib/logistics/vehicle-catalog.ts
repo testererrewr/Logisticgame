@@ -1179,7 +1179,6 @@ export const REAL_WAGONS:WagonSpec[]=[
  }
 ];
 
-// Canonical game payload unit: 1 EH = 100 kg. Factual manufacturer text is unchanged.
 REAL_VEHICLES.push(...extraVehicles as VehicleSpec[]);
 for(const v of REAL_VEHICLES)v.capacity*=10;
 for(const t of TRAILERS)t.capacity*=10;

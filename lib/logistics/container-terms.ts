@@ -1,5 +1,4 @@
 import {stableHash} from './business-rules';
-/** Small loads are common, medium loads regular and large jobs remain available. */
 export function containerQuantity(id:string,factory:boolean,km:number){
  const bucket=stableHash(id+'/quantity-class-v14')%100,size=stableHash(id+'/quantity-size-v14');
  if(bucket<(factory?50:65))return 10+(size%24)*10;

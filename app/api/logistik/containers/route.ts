@@ -20,7 +20,6 @@ export async function GET(req:NextRequest){try{
  if(siteId){where.push('o.source_id=?');args.push(siteId);}
  if(q){where.push('(a.name LIKE ? OR b.name LIKE ? OR o.source_city LIKE ? OR o.destination_city LIKE ? OR o.id LIKE ?)');args.push(...Array(5).fill('%'+q+'%'));}
  for(const [column,value,partial]of [['source_country',sourceCountry,false],['destination_country',destinationCountry,false],['source_city',sourceCity,true],['destination_city',destinationCity,true]] as const)if(value){where.push(`o.${column} ${partial?'LIKE':'='} ? COLLATE NOCASE`);args.push(partial?'%'+value+'%':value);}
- // Older accepted orders retain their original quantities and distances.
  const distance="CASE WHEN o.distance_km>0 THEN o.distance_km ELSE MAX(0,(o.fee-18)/.09) END";
  where.push(`${distance}>=?`,`${distance}<=?`,'o.quantity>=?','o.quantity<=?','o.deadline-?>=?','o.deadline-?<=?','o.quantity*o.fee>=?',"NOT EXISTS(SELECT 1 FROM logistics_partner_rules pr WHERE pr.id IN (o.source_id,o.destination_id) AND json_extract(pr.payload,'$.hidden')=1)");args.push(minKm,maxKm,minQty,maxQty,world.day,minDays,world.day,maxDays,minReward);
  const sorts:Record<string,string>={distanceAsc:distance+' ASC',distanceDesc:distance+' DESC',reward:'o.fee*o.quantity DESC',rewardPerEh:'o.fee DESC',quantity:'o.quantity DESC',deadline:'o.deadline ASC'},sort=sorts[params.get('sort')||'distanceAsc']||sorts.distanceAsc;

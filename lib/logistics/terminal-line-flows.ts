@@ -2,7 +2,6 @@ import {GOODS,RECIPES,availableToLoad,demandFor,stock,type State,type GoodId} fr
 import {activeLine} from './map-filtering';
 import {remainingDemand,newMarket,type DailyMarket} from './business-rules';
 type Edge={from:string;to:string;goods:Set<GoodId>};
-/** Source and customer totals, deduplicated through connected terminals and cycles. */
 export function terminalLineFlows(s:State,siteId:string,market?:DailyMarket){
  const edges:Edge[]=[],sites=new Map(s.sites.map(p=>[p.id,p]));
  for(const l of s.lines.filter(l=>activeLine(l,s.day)))for(let i=0;i<l.stops.length;i++){const load=l.stops[i];if(load.action!=='load')continue;for(const unload of l.stops.slice(i+1)){if(unload.action==='load'||load.siteId===unload.siteId)continue;const a=load.good||l.good,b=unload.good||l.good;edges.push({from:load.siteId,to:unload.siteId,goods:new Set(GOODS.filter(g=>(a==='all'||a===g.id)&&(b==='all'||b===g.id)).map(g=>g.id))});}}

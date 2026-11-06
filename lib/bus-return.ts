@@ -4,7 +4,6 @@ import {runPlan} from './operations';
 import {urbanSpeed,vehicleModel} from './vehicle-models';
 import type {WorldState} from './game';
 
-// Call after settling the old timetable. Never replay new return journeys in the past.
 export function enableBusReturns(state:WorldState,time=state.simTime||Date.now()){
  if(state.operations?.backlog)return;
  for(const company of state.companies)for(const line of company.lines){
@@ -18,7 +17,6 @@ export function enableBusReturns(state:WorldState,time=state.simTime||Date.now()
     const model=vehicleModel(vehicle,state.vehicleCatalog?.models),speed=line.city?urbanSpeed(model):model.speed;
     return {vehicle,speed,old:runPlan(company,line,speed,model.acceleration,model.braking)};
    });
-   // Keep the outbound geometry, event indices and people already on board.
    Object.assign(line,{routeMode:'shuttle',returnPath:route.returnPath,returnSegmentKm:route.returnSegmentKm,returnLength:route.returnLength});
    delete line.returnRouteError;delete line.returnRouteAttempt;
    for(const {vehicle,speed,old}of vehicles){
@@ -26,7 +24,6 @@ export function enableBusReturns(state:WorldState,time=state.simTime||Date.now()
     if(!run||!old||!plan||run.signature!==old.signature)continue;
     const terminal=old.visits.at(-1)!;
     if(time>=run.epoch+old.duration){
-     // Begin at the end where the bus actually stopped, with a fresh terminal dwell.
      run.epoch=time-terminal.at;run.next=old.visits.length;run.lastEvent=time;
     }
     run.signature=plan.signature;

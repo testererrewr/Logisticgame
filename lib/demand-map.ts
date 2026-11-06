@@ -1,5 +1,3 @@
 import type {RealMap,RealZone} from './real-map';
-// Simulation uses population cells and map bounds. Roads/building geometry are
-// loaded separately for construction, never for every live tick.
 export function demandMap(m:RealMap):RealMap{return {key:m.key,lat:m.lat,lon:m.lon,south:m.south,west:m.west,dLat:m.dLat,dLon:m.dLon,date:m.date,source:m.source,buildings:m.buildings,nodes:[],roads:[],demandOnly:true,zones:m.zones.map(z=>({id:z.id,x:z.x,y:z.y,residents:z.residents,jobs:z.jobs,shopping:z.shopping} as RealZone))};}
 export function simulationAreas(state:import('./game').WorldState){const keys=new Set<string>();for(const c of state.companies){if(c.suspended)continue;for(const l of c.lines){if(!l.active||!l.vehicles)continue;for(const key of l.stopAreas||(l.city?[l.city]:[]))if(key)keys.add(key);for(const id of l.facilityIds||[l.fromFacility,l.toFacility]){const f=state.companies.flatMap(c=>c.facilities||[]).find(f=>f.id===id);if(f)keys.add(f.city);}}}return keys;}

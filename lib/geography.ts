@@ -1,6 +1,4 @@
 import {getMap,type LatLon} from './real-map';
-// Non-overlapping 4 km data tiles are loaded only at street scale. They do not
-// constrain the Leaflet camera or create separate game maps.
 const SPAN=4000/111320;
 export function tileAt(p:LatLon){const row=Math.floor((Math.max(-85.05112878,Math.min(85.05112878,p[0]))+80)/SPAN),lat=-80+(row+.5)*SPAN,width=SPAN/Math.cos(lat*Math.PI/180),col=Math.floor(((((p[1]+180)%360)+360)%360)/width);return `geo_${row}_${col}`;}
 export function tileCenter(key:string):LatLon|null{const match=/^geo_(-?\d+)_(\d+)$/.exec(key);if(!match)return null;const row=Number(match[1]),col=Number(match[2]),lat=-80+(row+.5)*SPAN;if(!Number.isSafeInteger(row)||!Number.isSafeInteger(col)||Math.abs(lat)>85.1)return null;const width=SPAN/Math.cos(lat*Math.PI/180),lon=-180+(col+.5)*width;if(lon>180+width/2)return null;return [lat,lon];}

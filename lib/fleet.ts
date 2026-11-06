@@ -12,7 +12,6 @@ export type Vehicle={rangeIssue?:string;health?:import('./vehicle-health').Vehic
 export const depotMode=(f:Facility):Mode|undefined=>({busdepot:'bus',traindepot:'train',airdepot:'plane',shipdepot:'ship'} as Record<string,Mode>)[f.type];
 export function canDepotServe(c:Company,depot:Facility,line:Line){return depotMode(depot)===line.mode&&depotForLine({...sharedCompany(c),facilities:sharedCompany(c).facilities?.filter(f=>!depotMode(f)||f.id===depot.id)},line)?.id===depot.id;}
 export function syncFleet(c:Company,catalog=vehicleModels){
- // Older saves already paid for their line vehicles. Preserve them as assets.
  if(!c.fleet){c.fleet=[];for(const l of c.lines)for(let i=0;i<Math.min(256,Math.max(0,Math.floor(l.vehicles||0)));i++)c.fleet.push({id:crypto.randomUUID(),name:modes[l.mode].name+' '+(c.fleet.length+1),mode:l.mode,depot:depotForLine(c,l)?.id||'legacy',line:l.id,purchasePrice:modes[l.mode].base});}
  const lines=new Map(c.lines.map(l=>[l.id,l])),homes=new Map((c.facilities||[]).map(f=>[f.id,f])),reachable=new Map<string,boolean>(),counts=new Map<string,number>();
  for(const v of c.fleet){v.model=vehicleModel(v,catalog).id;if(v.line){const l=lines.get(v.line),home=homes.get(v.depot),key=v.depot+':'+v.line;if(!reachable.has(key))reachable.set(key,!!l&&!!home&&canDepotServe(c,home,l));let rangeOk=true;if(l?.mode==='plane')try{validateVehicleRoute(c,l,vehicleModel(v,catalog),home);}catch(e:any){rangeOk=false;v.rangeIssue=e.message;}if(!reachable.get(key)||!rangeOk)delete v.line;else counts.set(v.line,(counts.get(v.line)||0)+1);}}

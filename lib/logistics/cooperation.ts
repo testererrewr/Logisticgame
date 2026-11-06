@@ -1,6 +1,3 @@
-/** Explicit voluntary trades between independent player-owned freight companies.
- *  This module is pure: the API verifies the actor and performs an atomic
- *  two-company commit against matching revisions. */
 import {BUILDINGS,GOODS,storageCapacity,checkIntegrity,credit,debit,log,stock,type GoodId,type State,type Site} from './engine.ts';
 export interface TradeTerms {siteId:string;good:GoodId;quantity:number;price:number;sellerId:string}
 export function tradeTerminal(state:State,siteId:string):Site|undefined{
@@ -19,8 +16,6 @@ export function settleTrade(previousSeller:State,previousBuyer:State,terms:Trade
  const cap=storageCapacity(from);
  const stored=Object.values(buyer.inventory[from.id]||{}).reduce<number>((sum,n)=>sum+(n||0),0);
  if(stored+terms.quantity>cap)throw Error('Das Partnerterminal ist für diese Gütermenge zu voll.');
- // The physical warehouse is owned by the seller. A buyer gets loading rights
- // only for its *own* inventory there; no cargo is silently duplicated.
  if(!access)buyer.sites.push({...from,owned:false,cooperative:true,operatorId:terms.sellerId,name:`${from.name} (Partner)`});
  else{access.cooperative=true;access.operatorId=terms.sellerId;}
  seller.inventory[from.id]??={};seller.inventory[from.id][terms.good]=Math.round((stock(seller,from.id,terms.good)-terms.quantity)*100)/100;

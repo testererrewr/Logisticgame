@@ -11,7 +11,6 @@ import {canTransfer} from './contracts';
 type Entry={site:SiteLine;company:Company;line:Line;vehicle:Vehicle;plan:RunPlan;run:VehicleRun;visits:number[]};
 export type StationSchedule={entries:Entry[];lines:SiteLine[];world:World};
 export type StationDeparture={id:string;company:Company;line:Line;vehicle:Vehicle;departure:number;destination:string;direction:string;at:string;distance:number;direct:boolean;walkMs:number;reachable:boolean;current:boolean};
-// Route geometry and model-dependent motion are prepared only on a new snapshot.
 export function stationSchedule(world:World,reference:SiteRef,myId:string,showForeign=false):StationSchedule{
  bindInfrastructure(world.state);const lines=linesAtSite(world,reference).filter(r=>!r.depot&&(showForeign||canTransfer(world.state,myId,r.company.id))),entries:Entry[]=[],wanted=new Map(lines.map(r=>[r.line.id,r])),groups=new Map<string,{plan:RunPlan|null;visits:number[]}>();
  for(const c of world.state.companies){if(c.suspended)continue;for(const v of c.fleet||[]){const site=wanted.get(v.line||'');if(!site||site.company.id!==c.id||!site.line.active||v.mode!==site.line.mode)continue;
@@ -21,7 +20,6 @@ export function stationSchedule(world:World,reference:SiteRef,myId:string,showFo
   if(group.plan&&group.plan.signature===run.signature&&group.visits.length)entries.push({site,company:c,line:site.line,vehicle:v,plan:group.plan,run,visits:group.visits});
  }}return {entries,lines,world};
 }
-// Only departure times are forecast. This never changes a run or passenger queue.
 export function upcomingDepartures(schedule:StationSchedule,now=Date.now(),limit=12,lineId=''){
  const clock=liveClock(schedule.world,now);if(clock.stale||schedule.world.state.operations?.backlog||schedule.world.status!=='running')return [];
  type Candidate={entry:Entry;index:number;departure:number};const best:Candidate[]=[];limit=Math.max(1,Math.min(50,limit));

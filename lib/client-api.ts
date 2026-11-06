@@ -1,5 +1,3 @@
-// Unconfirmed game actions reuse their request ID, including a manual retry.
-// The server records it atomically with the world state.
 const unconfirmed=new Map<string,{id:string;at:number}>();
 export async function requestApi(path:string,body?:unknown,fetcher:typeof fetch=fetch):Promise<any>{
  const action=!!body&&/^worlds\/[^/]+\/action$/.test(path),updatingWorld=/^worlds\/[^/]+\/(state|live)(?:\?|$)/.test(path),payload=body?JSON.stringify(body):undefined,signature=path+'|'+payload;

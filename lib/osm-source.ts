@@ -1,5 +1,3 @@
-// Convert the standard OSM map API's node references into Overpass-style geometry.
-// Keep only the objects used by the game; never invent buildings on empty land.
 export function osmGeometry(raw:any){
  if(!Array.isArray(raw?.elements))throw Error('Ungültige OSM-Kartendaten.');
  const nodes=new Map<number,any>(),ways=new Map<number,any>();

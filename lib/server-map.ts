@@ -12,9 +12,6 @@ async function pack(data:unknown){const bytes=new Uint8Array(await new Response(
 async function unpack(payload:string){if(!payload.startsWith('gz:'))return JSON.parse(payload);const bytes=Uint8Array.from(atob(payload.slice(3)),c=>c.charCodeAt(0));return JSON.parse(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).text());}
 export async function loadMap(key:string):Promise<RealMap>{
  if(getMap(key)&&!getMap(key)!.demandOnly)return getMap(key)!;
- // Completed immutable maps are safe across requests. In-flight I/O is not:
- // Workers can cancel its owning request, leaving other requests waiting on
- // an abandoned promise. Each request must own its reads/decompression.
  return load(key);
 }
 async function load(key:string){

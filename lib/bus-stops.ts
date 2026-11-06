@@ -6,7 +6,6 @@ import {getMap,pointCell,cellPoint,meters,nearestRoadSnap} from './real-map';
 import {worldStreetRoute} from './world-roads';
 const lineCost=(km:number)=>Math.round(30000+km*18000);
 function stopName(value:any,fallback:string){const name=String(value??fallback).trim();if(name.length<2||name.length>50)throw Error('Name: 2–50 Zeichen.');return name;}
-// Existing lines retain their paid infrastructure as independently reusable stops.
 export function syncBusStops(c:Company){c.stops??=[];for(const line of c.lines){if(line.mode!=='bus'||!line.city||!line.stopNodes)continue;
  if(!line.stopIds){line.stopIds=line.stopNodes.map((node,i)=>{const area=line.stopAreas?.[i]||line.city!,m=getMap(area),point=line.stopPoints?.[i]||m?.nodes[node];if(!point)throw Error('Kartendaten einer bestehenden Haltestelle fehlen.');let stop=c.stops!.find(s=>meters(s.point,point)<2);const hub=!!line.hubs?.includes(line.stopPoints?i:node);if(!stop){stop={id:crypto.randomUUID(),city:area,node,point,name:m?.roads.find(r=>r.nodes.includes(node))?.name||'Haltestelle '+(c.stops!.length+1),hub};c.stops!.push(stop);}else if(hub)stop.hub=true;return stop.id;});}
  }

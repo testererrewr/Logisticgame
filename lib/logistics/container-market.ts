@@ -10,7 +10,6 @@ import type {PartnerRules} from './business-rules';
 import {kmBetween,stock,log,type Site,type State} from './engine';
 export interface ContainerOffer {source_country?:string;destination_country?:string;source_city?:string;destination_city?:string;distance_km?:number;id:string;world_id:string;day:number;source_id:string;destination_id:string;slot:number;quantity:number;fee:number;deadline:number;status:string;accepted_by:string|null}
 const quantityVersionKey=(worldId:string,day:number)=>'container-quantity-v14:'+worldId+':'+Math.floor(day);
-/** Rebalance existing open offers without rerolling partners or changing accepted jobs. */
 export async function resizeOpenContainerQuantities(worldId:string,day:number){
  day=Math.floor(day);const key=quantityVersionKey(worldId,day);if(await env.DB!.prepare('SELECT id FROM logistics_runtime WHERE id=?').bind(key).first())return;
  const rows=(await env.DB!.prepare("SELECT o.id,o.quantity,o.distance_km,o.fee,p.kind FROM logistics_container_offers o JOIN logistics_partner_registry p ON p.id=o.source_id WHERE o.world_id=? AND o.day=? AND o.status='open' AND o.accepted_by IS NULL ORDER BY o.id").bind(worldId,day).all<{id:string;quantity:number;distance_km:number;fee:number;kind:Site['kind']}>()).results;
@@ -19,7 +18,6 @@ export async function resizeOpenContainerQuantities(worldId:string,day:number){
  await env.DB!.prepare('INSERT OR IGNORE INTO logistics_runtime(id,updated,payload) VALUES(?,?,?)').bind(key,Date.now(),JSON.stringify({count:changes.length})).run();
 }
 export async function ensureContainerDay(worldId:string,day:number,rules:PartnerRules){await seedRegistry();day=Math.floor(day);const key='container-day-v15:'+worldId+':'+day;const marker=await env.DB!.prepare('SELECT id FROM logistics_runtime WHERE id=?').bind(key).first();if(marker){await resizeOpenContainerQuantities(worldId,day);return;}
- // Slim global index: never parse every business payload into one Worker isolate.
  const index:Site[]=[];for(let offset=0;;offset+=2000){const rows=await env.DB!.prepare(`SELECT id,kind,name,lat,lon,COALESCE(json_extract(payload,'$.tags."addr:city"'),json_extract(payload,'$.tags."addr:town"'),json_extract(payload,'$.tags."addr:village"'),'') AS city FROM logistics_partner_registry ORDER BY id LIMIT 2000 OFFSET ?`).bind(offset).all<Site>();index.push(...rows.results);if(rows.results.length<2000)break;}
  const cityById=new Map(index.map(p=>[p.id,(p as Site&{city?:string}).city||''])),locations=new Map<string,{country:string;city:string}>();const location=(p:Site)=>{if(!locations.has(p.id))locations.set(p.id,{country:countryAt([p.lat,p.lon]),city:cityById.get(p.id)||p.tags?.['addr:city']||p.tags?.['addr:town']||p.tags?.['addr:village']||''});return locations.get(p.id)!;};
  const eligible=index.filter(p=>!rules.items[p.id]?.hidden),sourceIds=eligible.filter(p=>dailyContainerCount(worldId,day,p)>0).map(p=>p.id),sources=await registryByIds(sourceIds);

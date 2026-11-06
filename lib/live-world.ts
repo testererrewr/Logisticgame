@@ -1,8 +1,6 @@
 import type {World} from './game';
 import type {VehicleRun} from './operations';
 
-// Financial counters and moving vehicles change every tick. Everything else
-// requires a complete snapshot before a client can safely draw a newer run.
 export function worldStructure(world:World){
  const text=JSON.stringify([world.name,world.description,world.config,world.status,world.state.vehicleCatalog,world.state.contracts,world.state.usedMarket,world.state.companies.map(({cash,cashRemainder,earned,passengers,ticketRevenue,history,finances,vehicleAccounts,statistics,lineAccounts,...structure})=>({...structure,fleet:structure.fleet?.map(({health,...v})=>v)}))]);
  let hash=2166136261;for(let i=0;i<text.length;i++)hash=Math.imul(hash^text.charCodeAt(i),16777619);

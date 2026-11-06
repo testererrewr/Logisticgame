@@ -10,7 +10,6 @@ import {lineFleetStats,vehicleModel} from './vehicle-models';
 import {depotForLine,distance} from './game';
 import {settleOperations} from './operations';
 const HOUR=3600000,WEEK=168*HOUR;
-// Integrating complete UTC hour buckets makes settlement independent of poll frequency.
 export function hourBuckets(start:number,end:number){const result=new Map<number,{time:number;ms:number}>();function add(t:number,ms:number){const d=new Date(t),key=d.getUTCDay()*24+d.getUTCHours(),prev=result.get(key);result.set(key,{time:t,ms:(prev?.ms||0)+ms});}const weeks=Math.floor((end-start)/WEEK);if(weeks){for(let i=0;i<168;i++)add(Math.floor(start/HOUR)*HOUR+i*HOUR,weeks*HOUR);start+=weeks*WEEK;}while(start<end){const next=Math.min(end,(Math.floor(start/HOUR)+1)*HOUR);add(start,next-start);start=next;}return [...result.values()];}
 export function advanceEnergy(state:WorldState,config:WorldConfig,realTime:number){
  const day=Math.floor(realTime/86400000),week=Math.floor((day+3)/7),base={diesel:1.6,kerosene:.85,electricity:.2};state.energyRealWeek??=week;state.energyRealDay??=day;

@@ -2,7 +2,6 @@ import {env} from 'cloudflare:workers';
 import {currentUser} from '../../online/route';
 const excluded=['sessions','limits','rate_limits','world_write_locks','logistics_world_guards','logistics_trade_guards'];
 const coreNames=new Set(['users','app_settings','worlds','vehicle_catalogs','logistics_worlds','logistics_world_companies','logistics_world_offers','logistics_world_permissions','logistics_container_offers','logistics_runtime','logistics_partner_rules','logistics_rule_revision']);
-/** A private owner download: coherent economy snapshot plus paged, bounded map/cache export. */
 export async function GET(req:Request){
  try{const user=await currentUser(req);if(!user||user.role!=='owner'||user.status!=='active')return Response.json({error:'Nur das Besitzerkonto darf eine vollständige Datensicherung laden.'},{status:403});
  const db=env.DB!,schema=(await db.prepare("SELECT type,name,tbl_name,sql FROM sqlite_master WHERE sql IS NOT NULL AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' ORDER BY type,name").all<{type:string;name:string;tbl_name:string;sql:string}>()).results,tables=schema.filter(r=>r.type==='table'&&!excluded.includes(r.name)).map(r=>r.name);if(tables.some(t=>!/^[a-z_][a-z0-9_]*$/i.test(t)))throw Error('Nicht unterstützter Tabellenname.');

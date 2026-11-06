@@ -1,7 +1,5 @@
 import {photonPlaces,nominatimPlaces,type PlaceResult} from './places';
 
-// Searches are explicit submissions, never autocomplete. The caller enforces
-// the shared 1.1-second provider gate across all Worker isolates.
 export async function providerPlaces(query:string,photon='https://photon.komoot.io/api/',fetcher:typeof fetch=fetch,hedgeMs=700):Promise<PlaceResult[]>{
  const controller=new AbortController();let timer:ReturnType<typeof setTimeout>|undefined;
  const headers={'User-Agent':'Weltverbund/1.0 (+https://play.crackgaming.org)','Accept':'application/json'};

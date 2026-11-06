@@ -31,6 +31,5 @@ export function contractAction(state:WorldState,actor:string,action:Action,now=D
   else throw Error('Diese Vertragsaktion ist nicht möglich.');
  }
  if(action.type!=='contract-offer'){const agreement=state.contracts.find(g=>g.id===action.contract);if(agreement)systemMessage(state,agreement.from===actor?agreement.to:agreement.from,agreement.status==='active'?'Umsteigevertrag angenommen':agreement.status==='withdrawn'?'Angebot zurückgezogen':agreement.status==='declined'?'Angebot abgelehnt':'Umsteigevertrag beendet',own.name+(agreement.status==='active'?' hat dein Angebot angenommen.':agreement.status==='withdrawn'?' hat das Angebot zurückgezogen.':agreement.status==='declined'?' hat das Angebot abgelehnt.':' hat den Vertrag beendet.'),'unternehmen?unternehmen='+encodeURIComponent(actor));}
- // Keep active agreements plus a bounded history.
  state.contracts=[...state.contracts.filter(c=>['active','offered'].includes(c.status)),...state.contracts.filter(c=>!['active','offered'].includes(c.status)).slice(-40)];return true;
 }

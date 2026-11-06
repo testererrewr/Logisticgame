@@ -10,7 +10,6 @@ export function manualLoadingSources(s:State,siteId:string){
 
 export function selectedGoOrders(s:State,siteIds:string[],selected:string[]|undefined,all:boolean){return selected??(all?s.contracts.filter(c=>activeContainerOrder(s,c)&&siteIds.some(id=>(s.consignments[id]?.[c.id]||0)>0)).map(c=>c.id):[]);}
 
-/** Stage explicitly selected neighbouring stock through the existing timed terminal transfer. */
 export function stageManualFreight(s:State,v:Vehicle,line:Line,stop:Stop,goods:GoodId[]|'all',sourceIds:string[]=[]){
  const sources=manualLoadingSources(s,v.locationId),allowed=new Set(sources.slice(1).map(p=>p.id));
  if(!Array.isArray(sourceIds)||sourceIds.length>100||new Set(sourceIds).size!==sourceIds.length||sourceIds.some(id=>!allowed.has(id)))throw Error('Nur benachbarte selbst gebaute eigene Gebäude auswählen.');

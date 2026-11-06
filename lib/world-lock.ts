@@ -1,5 +1,3 @@
-// The database lease works across Worker isolates. Keep revision checks as the
-// final guard if a crashed or stalled request outlives its lease.
 const prepared=new WeakSet<object>();
 export async function withWorldLock<T>(database:D1Database,id:string,waitMs:number,work:()=>Promise<T>):Promise<T|null>{
  if(!prepared.has(database)){await database.prepare('CREATE TABLE IF NOT EXISTS world_write_locks(world TEXT PRIMARY KEY,token TEXT NOT NULL,expires INTEGER NOT NULL)').run();prepared.add(database);}

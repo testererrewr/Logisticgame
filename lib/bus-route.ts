@@ -16,8 +16,6 @@ export function busRoute(c:Company,input:any,mode:RouteMode='shuttle'){
  }
  if(stops.length<2||stops.length>256||stops.some((s,i)=>i>0&&s.id===stops[i-1].id))throw Error('Wähle 2–256 Halte; aufeinanderfolgende Halte müssen verschieden sein.');
  if(points.filter(p=>p.kind==='via').length>256)throw Error('Maximal 256 Wegpunkte.');
- // Reuse the exact street geometry in reverse wherever every edge permits it.
- // A one-way street needs a legal return through the reversed stops/waypoints.
  const forward=worldStreetRoute(nodes,mode==='loop');let back:Pick<typeof forward,'path'|'length'|'segmentKm'>|undefined=undefined;
  if(mode==='shuttle'){try{back=forward.reversible?{path:[...forward.path].reverse(),length:forward.length,segmentKm:[...forward.segmentKm].reverse()}:worldStreetRoute([...nodes].reverse(),false);}catch{throw Error('Keine befahrbare Rückfahrt gefunden. Prüfe Einbahnstraßen und Wegpunkte für die umgekehrte Haltestellenfolge.');}}
  function aggregate(items:RoutePoint[],legs:number[],loop:boolean){const result:number[]=[];let total=0;for(let i=0;i<legs.length;i++){total+=legs[i];if(items[(i+1)%items.length].kind==='stop'){result.push(total);total=0;}}return result;}

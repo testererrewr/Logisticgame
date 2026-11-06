@@ -39,8 +39,6 @@ export function railGraph(c:Company):RailGraph{
  for(const track of c.tracks||[])for(let i=1;i<track.points.length;i++){const a=track.points[i-1],b=track.points[i];if(valid(a)&&valid(b)&&sphericalDistance(a,b)>.1)segments.push({track,a,b,cuts:[{t:0,p:a},{t:1,p:b}]});}
  const add=(s:Segment,t:number,p:LatLon)=>s.cuts.push({t,p});
  const cross=(a:LatLon,b:LatLon)=>a[0]*b[1]-a[1]*b[0];
- // Split both tracks at crossings, T-junctions, and collinear overlap endpoints.
- // Shared physical vertices, rather than track record IDs, define connectivity.
  for(let i=0;i<segments.length;i++)for(let j=i+1;j<segments.length;j++){
   const a=segments[i],b=segments[j],v=xy(a.b,a.a),q=xy(b.a,a.a),r=xy(b.b,a.a),w:LatLon=[r[0]-q[0],r[1]-q[1]],den=cross(v,w);
   if(Math.abs(den)>.00001){const t=cross(q,w)/den,u=cross(q,v)/den;if(t>=0&&t<=1&&u>=0&&u<=1){const p=ll([t*v[0],t*v[1]],a.a);add(a,t,p);add(b,u,p);}}

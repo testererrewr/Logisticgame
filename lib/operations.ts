@@ -40,7 +40,6 @@ export function runPlan(c:Company,l:Line,speed:number,acceleration=accelerationB
  const order=stops.map((_,i)=>i);if(loop)order.push(0);append(path,forward,order,l.segmentKm?.length===order.length-1?l.segmentKm:Array(order.length-1).fill(1));
  const returnAt=shuttle?at:undefined;
  if(shuttle){const back=l.returnPath?.length?l.returnPath:[...path].reverse(),reverse=[...stops.keys()].reverse();append(back,lengths(back),reverse,l.returnSegmentKm?.length===reverse.length-1?l.returnSegmentKm:Array(reverse.length-1).fill(1));}
- // The last repeated visit is the first visit of the next cycle.
  const duration=repeat?at:at+dwell;if(repeat)visits.pop();
  const result={visits,legs,duration:Math.max(1000,duration),repeat,signature,calls:stops,dwell,returnAt};plans.set(signature,result);if(plans.size>512)plans.delete(plans.keys().next().value!);return result;
 }
@@ -64,16 +63,12 @@ export function syncRuns(state:WorldState,time=state.simTime||Date.now()){
 }
 function callIndex(plan:RunPlan,p:LatLon){let index=0,best=Infinity;for(let i=0;i<plan.calls.length;i++){const d=meters(plan.calls[i],p);if(d<best){best=d;index=i;}}return index;}
 function destination(plan:RunPlan,index:number,to:number){for(let i=index+1;i<=index+plan.visits.length;i++){if(!plan.repeat&&i>=plan.visits.length)break;if(meters(plan.calls[plan.visits[i%plan.visits.length].call],plan.calls[to])<1)return i;}return undefined;}
-// Only arrivals sell completed rides. Forecasts supply finite competing demand to
-// queues; they never credit cash. Fractional demand is carried until a whole person arrives.
 export function settleOperations(state:WorldState,config:any,start:number,end:number){
  const ops=syncRuns(state,start),entries:{c:Company;l:Line;id:string;run:VehicleRun;plan:RunPlan;capacity:number;kmCost:number;maintenanceKm:number;vehicle:import('./fleet').Vehicle}[]=[],flowCache=new Map<number,Map<string,PassengerFlow[]>>();
  for(const c of state.companies)for(const v of c.fleet||[]){const run=ops.vehicles[v.id],l=c.lines.find(l=>l.id===run?.line);if(!run||!l)continue;const model=vehicleModel(v,state.vehicleCatalog?.models),plan=runPlan(c,l,l.mode==='bus'&&l.city?urbanSpeed(model):model.speed,model.acceleration,model.braking,false,false,model.lengthM||0);if(plan)entries.push({c,l,id:v.id,run,plan,capacity:model.capacity,vehicle:v,maintenanceKm:model.costPerKm,kmCost:energyCostPerKm(model,config.energy)});}
  function flows(t:number,line:string){const slot=0;let byLine=flowCache.get(slot);if(!byLine){byLine=new Map();for(const flow of networkForecast(state,config,t).flows){const list=byLine.get(flow.line)||[];list.push(flow);byLine.set(flow.line,list);}flowCache.set(slot,byLine);}return byLine.get(line)||[];}
  function item(q:Queue,flow:{line:string;from:LatLon;to:LatLon},plan:RunPlan,hops:number,sourceCompany?:string){const key=flowKey(flow),id=key+':'+hops+(sourceCompany?':'+sourceCompany:'');return q.items[id]??={sourceCompany,from:callIndex(plan,flow.from),to:callIndex(plan,flow.to),flow:key,hops,waiting:0,credit:0,pending:[]};}
  function accrue(q:Queue,line:string,plan:RunPlan,to:number){
-  // Pool whole arrivals across OD pairs. Otherwise 100 low-volume destinations
-  // can all remain empty for hours despite substantial combined demand.
   q.originCredit??=Object.values(q.items).reduce((s,v)=>s+v.credit,0);
   while(q.at<to){const until=Math.min(to,(Math.floor(q.at/HOUR)+1)*HOUR),fraction=(until-q.at)/DAY;for(const flow of flows(q.at,line)){if(!flow.origin)continue;const entry=item(q,flow,plan,0);if(entry.from===entry.to)continue;const amount=flow.origin*fraction;entry.credit+=amount;q.originCredit+=amount;}
    const whole=Math.floor(q.originCredit+1e-9);q.originCredit-=whole;const choices=Object.values(q.items).filter(v=>v.hops===0&&v.from!==v.to);for(let i=0;i<whole&&choices.length;i++){let selected=choices[0];for(const choice of choices)if(choice.credit>selected.credit)selected=choice;selected.waiting++;selected.credit--;}
@@ -86,8 +81,6 @@ export function settleOperations(state:WorldState,config:any,start:number,end:nu
  function rideKm(plan:RunPlan,from:number,to:number){let km=0;for(let i=from;i<to;i++)km+=plan.legs[i%plan.legs.length]?.km||0;return km;}
  function boundary(plan:RunPlan,l:Line,from:number,to:number){for(let i=from+1;i<to;i++){const call=plan.visits[i%plan.visits.length].call;if(call===0||l.routeMode!=='loop'&&l.mode!=='bus'&&call===plan.calls.length-1||l.routeMode==='shuttle'&&call===plan.calls.length-1)return i;}return to;}
 
- // A heap and a bounded replay keep a fast world responsive after a long absence.
- // Unprocessed events remain persisted and are replayed on the next request.
  const heap:typeof entries=[];const when=(e:typeof entries[number])=>eventAt(e.plan,e.run);function push(e:typeof entries[number]){heap.push(e);let i=heap.length-1;while(i){const p=(i-1)>>1;if(when(heap[p])<=when(e))break;heap[i]=heap[p];i=p;}heap[i]=e;}function pop(){const first=heap[0],last=heap.pop()!;if(heap.length){let i=0;while(i*2+1<heap.length){let j=i*2+1;if(j+1<heap.length&&when(heap[j+1])<when(heap[j]))j++;if(when(last)<=when(heap[j]))break;heap[i]=heap[j];i=j;}heap[i]=last;}return first;}
  for(const entry of entries)push(entry);let count=0;
  while(heap.length&&when(heap[0])<=end&&count++<20000){const entry=pop(),{c,l,run,plan,capacity}=entry,time=when(entry),visit=plan.visits[run.next%plan.visits.length],q=ops.queues[l.id];accrue(q,l.id,plan,time);
@@ -99,8 +92,6 @@ export function settleOperations(state:WorldState,config:any,start:number,end:nu
    else transfer(p,c,time,l.id);
   }run.onboard=run.onboard.filter(p=>p.exit>run.next&&!terminal);
   let seats=Math.max(0,capacity-run.onboard.reduce((s,p)=>s+p.count,0));const boarded:Record<UsageKind,number>={direct:0,own:0,partner:0};const eligible=Object.values(q.items).filter(item=>(!item.sourceCompany||canTransfer(state,item.sourceCompany,c.id))&&meters(plan.calls[item.from],plan.calls[visit.call])<1&&item.waiting>0&&destination(plan,run.next,item.to)!==undefined),total=eligible.reduce((s,p)=>s+p.waiting,0);
-  // Proportional allocation plus deterministic largest remainders avoids starving
-  // a destination merely because its ID happens to sort last.
   const allocations=eligible.map(item=>{const exact=total?Math.min(seats,total)*item.waiting/total:0;return {item,n:Math.floor(exact),remainder:exact%1};});let remaining=Math.min(seats,total)-allocations.reduce((s,a)=>s+a.n,0);for(const a of [...allocations].sort((a,b)=>b.remainder-a.remainder||a.item.to-b.item.to))if(remaining-->0)a.n++;
   for(const {item,n}of allocations){if(!n)continue;item.waiting-=n;const target=destination(plan,run.next,item.to)!,exit=boundary(plan,l,run.next,target),totalKm=rideKm(plan,run.next,target),firstKm=rideKm(plan,run.next,exit),fullFare=item.continuation?(item.paidFare??0):ticket(l,totalKm),fare=exit===target?fullFare:Math.round(fullFare*firstKm/Math.max(.001,totalKm)*100)/100;
    const flow=flows(time,l.id).find(f=>flowKey(f)===item.flow),bonuses=flow?.bonuses?Object.fromEntries(Object.entries(flow.bonuses).map(([id,n])=>[id,n/Math.max(.000001,flow.passengers)])):undefined;run.onboard.push({bonuses,exit,toCall:item.to,count:n,fare,remainingFare:Math.max(0,fullFare-fare),flow:item.flow,hops:item.hops,continuation:item.continuation});run.boarded+=n;if(!item.continuation)c.passengers+=n;if(item.continuation)(boarded as any).continuation=((boarded as any).continuation||0)+n;else boarded[item.hops===0?'direct':!item.sourceCompany||item.sourceCompany===c.id?'own':'partner']+=n;
@@ -113,7 +104,6 @@ export function settleOperations(state:WorldState,config:any,start:number,end:nu
   run.lastEvent=time;run.next++;if(eventAt(plan,run)<=end)push(entry);
  }
  ops.backlog=heap.some(e=>when(e)<=end);
- // Advance arrivals between vehicle visits, but never beyond unreplayed events.
  if(!ops.backlog)for(const {l,plan}of byLine.values())accrue(ops.queues[l.id],l.id,plan,end);
  const stationData=stationWaitingData(state);state.waiting=stationData.counts;state.waitingTop=stationData.top;const waiting=new Map<string,number>();for(const lines of Object.values(state.waiting))for(const [id,n]of Object.entries(lines))waiting.set(id,(waiting.get(id)||0)+n);state.pressure??={};for(const id of byLine.keys()){const n=waiting.get(id)||0,old=state.pressure[id];if(!old)state.pressure[id]={at:end,waiting:n};else if(end-old.at>=300000)state.pressure[id]={at:end,waiting:n,previousAt:old.at,previousWaiting:old.waiting};}for(const id of Object.keys(state.pressure))if(!byLine.has(id))delete state.pressure[id];
 }

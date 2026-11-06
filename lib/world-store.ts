@@ -39,5 +39,4 @@ export async function updateWorld(id:string,fn:(state:WorldState,row:any)=>void,
 export async function refreshWorld(id:string,force=false){const saved=await readWorld(id);if(!force&&saved.state.forecast&&!saved.state.operations?.backlog&&saved.state.clockVersion===2&&Date.now()-saved.state.lastTick<1500)return saved;const result=await withWorldLock(db(),id,0,()=>updateWorldUnlocked(id,()=>{}));return result||{...saved,syncPending:Date.now()-saved.state.lastTick>12000||!saved.state.forecast};}
 
 
-// No map hydration, forecasts or writes: opening a world remains independent of offline replay.
 export async function readWorldSnapshot(id:string){return {...await readWorld(id),syncPending:true};}

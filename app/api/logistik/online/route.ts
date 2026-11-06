@@ -10,7 +10,7 @@ import {newMarket,resetMarket} from '../../../../lib/logistics/business-rules';
 import {ensureContainerDay,acceptContainerOrder,factoryPartner,type ContainerOffer} from '../../../../lib/logistics/container-market';
 import {registryByIds} from '../../../../lib/logistics/partner-registry';
 import {NextRequest,NextResponse} from 'next/server';
-import {env} from 'cloudflare:workers';
+import {env,waitUntil} from 'cloudflare:workers';
 import {MAX_FLEET_VEHICLES,GOODS,VEHICLES,depotFor,profile,stock,normalizeFreightState,routePartners,mergeSites,stepSharedWorld,type Coords,type GoodId,type Site,type State,type Track} from '../../../../lib/logistics/engine.ts';
 import {applyAction,type OnlineAction,type OnlineCommand} from '../../../../lib/logistics/online-actions.ts';
 import {settleTrade,tradeTerminal} from '../../../../lib/logistics/cooperation.ts';
@@ -59,16 +59,15 @@ export async function adjustAdminCompanyCash(actor:User,body:{worldId:string;use
  }
  throw Error('Buchung bitte erneut versuchen.');
 }
-// Advance every company in one atomic world batch. Wall clock determines the
-// target even while nobody is online; requests materialize the elapsed days.
-// Single-flight: concurrent requests for the same world share one settlement
-// instead of each recomputing (and conflicting on) the whole world.
 const settling=new Map<string,Promise<World>>();
-export function settleWorld(id:string):Promise<World>{const running=settling.get(id);if(running)return running;const job=settleWorldNow(id).finally(()=>settling.delete(id));settling.set(id,job);return job;}
+const behind=new Set<string>();
+export function settleWorld(id:string):Promise<World>{const running=settling.get(id);if(running)return running;const job=settleWorldNow(id).finally(()=>{settling.delete(id);if(behind.delete(id))waitUntil(new Promise(r=>setTimeout(r,250)).then(()=>settleWorld(id)).catch(()=>{}));});settling.set(id,job);return job;}
+export function catchUpHours(world:World,now=Date.now()){return Math.max(0,(clockTarget(world,now)-world.day)*24);}
 async function settleWorldNow(id:string):Promise<World>{
- const settleAt=Date.now();
- for(let attempt=0;attempt<12;attempt++){
-  const world=await readWorld(id);if(!world)throw Error('Diese Welt existiert nicht.');if(settleAt-world.last_tick<1000)return world;
+ const settleAt=Date.now();let latest:World|undefined;
+ for(let attempt=0;attempt<2000;attempt++){
+  const world=await readWorld(id);if(!world)throw Error('Diese Welt existiert nicht.');latest=world;if(settleAt-world.last_tick<1000)return world;
+  if(attempt>0&&Date.now()-settleAt>6000){behind.add(id);return world;}
   const target=clockTarget(world,settleAt);if(target<=world.day+1e-8)return world;
   const next=Math.min(target,world.day+1/24),rows=await readCompanies(id);
   const permissions=(await db().prepare('SELECT owner_id,grantee_id FROM logistics_world_permissions WHERE world_id=? AND enabled=1').bind(id).all<{owner_id:string;grantee_id:string}>()).results;
@@ -86,7 +85,8 @@ async function settleWorldNow(id:string):Promise<World>{
   await ensureContainerDay(id,next,rules);
 
  }
- throw Error('Die Welt wird nach längerer Abwesenheit nachgerechnet. Bitte gleich erneut öffnen.');
+ if(latest){behind.add(id);return latest;}
+ throw Error('Diese Welt existiert nicht.');
 }
 async function join(world:World,u:User,name:string){
  const row=await readCompany(world.id,u.id);if(row)return;
@@ -108,7 +108,7 @@ async function snapshot(u:User,worldId:string){
  const world=results[0].results[0] as unknown as World,row=results[1].results[0] as unknown as Company;
  if(!row)throw Error('Bitte zuerst dieser Welt beitreten.');
  const rules=await readPartnerRules();const state=applyStateRules(normalizeFreightState(JSON.parse(row.state) as State),rules);state.borrowedTracks=await borrowedTracks(worldId,u.id);
- return {state,partnerRules:rules,market:{...newMarket(world.day),...JSON.parse(world.market||'{}')},companyName:row.name||state.companyName||u.name,revision:row.revision,user:u.name,userId:u.id,role:u.role,serverNow:Date.now(),world:{revision:world.revision,id:world.id,name:world.name,day:world.day,timeScale:world.time_scale,simTime:world.created+(world.day-1)*86400000,status:world.status,tickMs:worldTickMs(world)},companies:results[2].results,offers:results[3].results.map((raw:unknown)=>{const o=raw as Offer;return ({...o,quantity:Number(o.quantity)*(o.quantity_unit==='EH'?1:10)});}),permissions:results[4].results};
+ return {state,partnerRules:rules,market:{...newMarket(world.day),...JSON.parse(world.market||'{}')},companyName:row.name||state.companyName||u.name,revision:row.revision,user:u.name,userId:u.id,role:u.role,serverNow:Date.now(),world:{catchUpHours:Math.round(catchUpHours(world)*10)/10,revision:world.revision,id:world.id,name:world.name,day:world.day,timeScale:world.time_scale,simTime:world.created+(world.day-1)*86400000,status:world.status,tickMs:worldTickMs(world)},companies:results[2].results,offers:results[3].results.map((raw:unknown)=>{const o=raw as Offer;return ({...o,quantity:Number(o.quantity)*(o.quantity_unit==='EH'?1:10)});}),permissions:results[4].results};
 }
 function validPoint(p:unknown):p is Coords{return Array.isArray(p)&&p.length===2&&p.every(x=>typeof x==='number'&&Number.isFinite(x))&&Math.abs(p[0])<=85&&Math.abs(p[1])<=180;}
 async function verifySites(command:OnlineAction):Promise<Site[]|undefined>{
@@ -126,7 +126,6 @@ async function verifyRoads(command:OnlineAction,state:State):Promise<OnlineActio
  if(command.type==='assign'){const v=state.vehicles.find(v=>v.id===command.vehicleId),l=state.lines.find(l=>l.id===command.lineId),a=state.sites.find(p=>p.id===v?.locationId),model=VEHICLES.find(m=>m.id===v?.modelId),b=l?state.sites.find(p=>p.id===l.stops[0]?.siteId):v&&depotFor(state,model!.mode,a);if(model&&['van','truck'].includes(model.mode)&&a&&b)await connectRoad(state,a,b);return command;}
  if(command.type!=='line'||!['van','truck'].includes(command.mode))return command;
  const stops=command.stops.filter(st=>st.siteId);if(stops.length<2)throw Error('Mindestens zwei Standorte als Stopps auswählen.');const legs=(await Promise.all(stops.map(async(st,i)=>{const from=state.sites.find(s=>s.id===st.siteId),to=state.sites.find(s=>s.id===stops[(i+1)%stops.length].siteId);if(!from||!to)throw Error('Linienstandort unbekannt.');return connectRoad(state,from,to);}))).filter((leg):leg is NonNullable<typeof leg>=>!!leg);
- // Depot access is checked for the actual vehicle on assignment/return, rather than blocking every line edit.
  return {...command,stops,legs};
 }
 
@@ -210,7 +209,6 @@ export async function POST(req:NextRequest){try{
  return reply(await snapshot(u,id));
  }catch(e:any){return reply({error:e.message||'Online-Aktion fehlgeschlagen.'},422);}}
 
-/** Called by the Worker scheduler, independently of browser sessions. */
 export async function settleAllWorlds(source='scheduled'){
  const rows=(await db().prepare("SELECT id FROM logistics_worlds WHERE status='running' ORDER BY last_tick LIMIT 50").all<{id:string}>()).results;
  const completed:string[]=[],errors:{id:string;error:string}[]=[];

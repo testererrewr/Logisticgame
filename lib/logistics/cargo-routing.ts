@@ -4,7 +4,6 @@ import {terminalReserved} from './terminal-transfer';
 import {cargoCapacity,demandFor,storageCapacity,vehicleCargo,RECIPES,potentialLoadGoods,type State,type Vehicle,type Line,type Stop,type GoodId} from './engine';
 import {remainingDemand,newMarket,type DailyMarket} from './business-rules';
 const active=(s:State,c:State['contracts'][number])=>!c.cancelled&&c.startDay<=s.day&&c.endDay>=s.day;
-/** Capacity of matching subsequent unload stops. Sources never load stranded freight. */
 export function receivingCapacity(s:State,v:Vehicle,line:Line,load:Stop,id:GoodId,market?:DailyMarket,orderId?:string){
  const current=line.stops[v.nextStop],index=current?.siteId===load.siteId&&current.action==='load'?v.nextStop:line.stops.findIndex(st=>st.siteId===load.siteId&&st.action==='load');
  if(index<0)return 0;let capacity=0;const seen=new Set<string>(),book=market||s.localMarket||newMarket(s.day);

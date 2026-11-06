@@ -7,7 +7,6 @@ const signature=(l:Line)=>hash(JSON.stringify([l.stops,l.stopWhenDemandMet,l.sto
 function siblings(s:State,l:Line){return s.vehicles.filter(v=>!v.detaching&&effectiveLine(v)===l.id&&v.status!=='returning');}
 export function coordinated(s:State,l:Line){return !isManualLine(l)&&!!(l.stopWhenDemandMet||l.stopWhenSourcesEmpty)&&siblings(s,l).length>1;}
 function valid(s:State,l:Line,p:ServicePlan|undefined){return !!p&&p.lineId===l.id&&p.day===Math.floor(s.day)&&p.signature===signature(l);}
-/** Claims reserve remaining station work for a vehicle, not additional stock or production. */
 export function ensureServicePlan(s:State,v:Vehicle,l:Line,market?:DailyMarket){
  if(!coordinated(s,l)){v.servicePlan=undefined;return;}
  const kind=l.stopWhenDemandMet?'distribute':'collect',fleet=siblings(s,l),book=market||s.localMarket||newMarket(s.day),sites=new Map(s.sites.map(p=>[p.id,p]));

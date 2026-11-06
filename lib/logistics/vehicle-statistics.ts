@@ -1,6 +1,5 @@
 import type {Vehicle} from './engine';
 
-/** Real wall-clock age; deliberately independent of world speed or pause state. */
 export function vehicleAgeDays(v:Vehicle,now=Date.now()){
  return Math.max(0,Math.floor((now-(v.purchasedAt??v.statisticsSince??now))/86400000));
 }
@@ -14,7 +13,6 @@ export function ensureVehicleStatistics(v:Vehicle,day:number,now=Date.now()){
  if(v.odometerKm===undefined){v.odometerKm=0;v.legRecordedKm=legDistance(v,day);}
  v.transportedEh??=0;
 }
-/** Add only the newly travelled part, including empty and depot journeys. */
 export function recordVehicleDistance(v:Vehicle,day:number){
  const distance=legDistance(v,day);
  v.odometerKm=(v.odometerKm||0)+Math.max(0,distance-(v.legRecordedKm||0));

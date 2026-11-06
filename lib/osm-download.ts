@@ -20,10 +20,8 @@ export async function downloadOsm(box:OsmBox,query:string,custom?:string,fetcher
  }
 
  const url=(b:OsmBox)=>'https://api.openstreetmap.org/api/0.6/map.json?bbox='+[b.west,b.south,b.east,b.north].map(n=>n.toFixed(6)).join(',');
- const attempts=[overpass(custom||'https://overpass-api.de/api/interpreter').then(v=>{if(!v)throw Error('Overpass unavailable');return v;}),(async()=>{await new Promise(resolve=>setTimeout(resolve,500));try{return osmGeometry(await request(url(box),18000));}catch(e:any){failures.push('OSM map: '+e.message);if(e.status===400){await split(box,1);return {elements:[...objects.values()]};}throw e;}})()];try{return await Promise.any(attempts);}catch{/* Both complete sources failed; try alternate and cached parts. */}
+ const attempts=[overpass(custom||'https://overpass-api.de/api/interpreter').then(v=>{if(!v)throw Error('Overpass unavailable');return v;}),(async()=>{await new Promise(resolve=>setTimeout(resolve,500));try{return osmGeometry(await request(url(box),18000));}catch(e:any){failures.push('OSM map: '+e.message);if(e.status===400){await split(box,1);return {elements:[...objects.values()]};}throw e;}})()];try{return await Promise.any(attempts);}catch{}
  const secondary=await overpass('https://maps.mail.ru/osm/tools/overpass/api/interpreter');if(secondary)return secondary;
- // Dense areas can exceed the map API's node limit. Fetch smaller pieces only
- // after the full-area providers fail. Every piece must succeed before saving.
  function merge(raw:any){for(const e of raw.elements)objects.set(e.type+':'+e.id,{type:e.type,id:e.id,tags:e.tags,nodes:e.nodes,geometry:e.geometry,members:e.members,lat:e.lat,lon:e.lon});}
  async function piece(b:OsmBox,depth:number):Promise<void>{
   const saved=await partCache?.get(b);if(saved){merge(saved);return;}

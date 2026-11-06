@@ -3,7 +3,6 @@ export const WORLD_ROOTS=170*360;
 export interface WorldCell extends PartnerTile {depth:number;attempt?:number;nextTry?:number}
 export interface WorldImportProgress {enabled:boolean;cursor:number;completedRoots:number;completedCells:number;savedObjects:number;pending:WorldCell[];nextTry:number;attempt:number;lastError?:string;updated:number}
 export const newWorldImport=():WorldImportProgress=>({enabled:true,cursor:0,completedRoots:0,completedCells:0,savedObjects:0,pending:[],nextTry:0,attempt:0,updated:0});
-/** Start around Graz, then visit every 1° cell exactly once within map bounds. */
 export function worldRoot(cursor:number):WorldCell{if(!Number.isInteger(cursor)||cursor<0||cursor>=WORLD_ROOTS)throw Error('Ungültiger Weltimport-Cursor.');const south=(132+Math.floor(cursor/360))%170-85,west=(195+cursor%360)%360-180;return {id:'world-root-v10:'+cursor,south,west,north:south+1,east:west+1,depth:0};}
 export function splitWorldCell(cell:WorldCell):WorldCell[]{const lat=(cell.south+cell.north)/2,lon=(cell.west+cell.east)/2;return [[cell.south,cell.west,lat,lon],[cell.south,lon,lat,cell.east],[lat,cell.west,cell.north,lon],[lat,lon,cell.north,cell.east]].map(([south,west,north,east],i)=>({id:cell.id+'.'+i,south,west,north,east,depth:cell.depth+1}));}
 export function prepareWorldCell(p:WorldImportProgress,now=Date.now()){
