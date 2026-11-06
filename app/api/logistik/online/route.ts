@@ -63,19 +63,22 @@ const settling=new Map<string,Promise<World>>();
 const behind=new Set<string>();
 export function settleWorld(id:string):Promise<World>{const running=settling.get(id);if(running)return running;const job=settleWorldNow(id).finally(()=>{settling.delete(id);if(behind.delete(id))waitUntil(new Promise(r=>setTimeout(r,250)).then(()=>settleWorld(id)).catch(()=>{}));});settling.set(id,job);return job;}
 export function catchUpHours(world:World,now=Date.now()){return Math.max(0,(clockTarget(world,now)-world.day)*24);}
+const catchRate=new Map<string,number>();
+export function catchUpSeconds(world:World){const hours=catchUpHours(world);if(hours<=0)return 0;const rate=catchRate.get(world.id)||.5,net=rate-(world.time_scale||1)/3600;return net>0?Math.ceil(hours/net):null;}
 async function settleWorldNow(id:string):Promise<World>{
- const settleAt=Date.now();let latest:World|undefined;
+ const settleAt=Date.now();let latest:World|undefined,startDay:number|undefined;
+ const measure=(w:World)=>{const seconds=(Date.now()-settleAt)/1000;if(startDay!==undefined&&seconds>.5){const rate=(w.day-startDay)*24/seconds,old=catchRate.get(id);catchRate.set(id,old?old*.6+rate*.4:rate);}};
  for(let attempt=0;attempt<2000;attempt++){
-  const world=await readWorld(id);if(!world)throw Error('Diese Welt existiert nicht.');latest=world;if(settleAt-world.last_tick<1000)return world;
-  if(attempt>0&&Date.now()-settleAt>6000){behind.add(id);return world;}
+  const world=await readWorld(id);if(!world)throw Error('Diese Welt existiert nicht.');latest=world;startDay??=world.day;if(settleAt-world.last_tick<1000)return world;
+  if(attempt>0&&Date.now()-settleAt>6000){measure(world);behind.add(id);return world;}
   const target=clockTarget(world,settleAt);if(target<=world.day+1e-8)return world;
-  const next=Math.min(target,world.day+1/24),rows=await readCompanies(id);
+  const next=Math.min(target,world.day+1/72),rows=await readCompanies(id);
   const permissions=(await db().prepare('SELECT owner_id,grantee_id FROM logistics_world_permissions WHERE world_id=? AND enabled=1').bind(id).all<{owner_id:string;grantee_id:string}>()).results;
   const rules=await readPartnerRules(),market={...newMarket(world.day),...JSON.parse(world.market||'{}')};
   const states=new Map(rows.map(r=>[r.user_id,applyStateRules(normalizeFreightState(JSON.parse(r.state) as State),rules)]));
   const statements:D1PreparedStatement[]=[];
   for(const row of rows){const state=states.get(row.user_id)!;state.borrowedTracks=permissions.filter(p=>p.grantee_id===row.user_id).flatMap(p=>states.get(p.owner_id)?.tracks||[]);}
-  for(const state of states.values())await prepareVehicleRoads(state);
+  if(attempt===0)for(const state of states.values())await prepareVehicleRoads(state);
   const advanced=stepSharedWorld(states,next,market);
   for(const row of rows){const state=advanced.get(row.user_id)!;delete state.borrowedTracks;statements.push(db().prepare('UPDATE logistics_world_companies SET state=?,updated=? WHERE world_id=? AND user_id=?').bind(JSON.stringify(state),Date.now(),id,row.user_id));}
   const deadlines=[...advanced.values()].flatMap(s=>s.contracts.filter(c=>c.kind==='haulage'&&!c.cancelled&&c.endDay>=s.day&&c.delivered<(c.total||0)).map(c=>({id:c.id,deadline:c.endDay})));if(deadlines.length)statements.push(db().prepare("UPDATE logistics_container_offers SET deadline=(SELECT json_extract(value,'$.deadline') FROM json_each(?) WHERE json_extract(value,'$.id')=logistics_container_offers.id) WHERE world_id=? AND status='accepted' AND id IN (SELECT json_extract(value,'$.id') FROM json_each(?) WHERE json_extract(value,'$.deadline')>logistics_container_offers.deadline)").bind(JSON.stringify(deadlines),id,JSON.stringify(deadlines)));
@@ -97,7 +100,8 @@ async function join(world:World,u:User,name:string){
  if((count?.n||0)>=50)throw Error('Diese Welt ist voll (50 Speditionen).');
  await commit(world,[],[db().prepare('INSERT OR IGNORE INTO logistics_world_companies(world_id,user_id,name,state,revision,updated) VALUES(?,?,?,?,0,?)').bind(world.id,u.id,name.trim(),JSON.stringify(companyAtDay(world.day,name.trim())),Date.now())]);
 }
-async function snapshot(u:User,worldId:string){
+function geometrySignature(s:State){let h=2166136261;const add=(t:string)=>{for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619);}};for(const r of s.roadRoutes||[])add(r.fromId+'>'+r.toId+':'+r.path.length+';');for(const l of s.lines){add('|'+l.id);for(const r of l.legs||[])add(r.fromId+'>'+r.toId+':'+r.path.length+';');}return (h>>>0).toString(36)+'.'+(s.roadRoutes?.length||0)+'.'+s.lines.length;}
+async function snapshot(u:User,worldId:string,geo=''){
  const results=await db().batch([
   db().prepare('SELECT * FROM logistics_worlds WHERE id=?').bind(worldId),
   db().prepare('SELECT * FROM logistics_world_companies WHERE world_id=? AND user_id=?').bind(worldId,u.id),
@@ -108,7 +112,8 @@ async function snapshot(u:User,worldId:string){
  const world=results[0].results[0] as unknown as World,row=results[1].results[0] as unknown as Company;
  if(!row)throw Error('Bitte zuerst dieser Welt beitreten.');
  const rules=await readPartnerRules();const state=applyStateRules(normalizeFreightState(JSON.parse(row.state) as State),rules);state.borrowedTracks=await borrowedTracks(worldId,u.id);
- return {state,partnerRules:rules,market:{...newMarket(world.day),...JSON.parse(world.market||'{}')},companyName:row.name||state.companyName||u.name,revision:row.revision,user:u.name,userId:u.id,role:u.role,serverNow:Date.now(),world:{catchUpHours:Math.round(catchUpHours(world)*10)/10,revision:world.revision,id:world.id,name:world.name,day:world.day,timeScale:world.time_scale,simTime:world.created+(world.day-1)*86400000,status:world.status,tickMs:worldTickMs(world)},companies:results[2].results,offers:results[3].results.map((raw:unknown)=>{const o=raw as Offer;return ({...o,quantity:Number(o.quantity)*(o.quantity_unit==='EH'?1:10)});}),permissions:results[4].results};
+ const geometrySig=geometrySignature(state),geometryOmitted=!!geo&&geo===geometrySig;if(geometryOmitted){delete state.roadRoutes;for(const l of state.lines)delete l.legs;}
+ return {geometrySig,geometryOmitted,state,partnerRules:rules,market:{...newMarket(world.day),...JSON.parse(world.market||'{}')},companyName:row.name||state.companyName||u.name,revision:row.revision,user:u.name,userId:u.id,role:u.role,serverNow:Date.now(),world:{catchUpHours:Math.round(catchUpHours(world)*10)/10,catchUpSeconds:catchUpSeconds(world),revision:world.revision,id:world.id,name:world.name,day:world.day,timeScale:world.time_scale,simTime:world.created+(world.day-1)*86400000,status:world.status,tickMs:worldTickMs(world)},companies:results[2].results,offers:results[3].results.map((raw:unknown)=>{const o=raw as Offer;return ({...o,quantity:Number(o.quantity)*(o.quantity_unit==='EH'?1:10)});}),permissions:results[4].results};
 }
 function validPoint(p:unknown):p is Coords{return Array.isArray(p)&&p.length===2&&p.every(x=>typeof x==='number'&&Number.isFinite(x))&&Math.abs(p[0])<=85&&Math.abs(p[1])<=180;}
 async function verifySites(command:OnlineAction):Promise<Site[]|undefined>{
@@ -148,7 +153,7 @@ export async function GET(req:NextRequest){try{
   return reply({user:u.name,worlds:rows.results.filter(w=>['owner','admin'].includes(u.role)||w.status!=='draft').map(w=>({...w,day:clockTarget(w,Date.now())})),singleplayerEnabled:false,isAdmin:['owner','admin'].includes(u.role)});
  }
  await settleWorld(id);if(!await readCompany(id,u.id))return reply({error:'Bitte zuerst dieser Welt beitreten.'},403);
- return reply(await snapshot(u,id));
+ return reply(await snapshot(u,id,(req.nextUrl.searchParams.get('geo')||'').slice(0,60)));
  }catch(e:any){return reply({error:e.message||'Welt nicht erreichbar.'},503);}}
 export async function POST(req:NextRequest){try{
  const raw=await req.text();if(raw.length>1000000)return reply({error:'Aktion zu groß.'},413);
