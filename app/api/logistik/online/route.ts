@@ -1,6 +1,6 @@
 import {sameOrigin} from '../../../../lib/same-origin';
 import {encodeCompany,decodeCompany} from '../../../../lib/logistics/company-codec';
-import {makeUsedOffer,buyUsedVehicle,withdrawUsedVehicle} from '../../../../lib/logistics/vehicle-sales';
+import {makeUsedOffer,buyUsedVehicle,withdrawUsedVehicle,dealerValue} from '../../../../lib/logistics/vehicle-sales';
 import {readUsedVehicleOffer,readUsedVehicleOffers,saveUsedVehicleOffer} from '../../../../lib/logistics/used-vehicle-store';
 import {harborKind,checkHarborPlacement} from '../../../../lib/logistics/harbor-placement';
 import {adjustCompanyCash} from '../../../../lib/logistics/admin-cash';
@@ -181,6 +181,12 @@ export async function POST(req:NextRequest){try{
  if(cmd.type==='offerUsedVehicle'){
   const offers=await readUsedVehicleOffers(id);if(offers.filter(o=>o.sellerId===u.id).length>=100)throw Error('Höchstens 100 offene Fahrzeugangebote je Spedition.');
   if(await db().prepare('SELECT id FROM logistics_runtime WHERE id=?').bind('used-vehicle-v20:'+id+':'+body.requestId).first())throw Error('Anfragekennung bereits verwendet.');const offer=makeUsedOffer(state,cmd.vehicleId,cmd.price,id,u.id,row.name||u.name,body.requestId);statements.push(await update(row,state),saveUsedVehicleOffer(offer));
+ }else if(cmd.type==='offerUsedFleet'){
+  const ids=cmd.vehicleIds,pct=Number(cmd.percent);if(!Array.isArray(ids)||!ids.length||ids.length>100||new Set(ids).size!==ids.length||ids.some(x=>typeof x!=='string'))throw Error('1–100 unterschiedliche Fahrzeuge auswählen.');if(!Number.isFinite(pct)||pct<-90||pct>1000)throw Error('Aufschlag zwischen −90 % und 1000 % wählen.');
+  const offers=await readUsedVehicleOffers(id);if(offers.filter(o=>o.sellerId===u.id).length+ids.length>100)throw Error('Höchstens 100 offene Fahrzeugangebote je Spedition.');
+  if(await db().prepare('SELECT id FROM logistics_runtime WHERE id=?').bind('used-vehicle-v20:'+id+':'+body.requestId+'-0').first())throw Error('Anfragekennung bereits verwendet.');
+  const made=ids.map((vid,i)=>{const v=state.vehicles.find(x=>x.id===vid);if(!v)throw Error('Eigenes Fahrzeug auswählen.');return makeUsedOffer(state,vid,Math.max(1,Math.round(dealerValue(v)*(1+pct/100))),id,u.id,row.name||u.name,body.requestId+'-'+i);});
+  statements.push(await update(row,state),...made.map(saveUsedVehicleOffer));
  }else if(cmd.type==='buyUsedVehicle'){
   const offer=await readUsedVehicleOffer(id,cmd.offerId);if(offer.status!=='open'||offer.sellerId===u.id)throw Error('Dieses Angebot ist nicht mehr verfügbar.');const seller=await readCompany(id,offer.sellerId);if(!seller)throw Error('Anbietende Spedition nicht gefunden.');const sellerState=applyStateRules(normalizeFreightState(await decodeCompany(seller.state)),rules);buyUsedVehicle(state,sellerState,offer,id,u.id,cmd.depotId);checked=[row,seller];statements.push(await update(row,state),await update(seller,sellerState),saveUsedVehicleOffer(offer));
  }else if(cmd.type==='withdrawUsedVehicle'){

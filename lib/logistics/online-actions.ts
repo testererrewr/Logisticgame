@@ -38,6 +38,7 @@ export type OnlineAction=
  |{type:'tick';days:number};
 export type CooperationAction=
  |{type:'offerUsedVehicle';vehicleId:string;price:number}
+ |{type:'offerUsedFleet';vehicleIds:string[];percent:number}
  |{type:'buyUsedVehicle';offerId:string;depotId:string}
  |{type:'withdrawUsedVehicle';offerId:string;depotId:string}
  |{type:'acceptContainer';offerId:string}
