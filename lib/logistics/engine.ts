@@ -510,6 +510,7 @@ function advanceEconomy(previous:State,dt=1,market?:DailyMarket):State {if(!Numb
  if(v.pendingLineId===null)assignVehicle(s,v.id,'');
  if(v.detaching){if(v.status==='enroute'&&(v.etaDay||0)>s.day)continue;v.locationId=v.targetId||v.locationId;v.status='idle';v.currentLeg=undefined;v.currentStop=undefined;v.targetId=undefined;v.etaDay=undefined;v.departDay=undefined;v.detaching=false;v.restReason=undefined;const pending=v.pendingLineId;v.pendingLineId=undefined;if(pending)assignVehicle(s,v.id,pending);else startReturn(s,v);continue;}
  if(v.waitingRoute&&!v.lineId){startReturn(s,v);continue;}
+ if(v.status==='idle'&&!v.lineId&&!v.returnLineId&&v.pendingLineId===undefined&&!v.manualHold&&v.restReason)v.restReason=undefined;
  if(v.status==='returning'){if((v.etaDay||0)<=s.day){v.locationId=v.targetId||v.locationId;v.status='idle';if(!v.waitingRoute)v.restReason=undefined;v.targetId=undefined;v.etaDay=undefined;v.departDay=undefined;depotUnload(s,v);log(s,`${spec.name} im Depot eingetroffen.`,'good');}continue;}
  if(v.handlingUntil&&v.handlingUntil>s.day)continue;if(v.handlingUntil){v.handlingUntil=undefined;v.restReason=undefined;}
  if(v.status==='idle'&&v.pendingLineId!==undefined){const next=v.pendingLineId;v.pendingLineId=undefined;assignVehicle(s,v.id,next||'');continue;}

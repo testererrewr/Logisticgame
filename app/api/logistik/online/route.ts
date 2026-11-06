@@ -1,4 +1,5 @@
 import {sameOrigin} from '../../../../lib/same-origin';
+import {encodeCompany,decodeCompany} from '../../../../lib/logistics/company-codec';
 import {makeUsedOffer,buyUsedVehicle,withdrawUsedVehicle} from '../../../../lib/logistics/vehicle-sales';
 import {readUsedVehicleOffer,readUsedVehicleOffers,saveUsedVehicleOffer} from '../../../../lib/logistics/used-vehicle-store';
 import {harborKind,checkHarborPlacement} from '../../../../lib/logistics/harbor-placement';
@@ -36,7 +37,7 @@ const readCompany=(world:string,user:string)=>db().prepare('SELECT * FROM logist
 const readCompanies=async(world:string)=>(await db().prepare('SELECT * FROM logistics_world_companies WHERE world_id=? ORDER BY user_id').bind(world).all<Company>()).results;
 async function borrowedTracks(world:string,user:string):Promise<Track[]>{
  const rows=await db().prepare('SELECT w.state FROM logistics_world_permissions p JOIN logistics_world_companies w ON w.user_id=p.owner_id AND w.world_id=p.world_id WHERE p.world_id=? AND p.grantee_id=? AND p.enabled=1').bind(world,user).all<{state:string}>();
- return rows.results.flatMap(r=>(normalizeFreightState(JSON.parse(r.state) as State)).tracks||[]);
+ return (await Promise.all(rows.results.map(async r=>normalizeFreightState(await decodeCompany(r.state)).tracks||[]))).flat();
 }
 function guard(world:World,companies:Company[]=[],rulesRevision?:number){
  const clauses=['EXISTS(SELECT 1 FROM logistics_worlds WHERE id=? AND revision=?)'];const args:(string|number)[]=[world.id,world.revision];
@@ -54,8 +55,8 @@ export async function adjustAdminCompanyCash(actor:User,body:{worldId:string;use
  for(let attempt=0;attempt<6;attempt++){
   const previous=await db().prepare('SELECT actor,action,target FROM admin_audit WHERE id=?').bind(auditId).first<{actor:string;action:string;target:string}>();if(previous){const detail=JSON.parse(previous.action);if(previous.actor!==actor.id||previous.target!==body.userId||detail.worldId!==body.worldId||detail.amount!==body.amount||detail.reason!==body.reason.trim())throw Error('Buchungskennung bereits anders verwendet.');return {...detail,duplicate:true};}
   const world=await settleWorld(body.worldId),row=await readCompany(body.worldId,body.userId);if(!row)throw Error('Spedition in dieser Welt nicht gefunden.');
-  const state=normalizeFreightState(JSON.parse(row.state) as State),result=adjustCompanyCash(state,body.amount,body.reason),detail={type:'logistics.companyCash',worldId:body.worldId,reason:body.reason.trim(),...result};
-  try{await commit(world,[row],[db().prepare('UPDATE logistics_world_companies SET state=?,revision=revision+1,updated=? WHERE world_id=? AND user_id=?').bind(JSON.stringify(state),Date.now(),body.worldId,body.userId),db().prepare('INSERT INTO admin_audit(id,actor,action,target,created) VALUES(?,?,?,?,?)').bind(auditId,actor.id,JSON.stringify(detail),body.userId,Date.now())]);return detail;}catch(e){if(attempt===5)throw e;}
+  const state=normalizeFreightState(await decodeCompany(row.state)),result=adjustCompanyCash(state,body.amount,body.reason),detail={type:'logistics.companyCash',worldId:body.worldId,reason:body.reason.trim(),...result};
+  try{await commit(world,[row],[db().prepare('UPDATE logistics_world_companies SET state=?,revision=revision+1,updated=? WHERE world_id=? AND user_id=?').bind(await encodeCompany(state),Date.now(),body.worldId,body.userId),db().prepare('INSERT INTO admin_audit(id,actor,action,target,created) VALUES(?,?,?,?,?)').bind(auditId,actor.id,JSON.stringify(detail),body.userId,Date.now())]);return detail;}catch(e){if(attempt===5)throw e;}
  }
  throw Error('Buchung bitte erneut versuchen.');
 }
@@ -69,18 +70,18 @@ async function settleWorldNow(id:string):Promise<World>{
  const settleAt=Date.now();let latest:World|undefined,startDay:number|undefined;
  const measure=(w:World)=>{const seconds=(Date.now()-settleAt)/1000;if(startDay!==undefined&&seconds>.5){const rate=(w.day-startDay)*24/seconds,old=catchRate.get(id);catchRate.set(id,old?old*.6+rate*.4:rate);}};
  for(let attempt=0;attempt<2000;attempt++){
-  const world=await readWorld(id);if(!world)throw Error('Diese Welt existiert nicht.');latest=world;startDay??=world.day;if(settleAt-world.last_tick<1000)return world;
+  const world=await readWorld(id);if(!world)throw Error('Diese Welt existiert nicht.');latest=world;startDay??=world.day;if(settleAt-world.last_tick<4000)return world;
   if(attempt>0&&Date.now()-settleAt>6000){measure(world);behind.add(id);return world;}
   const target=clockTarget(world,settleAt);if(target<=world.day+1e-8)return world;
   const next=Math.min(target,world.day+1/72),rows=await readCompanies(id);
   const permissions=(await db().prepare('SELECT owner_id,grantee_id FROM logistics_world_permissions WHERE world_id=? AND enabled=1').bind(id).all<{owner_id:string;grantee_id:string}>()).results;
   const rules=await readPartnerRules(),market={...newMarket(world.day),...JSON.parse(world.market||'{}')};
-  const states=new Map(rows.map(r=>[r.user_id,applyStateRules(normalizeFreightState(JSON.parse(r.state) as State),rules)]));
+  const states=new Map(await Promise.all(rows.map(async r=>[r.user_id,applyStateRules(normalizeFreightState(await decodeCompany(r.state)),rules)] as [string,State])));
   const statements:D1PreparedStatement[]=[];
   for(const row of rows){const state=states.get(row.user_id)!;state.borrowedTracks=permissions.filter(p=>p.grantee_id===row.user_id).flatMap(p=>states.get(p.owner_id)?.tracks||[]);}
   if(attempt===0)for(const state of states.values())await prepareVehicleRoads(state);
   const advanced=stepSharedWorld(states,next,market);
-  for(const row of rows){const state=advanced.get(row.user_id)!;delete state.borrowedTracks;statements.push(db().prepare('UPDATE logistics_world_companies SET state=?,updated=? WHERE world_id=? AND user_id=?').bind(JSON.stringify(state),Date.now(),id,row.user_id));}
+  for(const row of rows){const state=advanced.get(row.user_id)!;delete state.borrowedTracks;statements.push(db().prepare('UPDATE logistics_world_companies SET state=?,updated=? WHERE world_id=? AND user_id=?').bind(await encodeCompany(state),Date.now(),id,row.user_id));}
   const deadlines=[...advanced.values()].flatMap(s=>s.contracts.filter(c=>c.kind==='haulage'&&!c.cancelled&&c.endDay>=s.day&&c.delivered<(c.total||0)).map(c=>({id:c.id,deadline:c.endDay})));if(deadlines.length)statements.push(db().prepare("UPDATE logistics_container_offers SET deadline=(SELECT json_extract(value,'$.deadline') FROM json_each(?) WHERE json_extract(value,'$.id')=logistics_container_offers.id) WHERE world_id=? AND status='accepted' AND id IN (SELECT json_extract(value,'$.id') FROM json_each(?) WHERE json_extract(value,'$.deadline')>logistics_container_offers.deadline)").bind(JSON.stringify(deadlines),id,JSON.stringify(deadlines)));
   const completed=[...advanced.values()].flatMap(s=>s.contracts.filter(c=>c.kind==='haulage'&&c.delivered>=(c.total||Infinity)).map(c=>c.id));if(completed.length)statements.push(db().prepare("UPDATE logistics_container_offers SET status='completed' WHERE world_id=? AND status='accepted' AND id IN (SELECT value FROM json_each(?))").bind(id,JSON.stringify(completed)));statements.push(db().prepare("UPDATE logistics_container_offers SET status='expired' WHERE world_id=? AND status='accepted' AND deadline<?").bind(id,next));
   statements.push(db().prepare('UPDATE logistics_worlds SET day=?,last_tick=?,market=? WHERE id=?').bind(next,world.last_tick+(next-world.day)*worldTickMs(world),JSON.stringify(market),id));
@@ -111,7 +112,7 @@ async function snapshot(u:User,worldId:string,geo=''){
  ]);
  const world=results[0].results[0] as unknown as World,row=results[1].results[0] as unknown as Company;
  if(!row)throw Error('Bitte zuerst dieser Welt beitreten.');
- const rules=await readPartnerRules();const state=applyStateRules(normalizeFreightState(JSON.parse(row.state) as State),rules);state.borrowedTracks=await borrowedTracks(worldId,u.id);
+ const rules=await readPartnerRules();const state=applyStateRules(normalizeFreightState(await decodeCompany(row.state)),rules);state.borrowedTracks=await borrowedTracks(worldId,u.id);
  const geometrySig=geometrySignature(state),geometryOmitted=!!geo&&geo===geometrySig;if(geometryOmitted){delete state.roadRoutes;for(const l of state.lines)delete l.legs;}
  return {geometrySig,geometryOmitted,state,partnerRules:rules,market:{...newMarket(world.day),...JSON.parse(world.market||'{}')},companyName:row.name||state.companyName||u.name,revision:row.revision,user:u.name,userId:u.id,role:u.role,serverNow:Date.now(),world:{catchUpHours:Math.round(catchUpHours(world)*10)/10,catchUpSeconds:catchUpSeconds(world),revision:world.revision,id:world.id,name:world.name,day:world.day,timeScale:world.time_scale,simTime:world.created+(world.day-1)*86400000,status:world.status,tickMs:worldTickMs(world)},companies:results[2].results,offers:results[3].results.map((raw:unknown)=>{const o=raw as Offer;return ({...o,quantity:Number(o.quantity)*(o.quantity_unit==='EH'?1:10)});}),permissions:results[4].results};
 }
@@ -138,11 +139,11 @@ function numericAmount(n:number,max:number){return Number.isFinite(n)&&n>0&&n<=m
 async function otherCompany(world:string,myId:string,theirId:string){
  if(!theirId||theirId===myId||theirId.length>200||!await readCompany(world,theirId))throw Error('Eine andere Spedition in derselben Welt auswählen.');
 }
-function validateSharedCapacity(action:OnlineAction,state:State,rows:Company[],myId:string){
+async function validateSharedCapacity(action:OnlineAction,state:State,rows:Company[],myId:string){
  if(!['supply','process'].includes(action.type))return;
  const a=action as Extract<OnlineAction,{type:'supply'|'process'|'sale'}>,site=state.sites.find(s=>s.id===a.siteId);if(!site)return;
  const p=profile(site);const cap=a.type==='supply'?p.production[(a as Extract<OnlineAction,{type:"supply"}>).good]||0:p.capacity;
- const used=rows.flatMap(r=>(normalizeFreightState(JSON.parse(r.state) as State)).contracts).filter(c=>c.kind===a.type&&c.siteId===a.siteId&&!c.cancelled&&c.endDay>=state.day&&(a.type!=='supply'||c.good===a.good)).reduce((n,c)=>n+c.daily,0);
+ const used=(await Promise.all(rows.map(async r=>normalizeFreightState(await decodeCompany(r.state)).contracts))).flat().filter(c=>c.kind===a.type&&c.siteId===a.siteId&&!c.cancelled&&c.endDay>=state.day&&(a.type!=='supply'||c.good===a.good)).reduce((n,c)=>n+c.daily,0);
  if(used+a.daily>cap)throw Error(`In dieser Welt sind noch ${Math.max(0,cap-used)} EH/Tag frei. Andere Speditionen haben Kapazität gebucht.`);
 }
 export async function GET(req:NextRequest){try{
@@ -174,41 +175,41 @@ export async function POST(req:NextRequest){try{
  const row=await readCompany(id,u.id);if(!row)throw Error('Bitte der Welt beitreten.');
  if(row.last_action===body.requestId)return reply({...await snapshot(u,id),duplicate:true});
  if(row.revision!==body.revision)return reply({...await snapshot(u,id),error:'Die Welt wurde inzwischen aktualisiert. Bitte erneut versuchen.'},409);
- const rules=await readPartnerRules();const now=Date.now(),state=applyStateRules(normalizeFreightState(JSON.parse(row.state) as State),rules);
- const update=(r:Company,s:State)=>db().prepare('UPDATE logistics_world_companies SET state=?,revision=revision+1,last_action=?,updated=? WHERE world_id=? AND user_id=?').bind(JSON.stringify(s),body.requestId,now,id,r.user_id);
+ const rules=await readPartnerRules();const now=Date.now(),state=applyStateRules(normalizeFreightState(await decodeCompany(row.state)),rules);
+ const update=async(r:Company,s:State)=>db().prepare('UPDATE logistics_world_companies SET state=?,revision=revision+1,last_action=?,updated=? WHERE world_id=? AND user_id=?').bind(await encodeCompany(s),body.requestId,now,id,r.user_id);
  const statements:D1PreparedStatement[]=[];let checked=[row];
  if(cmd.type==='offerUsedVehicle'){
   const offers=await readUsedVehicleOffers(id);if(offers.filter(o=>o.sellerId===u.id).length>=100)throw Error('Höchstens 100 offene Fahrzeugangebote je Spedition.');
-  if(await db().prepare('SELECT id FROM logistics_runtime WHERE id=?').bind('used-vehicle-v20:'+id+':'+body.requestId).first())throw Error('Anfragekennung bereits verwendet.');const offer=makeUsedOffer(state,cmd.vehicleId,cmd.price,id,u.id,row.name||u.name,body.requestId);statements.push(update(row,state),saveUsedVehicleOffer(offer));
+  if(await db().prepare('SELECT id FROM logistics_runtime WHERE id=?').bind('used-vehicle-v20:'+id+':'+body.requestId).first())throw Error('Anfragekennung bereits verwendet.');const offer=makeUsedOffer(state,cmd.vehicleId,cmd.price,id,u.id,row.name||u.name,body.requestId);statements.push(await update(row,state),saveUsedVehicleOffer(offer));
  }else if(cmd.type==='buyUsedVehicle'){
-  const offer=await readUsedVehicleOffer(id,cmd.offerId);if(offer.status!=='open'||offer.sellerId===u.id)throw Error('Dieses Angebot ist nicht mehr verfügbar.');const seller=await readCompany(id,offer.sellerId);if(!seller)throw Error('Anbietende Spedition nicht gefunden.');const sellerState=applyStateRules(normalizeFreightState(JSON.parse(seller.state) as State),rules);buyUsedVehicle(state,sellerState,offer,id,u.id,cmd.depotId);checked=[row,seller];statements.push(update(row,state),update(seller,sellerState),saveUsedVehicleOffer(offer));
+  const offer=await readUsedVehicleOffer(id,cmd.offerId);if(offer.status!=='open'||offer.sellerId===u.id)throw Error('Dieses Angebot ist nicht mehr verfügbar.');const seller=await readCompany(id,offer.sellerId);if(!seller)throw Error('Anbietende Spedition nicht gefunden.');const sellerState=applyStateRules(normalizeFreightState(await decodeCompany(seller.state)),rules);buyUsedVehicle(state,sellerState,offer,id,u.id,cmd.depotId);checked=[row,seller];statements.push(await update(row,state),await update(seller,sellerState),saveUsedVehicleOffer(offer));
  }else if(cmd.type==='withdrawUsedVehicle'){
-  const offer=await readUsedVehicleOffer(id,cmd.offerId);withdrawUsedVehicle(state,offer,id,u.id,cmd.depotId);statements.push(update(row,state),saveUsedVehicleOffer(offer));
+  const offer=await readUsedVehicleOffer(id,cmd.offerId);withdrawUsedVehicle(state,offer,id,u.id,cmd.depotId);statements.push(await update(row,state),saveUsedVehicleOffer(offer));
  }else if(cmd.type==='acceptContainer'){
   await ensureContainerDay(id,state.day,rules);const offer=await db().prepare("SELECT * FROM logistics_container_offers WHERE world_id=? AND id=? AND status='open' AND accepted_by IS NULL AND day=?").bind(id,cmd.offerId,Math.floor(state.day)).first<ContainerOffer>();if(!offer)throw Error('Ein anderer Spieler hat diesen Auftrag bereits angenommen oder der Spieltag ist abgelaufen.');
   const sites=await registryByIds([offer.source_id,offer.destination_id]);mergeSites(state,sites);const source=sites.find(p=>p.id===offer.source_id);if(!source||offer.slot>=(factoryPartner(source)?5:1))throw Error('Auftrag nicht mehr für diesen Betrieb freigegeben.');
   const occupied=await db().prepare("SELECT count(*) AS n FROM logistics_container_offers WHERE world_id=? AND source_id=? AND status='accepted' AND deadline>?").bind(id,offer.source_id,state.day).first<{n:number}>();if((occupied?.n||0)>=(factoryPartner(source)?5:1))throw Error('Alle Containerplätze dieses Betriebs sind bereits vergeben.');
-  acceptContainerOrder(state,offer);statements.push(update(row,state),db().prepare("UPDATE logistics_container_offers SET accepted_by=?,status='accepted' WHERE id=? AND world_id=? AND accepted_by IS NULL AND status='open'").bind(u.id,offer.id,id));
+  acceptContainerOrder(state,offer);statements.push(await update(row,state),db().prepare("UPDATE logistics_container_offers SET accepted_by=?,status='accepted' WHERE id=? AND world_id=? AND accepted_by IS NULL AND status='open'").bind(u.id,offer.id,id));
  }else if(cmd.type==='tradeOffer'){
   await otherCompany(id,u.id,cmd.receiverId);if(!GOODS.some(g=>g.id===cmd.good&&g.id!=='containers')||!numericAmount(cmd.quantity,10000)||!Number.isSafeInteger(cmd.price)||cmd.price<0||cmd.price>2000000000)throw Error('Ungültiges Handelsangebot.');
   if(!tradeTerminal(state,cmd.siteId)||stock(state,cmd.siteId,cmd.good)<cmd.quantity)throw Error('Nicht genug Ware am eigenen Übergabeterminal.');
-  statements.push(db().prepare("INSERT OR IGNORE INTO logistics_world_offers(id,world_id,sender_id,receiver_id,site_id,good,quantity,price,status,created,expires,quantity_unit) VALUES(?,?,?,?,?,?,?,?,'open',?,?,'EH')").bind(body.requestId,id,u.id,cmd.receiverId,cmd.siteId,cmd.good,cmd.quantity,cmd.price,now,now+7*86400000),update(row,state));
+  statements.push(db().prepare("INSERT OR IGNORE INTO logistics_world_offers(id,world_id,sender_id,receiver_id,site_id,good,quantity,price,status,created,expires,quantity_unit) VALUES(?,?,?,?,?,?,?,?,'open',?,?,'EH')").bind(body.requestId,id,u.id,cmd.receiverId,cmd.siteId,cmd.good,cmd.quantity,cmd.price,now,now+7*86400000),await update(row,state));
  }else if(cmd.type==='trackPermission'){
   await otherCompany(id,u.id,cmd.receiverId);if(typeof cmd.enabled!=='boolean')throw Error('Ungültige Freigabe.');
-  statements.push(db().prepare('INSERT INTO logistics_world_permissions(world_id,owner_id,grantee_id,enabled,updated) VALUES(?,?,?,?,?) ON CONFLICT(world_id,owner_id,grantee_id) DO UPDATE SET enabled=excluded.enabled,updated=excluded.updated').bind(id,u.id,cmd.receiverId,cmd.enabled?1:0,now),update(row,state));
+  statements.push(db().prepare('INSERT INTO logistics_world_permissions(world_id,owner_id,grantee_id,enabled,updated) VALUES(?,?,?,?,?) ON CONFLICT(world_id,owner_id,grantee_id) DO UPDATE SET enabled=excluded.enabled,updated=excluded.updated').bind(id,u.id,cmd.receiverId,cmd.enabled?1:0,now),await update(row,state));
  }else if(cmd.type==='acceptTrade'){
   const offer=await db().prepare("SELECT * FROM logistics_world_offers WHERE world_id=? AND id=? AND receiver_id=? AND status='open' AND expires>?").bind(id,cmd.offerId,u.id,now).first<Offer>();if(!offer)throw Error('Angebot nicht mehr verfügbar.');
   const seller=await readCompany(id,offer.sender_id);if(!seller)throw Error('Anbieter fehlt.');
-  const settled=settleTrade(applyStateRules(normalizeFreightState(JSON.parse(seller.state)),rules),state,{siteId:offer.site_id,good:offer.good,quantity:offer.quantity*(offer.quantity_unit==='EH'?1:10),price:offer.price,sellerId:offer.sender_id});
-  checked=[row,seller];statements.push(update(seller,settled.seller),update(row,settled.buyer),db().prepare("UPDATE logistics_world_offers SET status='accepted',settled=? WHERE world_id=? AND id=?").bind(now,id,offer.id));
+  const settled=settleTrade(applyStateRules(normalizeFreightState(await decodeCompany(seller.state)),rules),state,{siteId:offer.site_id,good:offer.good,quantity:offer.quantity*(offer.quantity_unit==='EH'?1:10),price:offer.price,sellerId:offer.sender_id});
+  checked=[row,seller];statements.push(await update(seller,settled.seller),await update(row,settled.buyer),db().prepare("UPDATE logistics_world_offers SET status='accepted',settled=? WHERE world_id=? AND id=?").bind(now,id,offer.id));
  }else if(cmd.type==='rejectTrade'||cmd.type==='withdrawTrade'){
   const field=cmd.type==='rejectTrade'?'receiver_id':'sender_id';
-  statements.push(db().prepare(`UPDATE logistics_world_offers SET status=? WHERE world_id=? AND id=? AND ${field}=? AND status='open'`).bind(cmd.type==='rejectTrade'?'rejected':'withdrawn',id,cmd.offerId,u.id),update(row,state));
+  statements.push(db().prepare(`UPDATE logistics_world_offers SET status=? WHERE world_id=? AND id=? AND ${field}=? AND status='open'`).bind(cmd.type==='rejectTrade'?'rejected':'withdrawn',id,cmd.offerId,u.id),await update(row,state));
  }else{
   const action=cmd as OnlineAction;if(action.type==='sale'||action.type==='haulage')throw Error('Abnehmer werden über offene Tagesbedarfe beliefert; Containeraufträge werden aus der Tagesbörse angenommen.');const siteIds=action.type==='supply'||action.type==='process'?[action.siteId]:action.type==='line'||action.type==='updateLineStops'?action.stops.map(st=>st.siteId):[];if(siteIds.length){const refreshed=await registryByIds(siteIds),lookup=new Map(refreshed.map(p=>[p.id,p]));state.sites=state.sites.map(p=>!p.owned&&!p.cooperative&&lookup.has(p.id)?lookup.get(p.id)!:p);mergeSites(state,refreshed);}if((action.type==='build'||action.type==='track'||action.type==='trackPlan')&&action.confirmed!==true)throw Error('Bau muss vor der Buchung bestätigt werden.');if(action.type==='build'&&harborKind(action.kind)){const shore=await checkHarborPlacement(action.point,action.kind,action.rotation||0);if(!shore.valid)throw Error(shore.error);}const verified=await verifySites(action);state.borrowedTracks=await borrowedTracks(id,u.id);
   if(action.type==='line'){const allowed=new Set(routePartners(state,action.good==='all'?undefined:action.good).map(p=>p.id));if(action.stops.some(st=>!allowed.has(st.siteId)))throw Error('Lieferanten brauchen einen Vertrag; Endabnehmer müssen dieses Gut nachfragen.');}
-  const routed=await verifyRoads(action,state),rows=await readCompanies(id);validateSharedCapacity(action,state,rows,u.id);
-  const updated=applyAction(state,routed,verified);if(action.type==='cancelContract')statements.push(db().prepare("UPDATE logistics_container_offers SET status='cancelled' WHERE id=? AND world_id=? AND accepted_by=? AND status='accepted'").bind(action.contractId,id,u.id));delete updated.borrowedTracks;statements.push(update(row,updated));
+  const routed=await verifyRoads(action,state),rows=await readCompanies(id);await validateSharedCapacity(action,state,rows,u.id);
+  const updated=applyAction(state,routed,verified);if(action.type==='cancelContract')statements.push(db().prepare("UPDATE logistics_container_offers SET status='cancelled' WHERE id=? AND world_id=? AND accepted_by=? AND status='accepted'").bind(action.contractId,id,u.id));delete updated.borrowedTracks;statements.push(await update(row,updated));
  }
  try{await commit(world,checked,statements,rules.revision);}catch{return reply({...await snapshot(u,id),error:'Eine andere Aktion hat die Welt aktualisiert. Bitte erneut versuchen.'},409);}
  return reply(await snapshot(u,id));
