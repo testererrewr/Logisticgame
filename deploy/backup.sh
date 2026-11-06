@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Konsistente Sicherung der Spieldatenbank (SQLite unter STATE_DIR).
-# Aufruf: sudo bash deploy/backup.sh   (läuft zusätzlich täglich per Timer)
 set -euo pipefail
 if [[ -f /etc/logistik/logistik.env ]]; then set -a; . /etc/logistik/logistik.env; set +a; fi
 STATE_DIR="${STATE_DIR:-/var/lib/logistik/state}"
@@ -27,5 +25,4 @@ fi
 gzip -9 "$target"/*.sqlite
 echo "Sicherung erstellt: $target"
 
-# Alte Sicherungen aufräumen
 ls -1d "$BACKUP_DIR"/*/ 2>/dev/null | sort | head -n -"$KEEP" | xargs -r rm -rf

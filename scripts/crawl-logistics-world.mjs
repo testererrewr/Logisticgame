@@ -1,4 +1,3 @@
-// Public OSM-cache work only. No login, credentials or player-state mutations.
 const origin=new URL(process.argv[2]||'https://weltverbund-logistik.serphil.chatgpt.site');
 if(!['http:','https:'].includes(origin.protocol))throw Error('HTTP(S)-Spieladresse angeben.');
 let stopping=false;process.on('SIGINT',()=>{stopping=true;});process.on('SIGTERM',()=>{stopping=true;});

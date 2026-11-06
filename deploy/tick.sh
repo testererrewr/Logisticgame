@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Minütliche Hintergrund-Abrechnung aller laufenden Welten + Weltimport-Schritte.
-# Ersetzt den Cloudflare-Cron (wrangler dev führt Crons nicht selbst aus).
 set -euo pipefail
 PORT="${PORT:-8787}"
 BIND_IP="${BIND_IP:-127.0.0.1}"

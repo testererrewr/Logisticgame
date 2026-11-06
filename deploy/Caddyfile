@@ -1,5 +1,3 @@
-# /etc/caddy/Caddyfile – Caddy holt das HTTPS-Zertifikat automatisch (Let's Encrypt).
-# Voraussetzung: DNS-Eintrag "play" zeigt auf die IP dieses Servers, Ports 80+443 offen.
 play.crackgaming.org {
 	encode zstd gzip
 	reverse_proxy 127.0.0.1:8787

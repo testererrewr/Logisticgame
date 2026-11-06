@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-# Neue Version von GitHub holen, bauen und neu starten. Spielstand bleibt erhalten.
-#   sudo bash /opt/logistik/app/deploy/update.sh            # git pull + build + restart
-#   sudo bash /opt/logistik/app/deploy/update.sh --no-pull  # nur neu bauen
 set -euo pipefail
 [[ $EUID -eq 0 ]] || { echo "Bitte mit sudo ausführen." >&2; exit 1; }
 APP=/opt/logistik/app
@@ -35,7 +32,7 @@ bash "$APP/deploy/backup.sh" || echo "(Sicherung übersprungen)"
 echo "==> systemd-Dienste aktualisieren und neu starten"
 install -m 644 "$APP"/deploy/systemd/*.service "$APP"/deploy/systemd/*.timer /etc/systemd/system/
 systemctl daemon-reload
-systemctl enable logistik >/dev/null 2>&1   # Autostart nach Server-Neustart
+systemctl enable logistik >/dev/null 2>&1
 systemctl restart logistik
 systemctl enable --now logistik-tick.timer logistik-backup.timer >/dev/null
 

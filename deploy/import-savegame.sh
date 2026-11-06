@@ -1,11 +1,4 @@
 #!/usr/bin/env bash
-# Spielstand (game.sql aus der Komplett-ZIP) in die Server-Datenbank importieren.
-#
-#   sudo bash deploy/import-savegame.sh /root/savegame          # Ordner mit game.sql + resume-clock.sql
-#   sudo bash deploy/import-savegame.sh --empty                 # leere neue Datenbank (ohne Spielstand)
-#
-# Eine bereits vorhandene Datenbank wird NICHT überschrieben, sondern vorher
-# nach STATE_DIR.vorher-<datum> verschoben.
 set -euo pipefail
 [[ $EUID -eq 0 ]] || { echo "Bitte mit sudo ausführen." >&2; exit 1; }
 APP=/opt/logistik/app
@@ -36,8 +29,6 @@ fi
 mkdir -p "$STATE_DIR"
 chown -R logistik:logistik "$STATE_DIR"
 
-# Leere D1-Datenbank von Wrangler anlegen lassen, dann direkt per sqlite3 befüllen
-# (wrangler d1 execute ist für eine 63-MB-Datei viel zu langsam).
 d1_command "CREATE TABLE _init(x); DROP TABLE _init;"
 DB="$(find "$STATE_DIR" -name '*.sqlite' ! -name 'metadata.sqlite' | head -1)"
 [[ -n "$DB" ]] || { echo "Datenbankdatei wurde nicht angelegt." >&2; exit 1; }
@@ -48,7 +39,6 @@ if [[ "$SRC" == "--empty" ]]; then
 else
   echo "Importiere Spielstand …"
   sqlite3 -bail "$DB" < "$SRC/game.sql"
-  # Echtzeit-Anker auf jetzt setzen: die Welten werden NICHT um die Offline-Zeit vorgespult.
   sqlite3 "$DB" "UPDATE logistics_worlds SET last_tick=CAST((julianday('now')-2440587.5)*86400000 AS INTEGER);"
   echo "Benutzer: $(sqlite3 "$DB" 'SELECT count(*) FROM users') · Welten: $(sqlite3 "$DB" "SELECT group_concat(name, ', ') FROM logistics_worlds")"
 fi

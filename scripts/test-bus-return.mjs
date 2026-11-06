@@ -41,7 +41,6 @@ enableBusReturns(moving.s,movingTime);const movingPlan=runPlan(moving.c,moving.l
 assert.deepEqual(vehiclePose(movingPlan,moving.run,movingTime).point,movingPoint);assert.equal(moving.run.epoch,oldEpoch);assert.equal(moving.run.next,1);assert.equal(moving.run.onboard[0].exit,2);assert.equal(moving.run.onboard[0].count,3,'Passengers keep their actual destination and count');
 const middle=eventAt(movingPlan,moving.run,1),destination=eventAt(movingPlan,moving.run,2),originalCash=moving.c.cash;settleOperations(moving.s,configOf({}),movingTime,middle+1);assert.equal(moving.c.cash,originalCash);settleOperations(moving.s,configOf({}),middle+1,destination+1);assert.ok(moving.run.alighted>=3);assert.ok(moving.c.cash>=originalCash+7.5,'Existing passengers still pay once at their real destination');
 
-// Interior segment anchors and routes crossing map boundaries reverse exactly too.
 const projected=fixture();projected.c.stops[0].point=[52.5205,13.3925];const projectedRoute=busRoute(projected.c,points);assert.deepEqual(projectedRoute.returnPath,[...projectedRoute.path].reverse());
 const other={...m,key:'berlin~returns-next',date:'returns-next',roads:[{name:'Continuation',nodes:[2,3],oneway:0}]};registerMap(other);const across=fixture();across.c.stops[2].city=other.key;const cross=busRoute(across.c,points);assert.deepEqual(cross.returnPath,[...cross.path].reverse());
 

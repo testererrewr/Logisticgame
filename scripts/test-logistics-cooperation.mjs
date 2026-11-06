@@ -20,7 +20,6 @@ assert.throws(()=>settleTrade(afterSeller,afterBuyer,{siteId:hub.id,good:'bread'
 assert.throws(()=>settleTrade(afterSeller,afterBuyer,{siteId:hub.id,good:'bread',quantity:1,price:afterBuyer.cash+1,sellerId:'user-one'}),/Kapital/);
 assert.throws(()=>settleTrade(afterSeller,afterBuyer,{siteId:hub.id,good:'containers',quantity:1,price:0,sellerId:'user-one'}),/Übergabeterminal/);
 
-// A partner can load the bought cargo at the seller's hub, without owning it.
 const depot=build(afterBuyer,'depot',47.075,15.45),truck=purchaseVehicle(afterBuyer,'truck','krone-profi');
 const line=createLine(afterBuyer,{name:'Partnerware ins eigene Depot',mode:'truck',good:'bread',stops:[{siteId:hub.id,action:'load',quantity:3},{siteId:depot.id,action:'unload',quantity:3}],duration:15});
 assignVehicle(afterBuyer,truck.id,line.id);
@@ -30,8 +29,6 @@ assert.ok(stock(b,hub.id,'bread')<amount,'loading at partner terminal reduces bu
 assert.equal(stock(afterSeller,hub.id,'bread'),16.5,'buyer trucks cannot alter seller state');
 checkIntegrity(b);
 
-// Player A lays tracks. Player B can only use them with a permission-granted
-// track snapshot; no tracks are added to B's *owned* network.
 const railroadOwner=newState();
 addTrack(railroadOwner,[47.1,15.1],[47.1,15.11]);
 addTrack(railroadOwner,[47.1,15.11],[47.1,15.12]);

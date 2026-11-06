@@ -8,8 +8,6 @@ assert.equal(good('wheat').purchase,14,'140 euros per tonne becomes 14 per EH');
 assert.equal(BUILDINGS.find(b=>b.id==='depot').capacity,800);
 assert.equal(WAGONS.find(w=>w.id==='bulk').capacity,694);
 assert.equal(s.quantityUnit,'EH');
-// A complete old save migrates its physical quantities once without changing money,
-// contract dates, arrival times, wagon counts, geographic coordinates or recipes.
 const old=structuredClone(s);delete old.quantityUnit;
 old.inventory[depot.id]={wheat:10,flour:2.5};old.consignments[depot.id]={order:12};
 old.contracts=[{id:'old',kind:'haulage',siteId:depot.id,daily:10,startDay:1,endDay:90,delivered:3,loadedToday:4,deliveredToday:2,fee:250,total:12,paid:750}];

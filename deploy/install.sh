@@ -1,14 +1,4 @@
 #!/usr/bin/env bash
-# Erstinstallation auf einem frischen Linux-VPS (Ubuntu 22.04/24.04 oder Debian 12).
-#
-#   sudo bash install.sh --savegame /root/savegame
-#
-# Optionen:
-#   --domain play.crackgaming.org     Domain für Caddy/HTTPS
-#   --repo   https://github.com/testererrewr/Logisticgame.git
-#   --branch main
-#   --savegame /pfad/zum/ordner       Ordner mit game.sql (+ resume-clock.sql) – nur beim ersten Mal
-#   --empty                           ohne Spielstand mit leerer Datenbank starten
 set -euo pipefail
 [[ $EUID -eq 0 ]] || { echo "Bitte mit sudo/root ausführen." >&2; exit 1; }
 
@@ -81,8 +71,7 @@ PORT=$PORT
 STATE_DIR=$STATE_DIR
 BACKUP_DIR=/var/backups/logistik
 SIMULATION_TRIGGER_SECRET=$(openssl rand -hex 32)
-# Weltimport: Runden je Minute (je max. 2 OSM-Abfragen) und Overpass-Timeout in Sekunden
-LOGISTIK_WORLD_IMPORT_ROUNDS=3
+LOGISTIK_WORLD_IMPORT_ROUNDS=1
 LOGISTIK_WORLD_IMPORT_TIMEOUT=25
 EOF
 fi
@@ -92,7 +81,6 @@ sed -i "s/^DOMAIN=.*/DOMAIN=$DOMAIN/" /etc/logistik/logistik.env
 
 log "Installieren und bauen"
 bash "$APP/deploy/update.sh" --no-pull || {
-  # update.sh startet den Dienst – beim allerersten Mal ohne Datenbank darf das scheitern
   [[ -f "$APP/dist/server/wrangler.json" ]] || { echo "Build fehlgeschlagen." >&2; exit 1; }
 }
 
@@ -117,7 +105,6 @@ log "Caddy für https://$DOMAIN"
 mkdir -p /etc/caddy/sites
 sed "s/play\.crackgaming\.org/$DOMAIN/; s/127\.0\.0\.1:8787/127.0.0.1:$PORT/" "$APP/deploy/Caddyfile" > /etc/caddy/sites/logistik.caddy
 if [[ ! -f /etc/caddy/Caddyfile ]] || grep -q '/usr/share/caddy' /etc/caddy/Caddyfile; then
-  # Standard-Caddyfile des Pakets durch unsere ersetzen
   [[ -f /etc/caddy/Caddyfile ]] && cp /etc/caddy/Caddyfile /etc/caddy/Caddyfile.original
   echo 'import sites/*.caddy' > /etc/caddy/Caddyfile
 elif ! grep -q 'import sites/\*.caddy' /etc/caddy/Caddyfile; then

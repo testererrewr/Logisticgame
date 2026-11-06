@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Startet den Spielserver (wird von systemd als Benutzer "logistik" aufgerufen).
-# Konfiguration kommt aus /etc/logistik/logistik.env (EnvironmentFile).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -15,7 +13,6 @@ if [[ ! -f dist/server/wrangler.json ]]; then
 fi
 mkdir -p "$STATE_DIR"
 
-# Laufzeit-Variablen/Secrets für den Worker. Wrangler liest .dev.vars neben der Config.
 umask 077
 env | grep -E '^(SIMULATION_TRIGGER_SECRET|SIMULATION_OWNER_EMAIL|ADMIN_EMAIL|ADMIN_SETUP_HASH|CATALOG_PUSH_HASH|BACKUP_READ_HASH|LOGISTIK_[A-Z0-9_]+)=' > dist/server/.dev.vars || true
 

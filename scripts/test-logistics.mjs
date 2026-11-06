@@ -1,4 +1,3 @@
-// Run with: node --experimental-strip-types scripts/test-logistics.mjs
 import assert from 'node:assert/strict';
 import {newState,profile,signSupply,signProcess,signSale,signHaulage,build,addTrack,purchaseVehicle,createLine,assignVehicle,configureTrain,wagonCapacity,stepDay,stock,checkIntegrity,good} from '../lib/logistics/engine.ts';
 const mk=(id,name,kind,x)=>({id:`osm:node:${id}`,name,kind,lat:47.07,lon:15.44+x,osmUrl:`https://www.openstreetmap.org/node/${id}`});
@@ -22,7 +21,6 @@ assert.ok(s.contracts.find(c=>c.id===sale.id).delivered>0,'Delivered baked bread
 assert.ok(s.events.some(e=>e.text.includes('geladen')),'Farm actually loaded physical inventory');
 assert.ok(s.events.some(e=>e.text.includes('verkauft')),'Sale paid at receiver');
 const order=signHaulage(s,another.id,shop.id,12);assert.equal(stock(s,another.id,'containers'),12);assert.throws(()=>signHaulage(s,another.id,shop.id,12),/bereits/);
-// One-off container consignment must keep its identity through truck-to-truck hub transfer.
 const leg1=line('Container leg 1','containers',[[another.id,'load',12],[hub.id,'transfer',12]]);
 const leg2=line('Container leg 2','containers',[[hub.id,'load',12],[shop.id,'unload',12]]);
 for(const leg of [leg1,leg2]){const assigned=purchaseVehicle(s,'truck','krone-box');assignVehicle(s,assigned.id,leg.id);}
@@ -39,7 +37,6 @@ assert.equal(s.vehicles.find(x=>x.id===v.id).status,'idle');
 assert.equal(s.vehicles.find(x=>x.id===v.id).lineId,undefined);
 console.log('PASS logistics: capacity, production → processing → hub → retail, payment, expiry, return, inventory integrity.');
 
-// Railway network and wagon-configuration constraints.
 const r=newState();r.cash=30000000;
 const stationA=build(r,'railDepot',47.101,15.398),stationB=build(r,'railDepot',47.101,15.6);
 assert.throws(()=>createLine(r,{name:'No rails',mode:'rail',good:'wheat',stops:[{siteId:stationA.id,action:'load',quantity:20},{siteId:stationB.id,action:'unload',quantity:20}],duration:null}),/Gleis/);

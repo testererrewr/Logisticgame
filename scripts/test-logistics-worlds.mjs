@@ -32,7 +32,6 @@ assert.equal((await snapshot(a,other)).state.day,1,'independent clocks in separa
 assert.equal((await command(a,other,{type:'trackPermission',receiverId:b.id,enabled:true},0)).status,422,'cross-world sharing forbidden');
 sa=await snapshot(a,world);assert.equal((await command(a,world,{type:'trackPermission',receiverId:b.id,enabled:true},sa.revision)).status,200);
 sb=await snapshot(b,world);assert.ok(sb.permissions.some(p=>p.owner_id===a.id&&p.grantee_id===b.id&&p.enabled===1));
-// Controlled inventory fixtures exist exclusively in the local QA database.
 sa=await snapshot(a,world);const seller=sa.state,hub=build(seller,'hub',47.08,15.46);seller.inventory[hub.id]={bread:20};
 const farm={id:'osm:node:qa',name:'QA farm fixture',kind:'farm',lat:47.07,lon:15.44};seller.sites.push(farm);sb.state.sites.push(farm);
 sql(`UPDATE logistics_world_companies SET state=${quote(JSON.stringify(seller))},revision=revision+1 WHERE world_id=${quote(world)} AND user_id=${quote(a.id)}; UPDATE logistics_world_companies SET state=${quote(JSON.stringify(sb.state))},revision=revision+1 WHERE world_id=${quote(world)} AND user_id=${quote(b.id)};`);

@@ -14,8 +14,6 @@ assert.throws(()=>busRoute(c,[via,...points]),/Beginne/);assert.throws(()=>busRo
 const oneWay={...map,key:'one-way-fixture',roads:[map.roads[0]]};registerMap(oneWay);const d=newCompany('one','One way');d.stops=c.stops.map(s=>({...s,city:oneWay.key}));assert.equal(busRoute(d,points,'outbound').path.length,2);assert.throws(()=>busRoute(d,points),/Rückfahrt/,'A new ordinary line requires a legal return');
 console.log('PASS: shuttle by default, explicit legacy outbound/ring, legal directed return geometry, via steering without extra passenger stops, validated real coordinates and no immediate U-turn at waypoints.');
 
-// Two one-way carriageways: a stop on the westbound side also serves eastbound
-// buses across an 11 m street, without a trip around the entire block.
 const divided={...map,key:'divided-road',nodes:[[0,0],[0,.001],[0,.002],[.0001,0],[.0001,.001],[.0001,.002]],roads:[{name:'Main',nodes:[0,1,2],oneway:1},{name:'Main',nodes:[5,4,3],oneway:1},{name:'Turn east',nodes:[2,5],oneway:1},{name:'Turn west',nodes:[3,0],oneway:1}]};
 const east=streetRoute(divided,[0,4,2],false);assert.ok(east.length<.25,'Opposite-side middle stop cannot force a lap around both carriageways');assert.ok(east.path.every(p=>p[0]===0),'Eastbound trip stays on its legal carriageway');const west=streetRoute(divided,[2,4,0],false);assert.ok(west.length<.3&&west.path.some(p=>p[0]===.0001),'The same stops also serve the opposite legal direction without a block-length detour');const exact=streetRoute(divided,[0,4,2],false,[false,true,false]);assert.ok(exact.length>east.length,'Explicit waypoints retain their exact carriageway');
 console.log('PASS: both-side stop access via road-segment projection, whole-route optimisation and exact directional waypoints.');
