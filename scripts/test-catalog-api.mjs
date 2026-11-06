@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+const base=process.env.TEST_BASE||'http://127.0.0.1:5173';if(!['127.0.0.1','localhost'].includes(new URL(base).hostname))throw Error('Catalog integration tests are local-only.');
+const token=(await readFile(process.env.TEST_CATALOG_TOKEN_FILE,'utf8')).trim();
+async function call(path,method='GET',body,auth,cookie){const r=await fetch(base+'/api/'+path,{method,headers:{...(cookie?{cookie}:{}),...(auth?{Authorization:'Bearer '+auth}:{}),...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});const text=await r.text();let data;try{data=JSON.parse(text);}catch{throw Error(method+' '+path+' returned '+r.status+' with invalid JSON: '+text.slice(0,200));}return {status:r.status,data,cookie:r.headers.get('set-cookie')?.split(';')[0]};}
+assert.equal((await call('internal/vehicle-catalog')).status,403);assert.equal((await call('internal/vehicle-catalog','PUT',{models:[]},'invalid')).status,403);
+const initial=await call('internal/vehicle-catalog','GET',undefined,token);assert.equal(initial.status,200);const original=initial.data.models,models=structuredClone(original);models.find(m=>m.id==='bus-standard').price=177777;const saved=await call('internal/vehicle-catalog','PUT',{models,baseRevision:initial.data.revision},token);assert.equal(saved.status,200);assert.ok(saved.data.revision>initial.data.revision);
+const stale=await call('internal/vehicle-catalog','PUT',{models:original,baseRevision:initial.data.revision},token);assert.equal(stale.status,409);
+const read=await call('internal/vehicle-catalog','GET',undefined,token);assert.equal(read.data.models.find(m=>m.id==='bus-standard').price,177777);
+const bad=structuredClone(original);bad[0].price='FREE';assert.equal((await call('internal/vehicle-catalog','PUT',{models:bad,baseRevision:read.data.revision},token)).status,400);
+const restored=await call('internal/vehicle-catalog','PUT',{models:original,baseRevision:read.data.revision},token);assert.equal(restored.status,200);const unchanged=await call('internal/vehicle-catalog','PUT',{models:original,baseRevision:restored.data.revision},token);assert.equal(unchanged.data.unchanged,true);
+const owner=await call('auth/login','POST',{email:'admin@weltverbund.test',password:'Local-test-owner-password-2026'});assert.equal(owner.status,200);assert.equal((await call('internal/vehicle-catalog','PUT',{models:original,baseRevision:restored.data.revision},undefined,owner.cookie)).status,403);
+const worlds=await call('worlds');assert.equal(worlds.status,200);
+const world=await call('worlds/atlas','GET',undefined,undefined,owner.cookie);assert.equal(world.status,200);assert.equal(world.data.world.state.vehicleCatalog.revision,restored.data.revision);assert.equal(world.data.world.state.vehicleCatalog.models.find(m=>m.id==='bus-standard').price,original.find(m=>m.id==='bus-standard').price);
+console.log('PASS: token-only backend publication, unauthorized requests blocked, persistent runtime updates, stale revision rejection, invalid catalog rejection, idempotent push and propagation into live worlds.');

@@ -1,0 +1,38 @@
+import assert from 'node:assert/strict';
+import {newState,normalizeFreightState,good,VEHICLES,TRAILERS,WAGONS,BUILDINGS,profile,build,purchaseVehicle,cargoCapacity,routePartners,createLine,signSupply,signProcess,stepTime,stock,RECIPES} from '../lib/logistics/engine.ts';
+const s=newState();s.cash=50000000;
+const depot=build(s,'depot',47.07,15.44);
+const v=purchaseVehicle(s,'truck','krone-profi');
+assert.equal(cargoCapacity(v,'bread'),240,'24 tonnes are 240 EH');
+assert.equal(good('wheat').purchase,14,'140 euros per tonne becomes 14 per EH');
+assert.equal(BUILDINGS.find(b=>b.id==='depot').capacity,800);
+assert.equal(WAGONS.find(w=>w.id==='bulk').capacity,694);
+assert.equal(s.quantityUnit,'EH');
+// A complete old save migrates its physical quantities once without changing money,
+// contract dates, arrival times, wagon counts, geographic coordinates or recipes.
+const old=structuredClone(s);delete old.quantityUnit;
+old.inventory[depot.id]={wheat:10,flour:2.5};old.consignments[depot.id]={order:12};
+old.contracts=[{id:'old',kind:'haulage',siteId:depot.id,daily:10,startDay:1,endDay:90,delivered:3,loadedToday:4,deliveredToday:2,fee:250,total:12,paid:750}];
+old.lines=[{id:'line',name:'Old route',mode:'truck',good:'bread',stops:[{siteId:depot.id,action:'load',quantity:10}],startDay:1,endDay:null,active:true}];
+old.vehicles[0].cargo={good:'bread',quantity:10};old.vehicles[0].etaDay=1.01;
+const migrated=normalizeFreightState(old);
+assert.equal(stock(migrated,depot.id,'wheat'),100,'10 tonnes = 100 EH');
+assert.equal(migrated.consignments[depot.id].order,120);
+assert.equal(migrated.contracts[0].fee,25);assert.equal(migrated.contracts[0].total,120);
+assert.equal(migrated.contracts[0].delivered,30);assert.equal(migrated.contracts[0].paid,750);
+assert.equal(migrated.lines[0].stops[0].quantity,100);assert.equal(migrated.vehicles[0].cargo.quantity,100);
+assert.equal(migrated.cash,s.cash);assert.equal(migrated.vehicles[0].etaDay,1.01);
+const once=JSON.stringify(migrated);assert.equal(JSON.stringify(normalizeFreightState(migrated)),once,'migration is idempotent');
+const farm={id:'qa:farm',kind:'farm',name:'Farm',lat:47.071,lon:15.441};
+const mill={id:'qa:mill',kind:'mill',name:'Mill',lat:47.072,lon:15.442};
+const uncontracted={id:'qa:other',kind:'farm',name:'Other',lat:47.073,lon:15.443};
+s.sites.push(farm,mill,uncontracted);signSupply(s,farm.id,'wheat',100);signProcess(s,mill.id,'flour',100);
+assert.ok(profile(farm).production.wheat>=100);
+assert.deepEqual(new Set(routePartners(s).map(p=>p.id)),new Set([depot.id,farm.id,mill.id]));
+assert.throws(()=>createLine(s,{name:'No contract',mode:'truck',good:'wheat',stops:[{siteId:uncontracted.id,action:'load',quantity:100},{siteId:depot.id,action:'unload',quantity:100}],duration:null}),/Vertrag/);
+const progressed=stepTime(s,s.day+1/24);assert.ok(stock(progressed,farm.id,'wheat')===100);
+s.inventory[mill.id]={wheat:100};const before=s.cash,processed=stepTime(s,s.day+1/24);
+assert.ok(Math.abs(stock(processed,mill.id,'flour')-100*.77)<.0001);
+assert.ok(Math.abs(before-processed.cash-100*4.5)<.001,'processing cost preserves euros per physical mass');
+assert.equal(RECIPES.find(r=>r.id==='flour').inputs.wheat,1,'recipes remain dimensionless');
+console.log('PASS EH: 100 kg units, mass and cash preservation, idempotent legacy migration, hourly production, processing price, contract-only route stops.');

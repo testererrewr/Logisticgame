@@ -1,0 +1,7 @@
+import {env} from 'cloudflare:workers';
+import {applyPartnerRule,type PartnerRules,type PartnerRule} from './business-rules';
+import {cancelLine,profile,cancelContract,type State,type Site} from './engine';
+export async function readPartnerRules():Promise<PartnerRules>{const [version,rows]=await env.DB!.batch([env.DB!.prepare("SELECT revision FROM logistics_rule_revision WHERE id='global'"),env.DB!.prepare('SELECT id,payload FROM logistics_partner_rules')]);return {revision:Number((version.results[0] as any)?.revision||0),items:Object.fromEntries(rows.results.map((r:any)=>[r.id,JSON.parse(r.payload) as PartnerRule]))};}
+export function applyStateRules(state:State,rules:PartnerRules){state.sites=state.sites.map(site=>applyPartnerRule(site,rules));for(const c of state.contracts){if(c.cancelled||!['supply','process'].includes(c.kind))continue;const site=state.sites.find(p=>p.id===c.siteId);if(!site)continue;const p=profile(site);if(c.kind==='supply'&&!p.production[c.good||'']||c.kind==='process'&&!p.recipes.includes(c.recipeId||''))cancelContract(state,c.id);}
+ const hidden=new Set(state.sites.filter(p=>p.hidden).map(p=>p.id));for(const line of state.lines)if(line.active&&line.stops.some(st=>hidden.has(st.siteId)))cancelLine(state,line.id);return state;}
+export function applyRules(sites:Site[],rules:PartnerRules,includeHidden=false){return sites.map(s=>applyPartnerRule(s,rules)).filter(s=>includeHidden||!s.hidden);}

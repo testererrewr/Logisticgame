@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';
+import {facilityGeometry,linesAtSite} from '../lib/site-details.ts';
+import {tileAt,tileCenter} from '../lib/geography.ts';
+import {mapBounds,cellPoint,registerMap} from '../lib/real-map.ts';
+import {newState,newCompany} from '../lib/game.ts';
+const city=tileAt([-33.9,151.2]),center=tileCenter(city),bounds=mapBounds(...center),cell=80*12+14,point=cellPoint(bounds,cell),footprint=Array.from({length:60},(_,i)=>cell+Math.floor(i/12)*80+i%12);
+const airport={id:'airport',name:'Sydney Airport',type:'airport',city,cell,point,footprint};
+const geometry=facilityGeometry(airport);assert.equal(geometry.cells.length,60);assert.equal(geometry.width,600);assert.equal(geometry.height,250);
+for(const c of geometry.cells){const expected=cellPoint(bounds,c.id);assert.ok(Math.abs(c.point[0]-expected[0])<1e-10);assert.ok(Math.abs(c.point[1]-expected[1])<1e-10);assert.ok(c.bounds[0][0]>=geometry.bounds[0][0]);assert.ok(c.bounds[1][1]<=geometry.bounds[1][1]);}
+assert.ok(geometry.center[1]>point[1]);assert.ok(geometry.center[0]>point[0]);
+registerMap({key:city,lat:center[0],lon:center[1],...bounds,nodes:[],roads:[],zones:[]});assert.deepEqual(facilityGeometry(airport),geometry,'Loaded maps and offline reconstruction draw the same occupied cells');
+const a=newCompany('a','Airways'),b=newCompany('b','Bus company');a.facilities=[airport,{...airport,id:'far',point:[point[0]+.1,point[1]]}];
+a.lines=[{id:'flight',name:'Flight',mode:'plane',a:city,b:city,fromFacility:'airport',toFacility:'far',vehicles:0,active:true,fare:1}];
+b.stops=[{id:'feeder',name:'Airport bus',point:[point[0]+.0008,point[1]],city,node:0,hub:false},{id:'far-stop',name:'Far stop',point:[point[0]+.1,point[1]],city,node:1,hub:false}];
+b.lines=[{id:'bus',name:'Bus feeder',mode:'bus',a:city,b:city,stopIds:['feeder','far-stop'],vehicles:2,active:true,fare:1},{id:'passing',mode:'bus',a:city,b:city,stopIds:['far-stop'],path:[point,point],vehicles:1,active:true,fare:1}];
+const world={id:'test',name:'World',description:'',speed:1,revision:0,state:{...newState(),companies:[a,b]}};
+const rows=linesAtSite(world,{company:'a',id:'airport',kind:'facility'});assert.equal(rows.length,2);assert.equal(rows[0].line.id,'flight');assert.equal(rows[0].direct,true);assert.equal(rows[0].line.vehicles,0,'Planned lines remain visible without claiming operation');assert.equal(rows[1].company.id,'b');assert.equal(rows[1].direct,false);assert.equal(rows[1].distance,0,'The feeder stop is inside the airport footprint');assert.equal(rows[1].at,'Airport bus');assert.ok(!rows.some(r=>r.line.id==='passing'),'A passing route or waypoint is not a boarding point');
+const stopRows=linesAtSite(world,{company:'b',id:'feeder',kind:'stop'});assert.equal(stopRows.find(r=>r.line.id==='bus').direct,true);assert.equal(stopRows.find(r=>r.line.id==='flight').direct,false);
+b.stops[0].point=[point[0]+.0032,point[1]];assert.equal(linesAtSite(world,{company:'a',id:'airport',kind:'facility'}).length,2,'Airport transfers allow 1000 m from the footprint');b.stops[0].hub=true;assert.equal(linesAtSite(world,{company:'a',id:'airport',kind:'facility'}).length,2,'Existing bus terminals share the expanded airport transfer range');
+a.facilities.push({...airport,id:'hangar',type:'airdepot',footprint:[],airportId:'airport'});a.fleet=[{id:'plane',name:'Plane',mode:'plane',depot:'hangar',line:'flight',purchasePrice:1100000}];assert.equal(linesAtSite(world,{company:'a',id:'hangar',kind:'facility'}).length,1);assert.equal(linesAtSite(world,{company:'missing',id:'airport',kind:'facility'}).length,0);
+console.log('PASS: full 60-cell airport footprint without map downloads, correct anchor/centre, all-company direct and walking-transfer lines, no false service for passing routes, depot assignments.');

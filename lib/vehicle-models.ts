@@ -1,0 +1,47 @@
+import {maintenanceFactor} from './maintenance';
+import {companyWorld,sharedCompany} from './infrastructure-context';
+import {motionProfile,accelerationByMode,brakingByMode} from './motion';
+import type {Company,Line,Mode} from './game';
+import seed from '../data/vehicle-catalog.json';
+import illustrationIds from '../data/vehicle-illustration-ids.json';
+import {modelIllustrationFile} from './vehicle-art.mjs';
+export type EnergyUse=Partial<Record<'diesel'|'kerosene'|'electricity',number>>;
+export type VehicleModel={rangeKm?:number;energyUse?:EnergyUse;energyType?:'diesel'|'kerosene'|'electricity'|'none';consumptionPerKm?:number;traction?:'electric'|'diesel'|'dual'|'none';trainRole?:'unit'|'locomotive'|'coach';acceleration?:number;braking?:number;id:string;mode:Mode;manufacturer:string;name:string;vehicleType:string;description:string;price:number;capacity:number;speed:number;citySpeed:number;maintenance:number;costPerKm:number;available:boolean;image:string;imageCredit:string;imageLicense:string;imageSource:string;imageLicenseUrl:string;sourceUrl:string;notes:string;referenceCapacity:number|null;referenceSpeed:number|null;lengthM:number|null};
+export type CatalogSnapshot={revision:number;created:number;models:VehicleModel[]};
+export const vehicleModels=seed as VehicleModel[];
+const catalogIndexes=new WeakMap<VehicleModel[],Map<string,VehicleModel>>();
+function catalogIndex(catalog:VehicleModel[]){let index=catalogIndexes.get(catalog);if(!index){index=new Map(catalog.map(m=>[m.id,m]));catalogIndexes.set(catalog,index);}return index;}
+const illustratedModels=new Set(illustrationIds);
+export const vehicleIllustration=(model:VehicleModel)=>illustratedModels.has(model.id)?modelIllustrationFile(model.id):'/vehicles/catalog-'+(model.mode==='train'?(model.trainRole||'unit'):model.mode)+'.svg';
+export const isVehicleIllustration=(model:VehicleModel)=>!model.image||/^\/vehicles\/(catalog-|model31-)/.test(model.image)||/illustration/i.test(model.imageCredit);
+export const vehicleImage=(model:VehicleModel)=>model.image||vehicleIllustration(model);
+export const modelsFor=(mode:Mode,catalog=vehicleModels)=>catalog.filter(m=>m.mode===mode&&m.available);
+export const defaultModel=(mode:Mode,catalog=vehicleModels)=>modelsFor(mode,catalog)[0]||catalog.find(m=>m.mode===mode)||vehicleModels.find(m=>m.mode===mode)!;
+export type ConsistPart={model:string;count:number};
+export function trainConsist(parts:ConsistPart[],catalog=vehicleModels){
+ const rows=parts.flatMap(p=>{const model=catalogIndex(catalog).get(p.model);return model?.mode==='train'?Array.from({length:p.count},()=>model):[];}),lead=rows.find(m=>m.trainRole!=='coach');if(!lead||!rows.length)return null;
+ const capacity=rows.reduce((s,m)=>s+m.capacity,0),speed=Math.min(...rows.map(m=>m.speed)),length=rows.reduce((s,m)=>s+(m.lengthM||0),0),units=rows.filter(m=>m.trainRole!=='coach').length,coaches=rows.filter(m=>m.trainRole==='coach').length;
+ const energyUse:EnergyUse={};for(const m of rows)if(m.trainRole!=='coach'&&m.energyType&&m.energyType!=='none')energyUse[m.energyType]=(energyUse[m.energyType]||0)+(m.consumptionPerKm||0);return {...lead,energyUse,consumptionPerKm:Object.keys(energyUse).length===1?Object.values(energyUse)[0]:undefined,energyType:rows.some(m=>m.energyType==='diesel')?'diesel' as const:'electricity' as const,traction:rows.some(m=>m.trainRole!=='coach'&&(m.traction==='diesel'||m.traction==='dual'))?'dual' as const:'electric' as const,name:parts.length===1&&parts[0].count===1?lead.name:lead.name+' + '+(coaches?coaches+' Wagen':units+' Einheiten'),capacity,speed,citySpeed:speed,lengthM:length,price:rows.reduce((s,m)=>s+m.price,0),maintenance:rows.reduce((s,m)=>s+m.maintenance,0),costPerKm:rows.reduce((s,m)=>s+m.costPerKm,0),acceleration:coaches?Math.max(.18,Math.min(.9,.9*units/(1+coaches*.22))):(lead.acceleration||.8),braking:Math.min(...rows.map(m=>m.braking||.8))};
+}
+export const vehicleModel=(v:{mode:Mode;model?:string;consist?:ConsistPart[]},catalog=vehicleModels):VehicleModel=>(v.mode==='train'&&v.consist?.length?trainConsist(v.consist,catalog):null)||((model=>model?.mode===v.mode?model:undefined)(catalogIndex(catalog).get(v.model||'')))||defaultModel(v.mode,catalog);
+export type FleetStats={vehicles:number;capacity:number;expenses:number;fixedExpenses:number;speed:number;wait:number;models:string[]};
+export type LineCostCache={signature:string;stats:FleetStats};
+export function lineFleetStats(company:Company,line:Line,km:number,catalog=vehicleModels):FleetStats{
+ const assigned=(company.fleet||[]).filter(v=>v.line===line.id&&v.mode===line.mode),world=companyWorld(company),energy=world?.rules?.energy,upkeep=maintenanceFactor(world);
+ const groups=new Map<string,{model:VehicleModel;count:number}>();for(const v of assigned){const key=v.model+':'+JSON.stringify(v.consist||[]),g=groups.get(key);if(g)g.count++;else groups.set(key,{model:vehicleModel(v,catalog),count:1});}
+ if(!assigned.length)for(let i=0;i<Math.max(0,Math.min(20000,line.vehicles||0));i++){const model=defaultModel(line.mode,catalog),g=groups.get(model.id);if(g)g.count++;else groups.set(model.id,{model,count:1});}
+ const stationLengths=(line.facilityIds||[]).map(id=>sharedCompany(company).facilities?.find(f=>f.id===id)?.platformLength||100);
+ const signature=JSON.stringify([47,upkeep,line.headwayMinutes,stationLengths,km,line.returnLength,line.segmentKm,line.returnSegmentKm,line.routeMode,line.city,line.facilityIds?.length||line.stopIds?.length||line.stopNodes?.length||2,line.railSpeed,line.throughStops,[...groups],energy]);
+ if(line.costCache?.signature===signature)return line.costCache.stats;
+ const routeKm=line.routeMode==='shuttle'?km+(line.returnLength||km):line.routeMode?km:km*2,stops=line.facilityIds?.length||line.stopIds?.length||line.stopNodes?.length||2,callCount=line.mode==='bus'&&line.routeMode==='outbound'?stops:(line.routeMode==='loop'||line.mode==='bus'&&!line.routeMode)?stops:Math.max(2,stops*2-2),dwellMinutes=line.mode==='plane'?3:line.mode==='ship'?1.5:line.mode==='train'?.75:25/60;
+ let capacity=0,expenses=0,fixedExpenses=0,frequency=0,weightedSpeed=0;
+ const costs=new Map<string,{dailyCost:number;dailyKm:number}>();for(const [key,{model,count}]of groups){const speed=Math.min(line.city&&line.mode==='bus'?urbanSpeed(model):model.speed,line.mode==='train'?line.railSpeed||320:line.mode==='plane'?2500:1300),through=line.mode==='train'?(line.throughStops||[]).filter(Boolean).length:0,callOrder=(line.routeMode==='loop'||line.mode==='bus'&&!line.routeMode)?Array.from({length:stops},(_,i)=>i):[...Array.from({length:stops},(_,i)=>i),...Array.from({length:Math.max(0,stops-2)},(_,i)=>stops-2-i)],dwellTotal=callOrder.reduce((n,i)=>n+dwellMinutes*(line.mode==='train'&&line.throughStops?.[i]?.5:1)*(line.mode==='train'&&(model.lengthM||0)>(stationLengths[i]||100)?2:1),0),cycle=Math.max(.01,(line.segmentKm?.length?line.segmentKm.concat((line.routeMode==='loop'||line.mode==='bus'&&!line.routeMode)?[]:line.returnSegmentKm||[...line.segmentKm].reverse()):Array(Math.max(1,callCount)).fill(routeKm/Math.max(1,callCount))).reduce((n,d)=>n+motionProfile(d*1000,speed,model.acceleration||accelerationByMode[line.mode],model.braking||brakingByMode[line.mode]).seconds/60,0)+dwellTotal),dailyCycles=1440/cycle,dailyKm=routeKm*dailyCycles,energyCost=energyCostPerKm(model,energy),dailyCost=model.maintenance*upkeep+dailyKm*(model.costPerKm*upkeep+energyCost);costs.set(key,{dailyCost,dailyKm});capacity+=count*model.capacity*dailyCycles;expenses+=count*dailyCost;fixedExpenses+=count*model.maintenance*upkeep;frequency+=count/cycle;weightedSpeed+=count*speed/cycle;}
+ const factor=line.headwayMinutes&&frequency?Math.min(1,1/(line.headwayMinutes*frequency)):1;if(factor<1){capacity*=factor;expenses=fixedExpenses+(expenses-fixedExpenses)*factor;frequency*=factor;weightedSpeed*=factor;for(const [key,value]of costs){const fixed=groups.get(key)!.model.maintenance*upkeep;value.dailyCost=fixed+(value.dailyCost-fixed)*factor;value.dailyKm*=factor;}}
+ for(const v of assigned){const cached=costs.get(v.model+':'+JSON.stringify(v.consist||[]));if(cached)Object.assign(v,cached);}
+ const stats={vehicles:assigned.length||line.vehicles||0,capacity:Math.floor(capacity),expenses:Math.round(expenses),fixedExpenses,speed:frequency?weightedSpeed/frequency:0,wait:frequency?Math.max(line.headwayMinutes?1/60:1,.5/frequency):0,models:[...new Set([...groups.values()].map(g=>g.model.name))]};line.costCache={signature,stats};return stats;
+}
+
+export function energyCostPerKm(model:VehicleModel,prices?:EnergyUse){const use=model.energyUse||(model.energyType&&model.energyType!=='none'?{[model.energyType]:model.consumptionPerKm||0}:{});return Object.entries(use).reduce((sum,[key,value])=>sum+(value||0)*(prices?.[key as keyof EnergyUse]??({diesel:1.6,kerosene:.85,electricity:.2}[key as keyof EnergyUse])),0);}
+export function consumptionLabel(model:VehicleModel){const use=model.energyUse||(model.energyType&&model.energyType!=='none'?{[model.energyType]:model.consumptionPerKm||0}:{});return Object.entries(use).map(([key,value])=>(value||0).toLocaleString('de-DE',{maximumFractionDigits:3})+' '+(key==='electricity'?'kWh':'L')+'/km '+({diesel:'Diesel',kerosene:'Kerosin',electricity:'Strom'}[key as keyof EnergyUse])).join(' + ')||'Ohne Energieverbrauch';}
+
+export const urbanSpeed=(model:VehicleModel)=>Math.min(50,model.speed,model.citySpeed*2);

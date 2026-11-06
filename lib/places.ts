@@ -1,0 +1,12 @@
+import type {LatLon} from './real-map';
+export type PlaceResult={id:string;name:string;label:string;point:LatLon;zoom:number};
+export function nominatimPlaces(raw:any):PlaceResult[]{
+ if(!Array.isArray(raw))throw Error('Die Ortssuche hat ungültige Daten geliefert.');
+ const result:PlaceResult[]=[];
+ for(const p of raw){const lat=Number(p.lat),lon=Number(p.lon);if(p.lat==null||p.lon==null||!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>85.05112878||Math.abs(lon)>180)continue;
+  const label=String(p.display_name||p.name||'Ort').slice(0,400),name=String(p.name||label.split(',')[0]).slice(0,120),id='nominatim:'+String(p.osm_type||'')+String(p.osm_id||p.place_id||lat+':'+lon);
+  if(result.some(r=>r.id===id))continue;result.push({id,name,label,point:[lat,lon],zoom:p.type==='country'?5:p.type==='state'?7:16});if(result.length===6)break;
+ }return result;
+}
+export function coordinatePlace(query:string):PlaceResult|null{const match=/^\s*(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)\s*$/.exec(query);if(!match)return null;const lat=Number(match[1]),lon=Number(match[2]);if(Math.abs(lat)>85.05112878||Math.abs(lon)>180)throw Error('Koordinaten: Breite zwischen −85,05 und 85,05; Länge zwischen −180 und 180.');return {id:'coordinates:'+lat+':'+lon,name:lat.toFixed(5)+', '+lon.toFixed(5),label:'Koordinaten · '+lat.toFixed(5)+', '+lon.toFixed(5),point:[lat,lon],zoom:16};}
+export function photonPlaces(raw:any):PlaceResult[]{if(!Array.isArray(raw?.features))throw Error('Die Ortssuche hat ungültige Daten geliefert.');const result:PlaceResult[]=[];for(const f of raw.features){const [lon,lat]=f.geometry?.coordinates||[],p=f.properties||{};if(f.geometry?.type!=='Point'||!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>85.05112878||Math.abs(lon)>180)continue;const kind:Record<string,string>={river:'Fluss',stream:'Bach',city:'Stadt',town:'Stadt',village:'Dorf',hamlet:'Weiler',country:'Land',state:'Region'};const street=[p.street,p.housenumber].filter(Boolean).join(' '),name=String(p.name||street||p.city||'Ort').slice(0,120),parts=[name,street,p.city,p.district,p.state,p.country].filter(v=>typeof v==='string'&&v.trim()),label=((kind[p.osm_value]?kind[p.osm_value]+' · ':'')+[...new Set(parts)].join(', ')).slice(0,400);const id=String(p.osm_type||'')+String(p.osm_id||lat+':'+lon);if(result.some(r=>r.id===id))continue;result.push({id,name,label,point:[lat,lon],zoom:p.osm_value==='country'?5:p.osm_value==='state'?7:16});if(result.length===6)break;}return result;}

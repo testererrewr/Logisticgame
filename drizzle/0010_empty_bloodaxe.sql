@@ -1,0 +1,1 @@
+ALTER TABLE `logistics_world_offers` ADD `quantity_unit` text DEFAULT 't' NOT NULL;

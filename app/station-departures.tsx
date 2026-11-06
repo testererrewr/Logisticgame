@@ -1,0 +1,18 @@
+'use client';
+import {useEffect,useMemo,useState} from 'react';
+import {Clock3,Route} from 'lucide-react';
+import type {Company,Line,World} from '../lib/game';
+import {modes} from '../lib/game';
+import type {SiteRef} from '../lib/site-details';
+import {stationSchedule,upcomingDepartures} from '../lib/station-departures';
+import {durationLabel,liveClock} from '../lib/vehicle-telemetry';
+const hour=new Intl.DateTimeFormat('de-DE',{timeZone:'UTC',hour:'2-digit',minute:'2-digit',second:'2-digit'}),day=new Intl.DateTimeFormat('de-DE',{timeZone:'UTC',day:'2-digit',month:'2-digit'});
+export default function StationDepartures({world,reference,myId,showForeign=false,onShowLine}:{world:World;reference:SiteRef;myId:string;showForeign?:boolean;onShowLine:(company:Company,line:Line)=>void}){
+ const [now,setNow]=useState(()=>world.receivedAt||world.serverNow||Date.now()),[line,setLine]=useState(''),schedule=useMemo(()=>stationSchedule(world,reference,myId,showForeign),[world,reference.company,reference.id,reference.kind,myId,showForeign]),clock=liveClock(world,now),filter=schedule.lines.some(r=>r.line.id===line)?line:'',departures=upcomingDepartures(schedule,now,12,filter),delayed=clock.stale||world.state.operations?.backlog;
+ useEffect(()=>{setNow(Date.now());const timer=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(timer);},[]);
+ useEffect(()=>setLine(''),[reference.company,reference.id,reference.kind]);
+ return <section className="station-departures" aria-label="Abfahrtstafel"><div className="station-departures-heading"><h3><Clock3 size={16}/> Nächste Abfahrten</h3><span>Prognose · Weltzeit</span></div>
+ {schedule.lines.length>1&&<label className="departure-line-filter">Linie<select aria-label="Abfahrten nach Linie filtern" value={filter} onChange={e=>setLine(e.target.value)}><option value="">Alle Linien vor Ort</option>{schedule.lines.map(r=><option key={r.company.id+':'+r.line.id} value={r.line.id}>{r.line.name||modes[r.line.mode].name+'linie'} · {r.company.name}</option>)}</select></label>}
+ {delayed?<p className="departure-message" role="status">{clock.stale?'Verbindung verzögert. Abfahrten werden nach dem nächsten Serverabgleich wieder angezeigt.':'Der Server aktualisiert die Fahrten. Die Abfahrtstafel folgt nach dem Abgleich.'}</p>:!departures.length?<p className="departure-message">Keine bevorstehende Abfahrt mit bestätigtem Fahrzeugeinsatz. Linien ohne Fahrzeuge oder mit eingestelltem Betrieb erzeugen keine Abfahrten.</p>:<ol className="departure-list">{departures.map(d=>{const remaining=Math.max(0,d.departure-clock.time),otherDay=Math.floor(d.departure/86400000)!==Math.floor(clock.time/86400000);return <li key={d.id}><div className="departure-main"><button className="departure-line" style={{borderLeftColor:d.company.color}} onClick={()=>onShowLine(d.company,d.line)}><b>{d.line.name||modes[d.line.mode].name+'linie'}</b><span><Route size={12}/>{d.destination}</span></button><div className="departure-time"><b>{remaining<1000?'Jetzt':durationLabel(remaining)}</b><time dateTime={new Date(d.departure).toISOString()}>{otherDay?day.format(d.departure)+' ':''}{hour.format(d.departure)}</time>{(world.config?.timeScale||1)!==1&&<small>{durationLabel(remaining/(world.config?.timeScale||1))} Echtzeit</small>}</div></div><p className="departure-detail">{d.company.name} · {d.vehicle.name} · {d.direction}</p>{!d.direct&&<p className={'departure-walk '+(!d.reachable?'is-tight':'')}>{d.at} · {d.distance} m Fußweg{!d.reachable?' · Anschluss zu knapp':''}</p>}</li>;})}</ol>}
+ <p className="departure-note">Voraussichtliche Abfahrten aus dem letzten Serverstand · Uhrzeiten in UTC-Weltzeit. Fahrgastwechsel und Taktabstände können die Prognose ändern.</p></section>;
+}

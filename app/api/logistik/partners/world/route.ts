@@ -1,0 +1,15 @@
+import {NextRequest,NextResponse} from 'next/server';
+import {env} from 'cloudflare:workers';
+import {seedRegistry} from '../../../../../lib/logistics/partner-registry';
+import {seedGlobalRegistry} from '../../../../../lib/logistics/global-registry';
+import {readPartnerRules} from '../../../../../lib/logistics/partner-rules-store';
+import {applyPartnerRule} from '../../../../../lib/logistics/business-rules';
+import {matchesMapSite,mapClusterKey,servedStationIds} from '../../../../../lib/logistics/map-filtering';
+import {currentUser} from '../../online/route';
+import type {Site,State} from '../../../../../lib/logistics/engine';
+export async function GET(req:NextRequest){try{await seedRegistry();const p=req.nextUrl.searchParams,lat=Number(p.get('lat')||0),lon=Number(p.get('lon')||0),zoom=Number(p.get('zoom')||2),kinds=(p.get('kinds')||'').split(',').filter(k=>/^[a-zA-Z]+$/.test(k)),query=(p.get('q')||'').slice(0,100),good=p.get('good')||'all',unserved=p.get('unserved')==='1',global=await seedGlobalRegistry(0);if(!Number.isFinite(lat)||!Number.isFinite(lon)||!Number.isFinite(zoom)||Math.abs(lat)>85||Math.abs(lon)>180||zoom<2||zoom>19)return NextResponse.json({error:'Ungültige Kartenansicht.'},{status:400});if(!kinds.length)return NextResponse.json({sites:[],clusters:[],global});
+ let served=new Set<string>();if(unserved){const u=await currentUser(req),row=u&&await env.DB!.prepare('SELECT state FROM logistics_world_companies WHERE world_id=? AND user_id=?').bind(p.get('world')||'',u.id).first<{state:string}>();if(!row)return NextResponse.json({error:'Bitte der Welt beitreten.'},{status:403});served=servedStationIds(JSON.parse(row.state) as State);}
+ const dy=Math.min(180,135/2**(zoom-2)),dx=Math.min(360,230/2**(zoom-2)),rules=await readPartnerRules(),sites:Site[]=[],groups=new Map<string,{lat:number;lon:number;count:number;kind:string;site:Site}>();let count=0;
+ for(let offset=0;;offset+=500){const rows=(await env.DB!.prepare('SELECT payload FROM logistics_partner_registry WHERE lat BETWEEN ? AND ? AND (?=1 OR lon BETWEEN ? AND ?) ORDER BY id LIMIT 500 OFFSET ?').bind(lat-dy,lat+dy,dx>=180?1:0,lon-dx,lon+dx,offset).all<{payload:string}>()).results;for(const row of rows){const site=applyPartnerRule(JSON.parse(row.payload),rules);if(!kinds.includes(site.kind)||served.has(site.id)||!matchesMapSite(site,query,good))continue;count++;if(sites.length<3001)sites.push(site);const key=mapClusterKey(site,zoom),g=groups.get(key)||{lat:0,lon:0,count:0,kind:'mixed',site};g.lat+=site.lat;g.lon+=site.lon;g.count++;groups.set(key,g);}if(rows.length<500)break;}
+ const clustered=zoom<8||count>3000;return NextResponse.json({sites:clustered?[]:sites,clusters:clustered?[...groups].map(([id,g])=>({id,lat:g.lat/g.count,lon:g.lon/g.count,count:g.count,kind:g.count===1?g.site.kind:g.kind,name:g.count===1?g.site.name:undefined})):[],global,matched:count},{headers:{'Cache-Control':'no-store'}});
+ }catch(e:any){return NextResponse.json({error:e.message},{status:503});}}

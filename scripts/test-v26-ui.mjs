@@ -1,0 +1,18 @@
+import React from 'react';
+import {renderToStaticMarkup} from 'react-dom/server';
+import assert from 'node:assert/strict';
+import FinancePage from '../app/finance-page.tsx';
+import StatisticsPage from '../app/statistics-page.tsx';
+import TrainBuilder from '../app/train-builder.tsx';
+import LineWindow,{newDraft} from '../app/line-window.tsx';
+import SiteWindow from '../app/site-window.tsx';
+import {newCompany,newState} from '../lib/game.ts';
+import {book} from '../lib/finance.ts';
+import {vehicleModels} from '../lib/vehicle-models.ts';
+import {configOf} from '../lib/world-config.ts';
+const c=newCompany('ui','UI'),time=Date.parse('2026-10-25T08:00:00Z'),world={id:'ui',name:'UI',status:'running',state:{...newState(),simTime:time,companies:[c]},config:configOf({}),revision:1};c.facilities=[0,1,2].map(i=>({id:'r'+i,name:'Bahnhof '+i,type:'station',city:'berlin',point:[52.52,13.4+i*.01],cell:0,footprint:[]}));c.tracks=[{id:'t',from:'r0',to:'r2',points:c.facilities.map(f=>f.point),length:1.4}];book(c,time,0,123);book(c,time,1,20);let html=renderToStaticMarkup(React.createElement(FinancePage,{world,myId:c.id,busy:false,onAction:async()=>true}));assert.match(html,/Täglich/);assert.match(html,/Wöchentlich/);assert.match(html,/Finanzdatum/);assert.match(html,/123,00/);assert.ok(!html.includes('seit Betrieb'));
+html=renderToStaticMarkup(React.createElement(StatisticsPage,{world,myId:c.id}));assert.match(html,/Statistik durchsuchen/);assert.match(html,/Partner-Linienwechsel/);
+html=renderToStaticMarkup(React.createElement(TrainBuilder,{catalog:vehicleModels,quantity:3,cash:5000000,disabled:false,onBuy:()=>{}}));assert.match(html,/Lokomotiven/);assert.match(html,/3 Zugverbände kaufen/);assert.match(html,/Stadler FLIRT/);
+html=renderToStaticMarkup(React.createElement(LineWindow,{world,myId:c.id,draft:{...newDraft(),mode:'train',facilityIds:['r0','r1','r2'],fare:1.8},setDraft:()=>{},onClose:()=>{},onAction:async()=>true,onPreview:()=>{},onFocusStop:()=>{},onOpenDepots:()=>{},presentation:'page'}));assert.match(html,/Station hinzufügen/);assert.match(html,/Bahnhof 0/);assert.match(html,/Bahnhof 1/);assert.match(html,/Bahnhof 2/);assert.match(html,/Ticketpreis in Euro/);assert.ok(!html.includes('Nutzung am aktuellen Spieltag'));assert.ok(!html.includes('name="Linie erstellen" disabled'));
+html=renderToStaticMarkup(React.createElement(SiteWindow,{world,myId:c.id,reference:{company:c.id,kind:'facility',id:'r0'},busy:false,onClose:()=>{},onManageStop:()=>{},onDepot:()=>{},onPlan:()=>{},onAction:async()=>true,onShowLine:()=>{}}));assert.ok(!html.includes('Abfahrtsbelegung'));assert.ok(!html.includes('Direkteinstiege'));
+console.log('PASS v26 UI server rendering: date/period finance controls, independent statistics page, train builder, multiple ordered stations, distance fare inputs and no statistics in the station popup.');

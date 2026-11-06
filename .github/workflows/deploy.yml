@@ -1,0 +1,39 @@
+name: Deploy auf VPS
+
+# Optional: Nach jedem Push auf main aktualisiert sich der Server automatisch.
+# Dafür unter GitHub → Settings → Secrets and variables → Actions anlegen:
+#   VPS_HOST     IP oder Hostname des Servers
+#   VPS_USER     SSH-Benutzer (z. B. root)
+#   VPS_SSH_KEY  privater SSH-Schlüssel (dessen öffentlicher Teil in ~/.ssh/authorized_keys liegt)
+# Ohne diese Secrets wird der Schritt einfach übersprungen.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: vps-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - id: check
+        env:
+          HOST: ${{ secrets.VPS_HOST }}
+        run: echo "ok=$([ -n "$HOST" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Update auf dem Server ausführen
+        if: steps.check.outputs.ok == 'true'
+        env:
+          HOST: ${{ secrets.VPS_HOST }}
+          SSH_USER: ${{ secrets.VPS_USER }}
+          KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new "${SSH_USER:-root}@$HOST" \
+            "sudo bash /opt/logistik/app/deploy/update.sh"

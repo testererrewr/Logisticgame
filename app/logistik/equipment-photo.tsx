@@ -1,0 +1,4 @@
+import galleryData from '../../data/logistics-equipment-gallery.json';
+type Photo={path:string;alt:string;caption:string;sourceUrl:string;author:string;license:string;licenseUrl:string};
+const gallery=galleryData as {trailers?:Record<string,Photo|null>;wagons?:Record<string,Photo|null>};
+export default function EquipmentPhoto({id,kind,credits=false}:{id:string;kind:'trailers'|'wagons';credits?:boolean}){const p=gallery[kind]?.[id];return <figure className="log-equipment-photo">{p?<><img src={p.path} alt={p.alt} loading="lazy" decoding="async" width="480" height="300"/>{credits&&<figcaption>{p.caption}<span><a target="_blank" rel="noopener noreferrer" href={p.sourceUrl}>{p.author}</a> · <a target="_blank" rel="noopener noreferrer" href={p.licenseUrl}>{p.license}</a></span></figcaption>}</>:<div className="log-equipment-fallback"><span>{kind==='wagons'?'🚃':'🚛'}</span><small>Kein belegtes freies Bauartfoto</small></div>}</figure>}

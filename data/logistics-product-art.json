@@ -1,0 +1,430 @@
+[
+  {
+    "id": "wheat",
+    "name": "Weizen"
+  },
+  {
+    "id": "corn",
+    "name": "Mais"
+  },
+  {
+    "id": "milk",
+    "name": "Milch"
+  },
+  {
+    "id": "apples",
+    "name": "Äpfel"
+  },
+  {
+    "id": "timber",
+    "name": "Rundholz"
+  },
+  {
+    "id": "ironOre",
+    "name": "Eisenerz"
+  },
+  {
+    "id": "rareEarth",
+    "name": "Seltene Erden"
+  },
+  {
+    "id": "flour",
+    "name": "Mehl"
+  },
+  {
+    "id": "bread",
+    "name": "Brot"
+  },
+  {
+    "id": "pastry",
+    "name": "Gebäck"
+  },
+  {
+    "id": "biscuits",
+    "name": "Kekse"
+  },
+  {
+    "id": "lumber",
+    "name": "Schnittholz"
+  },
+  {
+    "id": "steel",
+    "name": "Stahl"
+  },
+  {
+    "id": "electronics",
+    "name": "Elektronik"
+  },
+  {
+    "id": "packaging",
+    "name": "Verpackungen"
+  },
+  {
+    "id": "containers",
+    "name": "Containerfracht"
+  },
+  {
+    "id": "barley",
+    "name": "Gerste"
+  },
+  {
+    "id": "oats",
+    "name": "Hafer"
+  },
+  {
+    "id": "rye",
+    "name": "Roggen"
+  },
+  {
+    "id": "rice",
+    "name": "Reis"
+  },
+  {
+    "id": "soy",
+    "name": "Sojabohnen"
+  },
+  {
+    "id": "sugarBeet",
+    "name": "Zuckerrüben"
+  },
+  {
+    "id": "potatoes",
+    "name": "Kartoffeln"
+  },
+  {
+    "id": "sand",
+    "name": "Sand"
+  },
+  {
+    "id": "gravel",
+    "name": "Kies"
+  },
+  {
+    "id": "limestone",
+    "name": "Kalkstein"
+  },
+  {
+    "id": "coal",
+    "name": "Kohle"
+  },
+  {
+    "id": "bauxite",
+    "name": "Bauxit"
+  },
+  {
+    "id": "copperOre",
+    "name": "Kupfererz"
+  },
+  {
+    "id": "lithium",
+    "name": "Lithiumkonzentrat"
+  },
+  {
+    "id": "salt",
+    "name": "Salz"
+  },
+  {
+    "id": "cement",
+    "name": "Zement"
+  },
+  {
+    "id": "fertilizer",
+    "name": "Dünger"
+  },
+  {
+    "id": "sugar",
+    "name": "Zucker"
+  },
+  {
+    "id": "malt",
+    "name": "Malz"
+  },
+  {
+    "id": "animalFeed",
+    "name": "Tierfutter"
+  },
+  {
+    "id": "coffeeBeans",
+    "name": "Kaffeebohnen"
+  },
+  {
+    "id": "cocoa",
+    "name": "Kakao"
+  },
+  {
+    "id": "vegetables",
+    "name": "Gemüse"
+  },
+  {
+    "id": "tomatoes",
+    "name": "Tomaten"
+  },
+  {
+    "id": "grapes",
+    "name": "Trauben"
+  },
+  {
+    "id": "eggs",
+    "name": "Eier"
+  },
+  {
+    "id": "beef",
+    "name": "Rindfleisch"
+  },
+  {
+    "id": "pork",
+    "name": "Schweinefleisch"
+  },
+  {
+    "id": "poultry",
+    "name": "Geflügelfleisch"
+  },
+  {
+    "id": "fish",
+    "name": "Fisch"
+  },
+  {
+    "id": "cheese",
+    "name": "Käse"
+  },
+  {
+    "id": "butter",
+    "name": "Butter"
+  },
+  {
+    "id": "yogurt",
+    "name": "Joghurt"
+  },
+  {
+    "id": "frozenFood",
+    "name": "Tiefkühlkost"
+  },
+  {
+    "id": "freshJuice",
+    "name": "Frischsaft"
+  },
+  {
+    "id": "pasta",
+    "name": "Teigwaren"
+  },
+  {
+    "id": "cannedFood",
+    "name": "Konserven"
+  },
+  {
+    "id": "chocolate",
+    "name": "Schokolade"
+  },
+  {
+    "id": "roastedCoffee",
+    "name": "Röstkaffee"
+  },
+  {
+    "id": "paper",
+    "name": "Papier"
+  },
+  {
+    "id": "cardboard",
+    "name": "Karton"
+  },
+  {
+    "id": "textiles",
+    "name": "Textilien"
+  },
+  {
+    "id": "clothing",
+    "name": "Bekleidung"
+  },
+  {
+    "id": "furniture",
+    "name": "Möbel"
+  },
+  {
+    "id": "glass",
+    "name": "Glas"
+  },
+  {
+    "id": "bottles",
+    "name": "Glasflaschen"
+  },
+  {
+    "id": "tires",
+    "name": "Reifen"
+  },
+  {
+    "id": "spareParts",
+    "name": "Ersatzteile"
+  },
+  {
+    "id": "medicalSupplies",
+    "name": "Medizinischer Bedarf"
+  },
+  {
+    "id": "bandages",
+    "name": "Verbandmaterial"
+  },
+  {
+    "id": "syringes",
+    "name": "Spritzen / Einwegmaterial"
+  },
+  {
+    "id": "soap",
+    "name": "Seife"
+  },
+  {
+    "id": "cleaners",
+    "name": "Reinigungsmittel"
+  },
+  {
+    "id": "woodPellets",
+    "name": "Holzpellets (Säcke)"
+  },
+  {
+    "id": "plasticGranules",
+    "name": "Kunststoffgranulat (Säcke)"
+  },
+  {
+    "id": "batteries",
+    "name": "Batteriesysteme (gesichert)"
+  },
+  {
+    "id": "solarPanels",
+    "name": "Solarmodule"
+  },
+  {
+    "id": "computers",
+    "name": "Computer"
+  },
+  {
+    "id": "machineryParts",
+    "name": "Maschinenkomponenten"
+  },
+  {
+    "id": "rubber",
+    "name": "Kautschuk"
+  },
+  {
+    "id": "cotton",
+    "name": "Baumwolle"
+  },
+  {
+    "id": "aluminium",
+    "name": "Aluminium"
+  },
+  {
+    "id": "copper",
+    "name": "Kupfer"
+  },
+  {
+    "id": "steelCoils",
+    "name": "Stahlcoils"
+  },
+  {
+    "id": "steelBeams",
+    "name": "Stahlträger"
+  },
+  {
+    "id": "concreteElements",
+    "name": "Betonfertigteile"
+  },
+  {
+    "id": "bricks",
+    "name": "Ziegel"
+  },
+  {
+    "id": "machines",
+    "name": "Maschinen"
+  },
+  {
+    "id": "vehicles",
+    "name": "PKW / Nutzfahrzeuge"
+  },
+  {
+    "id": "scrapMetal",
+    "name": "Metallschrott"
+  },
+  {
+    "id": "water",
+    "name": "Trinkwasser"
+  },
+  {
+    "id": "beer",
+    "name": "Bier (Tank)"
+  },
+  {
+    "id": "wine",
+    "name": "Wein (Tank)"
+  },
+  {
+    "id": "vegetableOil",
+    "name": "Pflanzenöl"
+  },
+  {
+    "id": "molasses",
+    "name": "Melasse"
+  },
+  {
+    "id": "crudeOil",
+    "name": "Rohöl"
+  },
+  {
+    "id": "diesel",
+    "name": "Diesel"
+  },
+  {
+    "id": "petrol",
+    "name": "Benzin"
+  },
+  {
+    "id": "kerosene",
+    "name": "Kerosin"
+  },
+  {
+    "id": "chemicals",
+    "name": "Industriechemikalien"
+  },
+  {
+    "id": "solvents",
+    "name": "Lösungsmittel"
+  },
+  {
+    "id": "industrialGases",
+    "name": "Industriegase"
+  },
+  {
+    "id": "antibiotics",
+    "name": "Antibiotika"
+  },
+  {
+    "id": "painkillers",
+    "name": "Schmerzmittel"
+  },
+  {
+    "id": "insulin",
+    "name": "Insulin"
+  },
+  {
+    "id": "vaccines",
+    "name": "Impfstoffe"
+  },
+  {
+    "id": "infusions",
+    "name": "Infusionslösungen"
+  },
+  {
+    "id": "medicalOxygen",
+    "name": "Medizinischer Sauerstoff"
+  },
+  {
+    "id": "cattle",
+    "name": "Rinder"
+  },
+  {
+    "id": "pigs",
+    "name": "Schweine"
+  },
+  {
+    "id": "livePoultry",
+    "name": "Lebendgeflügel"
+  }
+]

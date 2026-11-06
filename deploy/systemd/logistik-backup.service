@@ -1,0 +1,7 @@
+[Unit]
+Description=Weltverbund Logistik – tägliche Datenbanksicherung
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/logistik/logistik.env
+ExecStart=/bin/bash /opt/logistik/app/deploy/backup.sh

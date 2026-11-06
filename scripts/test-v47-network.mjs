@@ -1,0 +1,9 @@
+import assert from 'node:assert/strict';
+import {fixture,addLine,time} from './v33-fixtures.mjs';import {act} from '../lib/game.ts';import {cellPoint,registerMap} from '../lib/real-map.ts';import {configOf} from '../lib/world-config.ts';import {inspectNetwork,networkForecast} from '../lib/network.ts';
+const f=fixture('transfers47');f.c.lines=[];f.c.stops=[];f.c.fleet=[];f.state.rules=configOf({maxTransfers:10});
+const cells=Array.from({length:12},(_,i)=>20*80+5+i*5),points=cells.map(id=>cellPoint(f.map,id));
+for(let i=0;i<11;i++){const l=addLine(f.c,'leg'+i,f.map,points.slice(i,i+2));l.routingVersion=2;act(f.state,f.c.id,{type:'vehicle-buy',depot:'bd',model:'bus-mini',line:l.id});}
+let journey=inspectNetwork(f.state,points[0],points.at(-1),{maxTransfers:10});assert.ok(journey.journeys.length);assert.ok(journey.journeys.every(j=>j.factors.transfers===10));journey=inspectNetwork(f.state,points[0],points.at(-1),{maxTransfers:9});assert.equal(journey.journeys.length,0);
+f.map.zones[cells[0]].residents=50000;f.map.zones[cells.at(-1)].jobs=50000;f.map.date+='demand';registerMap({...f.map,zones:f.map.zones.map(z=>({...z}))});const direct=addLine(f.c,'direct',f.map,[points[0],points.at(-1)]);direct.routingVersion=2;act(f.state,f.c.id,{type:'vehicle-buy',depot:'bd',model:'bus-mini',line:direct.id});
+const ten=networkForecast(f.state,{maxTransfers:10}),nine=networkForecast(f.state,{maxTransfers:9});assert.ok(ten.flows.some(f=>f.line==='leg0'&&f.origin>0),'A full direct route leaves demand that can use the ten-transfer alternative');assert.ok(ten.summary.served>nine.summary.served,'Capacity rerouting serves more people when the longer chain is permitted');assert.ok(ten.summary.served<=ten.summary.demand+.00001);
+console.log('PASS v47 network: a genuine eleven-line chain requires/permits ten transfers; nine rejects it; saturated direct service reroutes finite remaining demand through the long chain without creating extra passengers.');

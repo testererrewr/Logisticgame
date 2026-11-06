@@ -1,0 +1,26 @@
+import {maintenanceFactor} from './maintenance';
+import {modeEnabled} from './world-modes';
+import {bindInfrastructure} from './infrastructure-context';
+import {settleInfrastructure} from './infrastructure';
+import {vehicleLedger,lineLedger} from './company-metrics';
+import {book} from './finance';
+import {economy,type WorldState} from './game';
+import {configOf,type WorldConfig} from './world-config';
+import {lineFleetStats,vehicleModel} from './vehicle-models';
+import {depotForLine,distance} from './game';
+import {settleOperations} from './operations';
+const HOUR=3600000,WEEK=168*HOUR;
+// Integrating complete UTC hour buckets makes settlement independent of poll frequency.
+export function hourBuckets(start:number,end:number){const result=new Map<number,{time:number;ms:number}>();function add(t:number,ms:number){const d=new Date(t),key=d.getUTCDay()*24+d.getUTCHours(),prev=result.get(key);result.set(key,{time:t,ms:(prev?.ms||0)+ms});}const weeks=Math.floor((end-start)/WEEK);if(weeks){for(let i=0;i<168;i++)add(Math.floor(start/HOUR)*HOUR+i*HOUR,weeks*HOUR);start+=weeks*WEEK;}while(start<end){const next=Math.min(end,(Math.floor(start/HOUR)+1)*HOUR);add(start,next-start);start=next;}return [...result.values()];}
+export function advanceEnergy(state:WorldState,config:WorldConfig,realTime:number){
+ const day=Math.floor(realTime/86400000),week=Math.floor((day+3)/7),base={diesel:1.6,kerosene:.85,electricity:.2};state.energyRealWeek??=week;state.energyRealDay??=day;
+ if(!config.energy.stable)for(let w=state.energyRealWeek+1;w<=week;w++)for(const [i,key]of (['diesel','kerosene','electricity'] as const).entries()){const pending=({diesel:'nextDiesel',kerosene:'nextKerosene',electricity:'nextElectricity'} as const)[key];if(w===week&&config.energy.nextDay!==undefined&&day>=config.energy.nextDay&&config.energy[pending]!==0)continue;const noise=Math.sin(w*12.9898+(i+1)*78.233)*.04,reversion=(base[key]-config.energy[key])/base[key]*.01;config.energy[key]=Math.round(Math.max(.0001,Math.min(20,config.energy[key]*(1+noise+reversion)))*10000)/10000;}
+ state.energyRealWeek=week;state.energyRealDay=day;
+ if(config.energy.nextDay!==undefined&&day>=config.energy.nextDay){for(const [key,pending]of [['diesel','nextDiesel'],['kerosene','nextKerosene'],['electricity','nextElectricity']] as const)config.energy[key]=Math.round(Math.max(.0001,Math.min(20,config.energy[key]*(1+config.energy[pending]/100)))*10000)/10000;config.energy.nextDiesel=config.energy.nextKerosene=config.energy.nextElectricity=0;delete config.energy.nextDay;}
+ if(state.rules)state.rules.energy=config.energy;
+}
+export function settleWorld(state:WorldState,options:Partial<WorldConfig>|string,status='running',now=Date.now()){
+ const config=configOf(options);advanceEnergy(state,config,now);if(options&&typeof options==='object'){options.energy=config.energy;options.configVersion=47;}state.rules=config;bindInfrastructure(state);if(state.clockVersion!==2||!Number.isFinite(state.simTime)){state.simTime=now;state.startedAt=now;state.lastTick=now;state.clockVersion=2;return;}const elapsed=Math.max(0,now-state.lastTick);state.lastTick=now;if(status!=='running'||!elapsed)return;const start=state.simTime!,end=start+elapsed*config.timeScale;for(const c of state.companies)c.finances??={started:start,days:{}};const cutoff=Math.max(start,end-90*86400000),periods:{start:number;end:number;record:boolean}[]=[];if(cutoff>start)periods.push({start,end:cutoff,record:false});for(let at=cutoff;at<end;){const next=Math.min(end,(Math.floor(at/86400000)+1)*86400000);periods.push({start:at,end:next,record:true});at=next;}const history=new Map<string,number>();
+ for(const period of periods){const rows=state.companies.flatMap(c=>c.lines.map(l=>{const stats=lineFleetStats(c,l,l.length??distance(l.a,l.b),state.vehicleCatalog?.models),active=l.active&&modeEnabled(config,l.mode)&&!!depotForLine(c,l);return {id:l.id,company:c.id,expenses:active?(state.tripCostsSince===undefined||period.end<=state.tripCostsSince?stats.expenses:stats.fixedExpenses):0,profit:0};})),fraction=(period.end-period.start)/86400000;for(const c of state.companies){if(c.suspended)continue;const owned=rows.filter(r=>r.company===c.id),operating=owned.reduce((n,r)=>n+r.expenses,0),interest=c.loan*(c.loanRate??.001);for(const row of owned)lineLedger(c,row.id,period.start,0,row.expenses*fraction);c.cash-=(operating+interest)*fraction;c.earned-=(operating+interest)*fraction;if(period.record){book(c,period.start,1,operating*fraction);book(c,period.start,2,interest*fraction);}for(const v of c.fleet||[])if(v.line&&owned.some(r=>r.id===v.line))vehicleLedger(c,v.id,period.start,0,(state.tripCostsSince===undefined||period.end<=state.tripCostsSince?(v.dailyCost||0):vehicleModel(v,state.vehicleCatalog?.models).maintenance*maintenanceFactor(state,period.start))*fraction);history.set(c.id,owned.reduce((n,r)=>n+r.profit,0)-interest);}settleInfrastructure(state,period.start,fraction);}
+ settleOperations(state,config,start,end);if(options&&typeof options==='object'){options.energy=config.energy;options.configVersion=47;}state.simTime=end;state.day=Math.floor((end-(state.startedAt||start))/86400000)+1;for(const c of state.companies)if(history.has(c.id))c.history=[...c.history,history.get(c.id)!].slice(-20);
+}

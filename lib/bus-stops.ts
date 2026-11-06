@@ -1,0 +1,32 @@
+import {sharedCompany,companyWorld} from './infrastructure-context';
+import {facilityLine} from './facility-lines';
+import {busRoute} from './bus-route';
+import type {Action,BusStop,Company,Line} from './game';
+import {getMap,pointCell,cellPoint,meters,nearestRoadSnap} from './real-map';
+import {worldStreetRoute} from './world-roads';
+const lineCost=(km:number)=>Math.round(30000+km*18000);
+function stopName(value:any,fallback:string){const name=String(value??fallback).trim();if(name.length<2||name.length>50)throw Error('Name: 2–50 Zeichen.');return name;}
+// Existing lines retain their paid infrastructure as independently reusable stops.
+export function syncBusStops(c:Company){c.stops??=[];for(const line of c.lines){if(line.mode!=='bus'||!line.city||!line.stopNodes)continue;
+ if(!line.stopIds){line.stopIds=line.stopNodes.map((node,i)=>{const area=line.stopAreas?.[i]||line.city!,m=getMap(area),point=line.stopPoints?.[i]||m?.nodes[node];if(!point)throw Error('Kartendaten einer bestehenden Haltestelle fehlen.');let stop=c.stops!.find(s=>meters(s.point,point)<2);const hub=!!line.hubs?.includes(line.stopPoints?i:node);if(!stop){stop={id:crypto.randomUUID(),city:area,node,point,name:m?.roads.find(r=>r.nodes.includes(node))?.name||'Haltestelle '+(c.stops!.length+1),hub};c.stops!.push(stop);}else if(hub)stop.hub=true;return stop.id;});}
+ }
+ for(const line of c.lines){if(!line.stopIds)continue;const stops=line.stopIds.map(id=>sharedCompany(c).stops!.find(s=>s.id===id));if(stops.some(s=>!s))throw Error('Eine Linie verweist auf eine fehlende Haltestelle.');line.stopAreas=stops.map(s=>s!.city);line.stopPoints=stops.map(s=>s!.point);line.stopNodes=stops.map(s=>s!.node);line.hubs=stops.flatMap((s,i)=>s!.hub?[i]:[]);line.stops=stops.map(s=>{const m=getMap(s!.city);return m?pointCell(m,s!.point):0;});
+ }}
+export function resolveStops(c:Company,ids:any):BusStop[]{if(!Array.isArray(ids)||ids.length<2||ids.length>256||ids.some(id=>typeof id!=='string')||ids.some((id,i)=>i>0&&id===ids[i-1]))throw Error('Wähle 2–256 verschiedene gebaute Haltestellen in ihrer Reihenfolge.');return ids.map(id=>{const s=sharedCompany(c).stops?.find(s=>s.id===id);if(!s)throw Error('Nur eigene gebaute Haltestellen können einer Linie zugeordnet werden.');return s;});}
+export function handleStopAction(c:Company,action:Action,requireDepot:(c:Company,l:Line)=>void){
+ if(action.type==='busstop'){const m=getMap(action.city);let node=action.node;if(!m)throw Error('Straßendaten fehlen.');let point=m.nodes[node];if(action.point!==undefined){if(!Array.isArray(action.point)||action.point.length!==2||!action.point.every(Number.isFinite))throw Error('Ungültige Straßenposition.');const snapped=nearestRoadSnap(m,[action.point[0],action.point[1]],2);if(!snapped)throw Error('Wähle einen Punkt auf einer befahrbaren Straße.');node=snapped.node;point=snapped.point;}if(!Number.isInteger(node)||!point||pointCell(m,point)<0)throw Error('Wähle eine Haltestelle auf einer echten befahrbaren Straße.');c.stops??=[];if(c.stops.length>=512)throw Error('Maximal 512 Haltestellen pro Unternehmen.');if(c.stops.some(s=>meters(s.point,point)<8))throw Error('Hier hast du bereits eine Haltestelle.');const hub=action.hub===true,amount=10000+(hub?45000:0);if(c.cash<amount)throw Error('Nicht genug Kapital für die Haltestelle.');const name=stopName(action.name,m.roads.find(r=>r.nodes.includes(node))?.name||'Haltestelle '+(c.stops.length+1));c.cash-=amount;c.stops.push({id:crypto.randomUUID(),name,city:m.key,node,point:[...point],hub});return true;
+ }
+ if(action.type==='stop-update'||action.type==='stop-delete'){const stop=c.stops?.find(s=>s.id===action.stop);if(!stop)throw Error('Eigene Haltestelle nicht gefunden.');if(action.type==='stop-delete'){if((companyWorld(c)?.companies||[c]).some(co=>co.lines.some(l=>l.stopIds?.includes(stop.id))))throw Error('Entferne die Haltestelle zuerst aus allen Linien.');c.stops=c.stops!.filter(s=>s.id!==stop.id);return true;}const name=stopName(action.name,stop.name);if(action.hub!==undefined&&action.hub!==stop.hub)throw Error('Wähle Bushaltestelle oder Busbahnhof beim Bauen. Der Typ kann danach nicht geändert werden.');stop.name=name;syncBusStops(c);return true;
+ }
+ if(action.type==='buildbus'||action.type==='editline'){
+ const old=action.type==='editline'?c.lines.find(l=>l.id===action.line):undefined;if(action.type==='editline'&&!old)throw Error('Eigene Linie nicht gefunden.');const name=stopName(action.name,old?.name||'Buslinie '+(c.lines.length+1));const fare=action.fare??old?.fare??1;if(!Number.isFinite(fare)||fare<.5||fare>2)throw Error('Tariffaktor muss zwischen 0,5 und 2 liegen.');
+ if(old&&old.mode!=='bus'){if(action.facilityIds)Object.assign(old,facilityLine(c,old.mode,action.facilityIds,action.railVia,action.routeMode||old.routeMode));old.name=name;old.fare=+fare.toFixed(2);if(action.ticketPrice!==undefined)old.ticketPrice=action.ticketPrice;else if(action.fare!==undefined)delete old.ticketPrice;return true;}
+ const input=action.routePoints||action.stopIds?.map((stopId:string)=>({kind:'stop',stopId})),requested=action.routeMode||old?.routeMode||(old?'loop':'shuttle'),mode=requested==='outbound'?'shuttle':requested,route=busRoute(c,input,mode),stops=route.stops;
+ if(!old&&c.lines.length>=(companyWorld(c)?.rules?.maxLines||2500))throw Error('Linienlimit dieser Welt erreicht.');
+ const candidate={...(old||{}),routingVersion:2,id:old?.id||crypto.randomUUID(),a:stops[0].city.split('~')[0],b:stops.at(-1)!.city.split('~')[0],mode:'bus',city:stops[0].city,stopIds:stops.map(s=>s.id),routePoints:route.points,routeMode:mode,returnPath:route.returnPath,returnSegmentKm:route.returnSegmentKm,returnLength:route.returnLength,stopAreas:stops.map(s=>s.city),stopPoints:stops.map(s=>s.point),stopNodes:stops.map(s=>s.node),stops:stops.map(s=>pointCell(getMap(s.city)!,s.point)),hubs:stops.flatMap((s,i)=>s.hub?[i]:[]),path:route.path,segmentKm:route.segmentKm,length:route.length,investment:old?.investment||0,vehicles:old?.vehicles??0,active:old?.active??true,name,fare:+fare.toFixed(2),ticketPrice:action.ticketPrice??(action.fare===undefined?old?.ticketPrice:undefined)} as Line;
+ delete candidate.returnRouteError;delete candidate.returnRouteAttempt;
+ if(old){Object.assign(old,candidate);delete old.returnRouteError;delete old.returnRouteAttempt;}else c.lines.push(candidate);return true;
+ }
+ if(action.type==='hubs')throw Error('Wähle Bushaltestelle oder Busbahnhof beim Bauen. Nachträgliche Upgrades sind nicht möglich.');
+ return false;
+}

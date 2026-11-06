@@ -1,0 +1,48 @@
+import assert from 'node:assert/strict';
+import {newState,build,addTrack,createLine,purchaseVehicle,assignVehicle,stepDay,stock,checkIntegrity,kmBetween} from '../lib/logistics/engine.ts';
+import {settleTrade} from '../lib/logistics/cooperation.ts';
+import {applyAction} from '../lib/logistics/online-actions.ts';
+
+const seller=newState(),buyer=newState();
+const hub=build(seller,'hub',47.071,15.441);
+seller.inventory[hub.id]={bread:21};
+const amount=4.5,price=820;
+const {seller:afterSeller,buyer:afterBuyer}=settleTrade(seller,buyer,{siteId:hub.id,good:'bread',quantity:amount,price,sellerId:'user-one'});
+assert.equal(stock(afterSeller,hub.id,'bread'),16.5);
+assert.equal(stock(afterBuyer,hub.id,'bread'),amount);
+assert.equal(afterSeller.cash,seller.cash+price);
+assert.equal(afterBuyer.cash,buyer.cash-price);
+assert.equal(afterBuyer.sites.find(x=>x.id===hub.id).owned,false);
+assert.equal(afterBuyer.sites.find(x=>x.id===hub.id).cooperative,true);
+assert.equal(stock(seller,hub.id,'bread'),21,'pure trade must not mutate original');
+assert.equal(stock(buyer,hub.id,'bread'),0);
+assert.throws(()=>settleTrade(afterSeller,afterBuyer,{siteId:hub.id,good:'bread',quantity:999,price:500,sellerId:'user-one'}),/Bestand/);
+assert.throws(()=>settleTrade(afterSeller,afterBuyer,{siteId:hub.id,good:'bread',quantity:1,price:afterBuyer.cash+1,sellerId:'user-one'}),/Kapital/);
+assert.throws(()=>settleTrade(afterSeller,afterBuyer,{siteId:hub.id,good:'containers',quantity:1,price:0,sellerId:'user-one'}),/Übergabeterminal/);
+
+// A partner can load the bought cargo at the seller's hub, without owning it.
+const depot=build(afterBuyer,'depot',47.075,15.45),truck=purchaseVehicle(afterBuyer,'truck','krone-profi');
+const line=createLine(afterBuyer,{name:'Partnerware ins eigene Depot',mode:'truck',good:'bread',stops:[{siteId:hub.id,action:'load',quantity:3},{siteId:depot.id,action:'unload',quantity:3}],duration:15});
+assignVehicle(afterBuyer,truck.id,line.id);
+let b=afterBuyer;for(let i=0;i<9;i++)b=stepDay(b);
+assert.ok(stock(b,depot.id,'bread')>0,'purchased cargo should arrive in the buyer warehouse');
+assert.ok(stock(b,hub.id,'bread')<amount,'loading at partner terminal reduces buyer inventory');
+assert.equal(stock(afterSeller,hub.id,'bread'),16.5,'buyer trucks cannot alter seller state');
+checkIntegrity(b);
+
+// Player A lays tracks. Player B can only use them with a permission-granted
+// track snapshot; no tracks are added to B's *owned* network.
+const railroadOwner=newState();
+addTrack(railroadOwner,[47.1,15.1],[47.1,15.11]);
+addTrack(railroadOwner,[47.1,15.11],[47.1,15.12]);
+const railCompany=newState(),stA=build(railCompany,'railDepot',47.101,15.1),stB=build(railCompany,'railDepot',47.101,15.12);
+const request={name:'Partner-Bahnnetz',mode:'rail',good:'flour',stops:[{siteId:stA.id,action:'load',quantity:12},{siteId:stB.id,action:'unload',quantity:12}],duration:null};
+assert.throws(()=>createLine(railCompany,request),/Gleise/);
+railCompany.borrowedTracks=railroadOwner.tracks;
+const sharedLine=createLine(railCompany,request);
+assert.ok(sharedLine.legs.every(x=>x.source==='eigene-gleise'));
+assert.ok(sharedLine.legs[0].km>0);
+assert.equal(railCompany.tracks.length,0,'borrowed tracks never become player-owned');
+const revoked=structuredClone(railCompany);revoked.borrowedTracks=[];const stopped=applyAction(revoked,{type:'tick',days:1});
+assert.equal(stopped.lines[0].active,false,'revoking track permission should stop partner-dependent railway lines');
+console.log('PASS cooperation: independent assets, cargo/money settlement, partner pickup, permissions for player-laid rails.');

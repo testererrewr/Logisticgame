@@ -1,0 +1,9 @@
+[Unit]
+Description=Weltverbund Logistik – Sicherung täglich um 04:17
+
+[Timer]
+OnCalendar=*-*-* 04:17:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

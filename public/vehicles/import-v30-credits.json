@@ -1,0 +1,585 @@
+{
+  "global-plane-concorde-consortium-concorde-9b2da2e": {
+    "image": "/vehicles/import-v30-concorde.jpg",
+    "imageCredit": "P. B. Toman / Plismo",
+    "imageLicense": "CC BY-SA 3.0",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:British_Concorde.jpg",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "caption": "Concorde G-BOAC der British Airways in Heathrow",
+    "matchingNotes": "Foto zeigt Concorde, British Airways G-BOAC. Keine abweichende Flugzeugfamilie.",
+    "imageModification": "Unveränderte JPEG-Datei vom Original auf Wikimedia Commons.",
+    "bytes": 85324,
+    "dimensions": {
+      "height": 382,
+      "format": "b96b3cae-0728-11d3-9d7b-0000f81ef32e",
+      "width": 709
+    },
+    "originalFileTitle": "File:British Concorde.jpg",
+    "originalFileUrl": "https://upload.wikimedia.org/wikipedia/commons/f/fe/British_Concorde.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "originalWidth": 709,
+    "originalHeight": 382,
+    "originalMetadata": {
+      "DateTime": {
+        "value": "2013-05-16 22:08:18",
+        "source": "mediawiki-metadata",
+        "hidden": ""
+      },
+      "ObjectName": {
+        "value": "British Concorde",
+        "source": "mediawiki-metadata"
+      },
+      "CommonsMetadataExtension": {
+        "value": 1.2,
+        "source": "extension",
+        "hidden": ""
+      },
+      "Categories": {
+        "value": "G-BOAC (aircraft)|Self-published work|London Heathrow Airport in the 1980s|Concorde of British Airways at London Heathrow Airport",
+        "source": "commons-categories",
+        "hidden": ""
+      },
+      "Assessments": {
+        "value": "",
+        "source": "commons-categories",
+        "hidden": ""
+      },
+      "ImageDescription": {
+        "value": "British Airways Concorde G-BOAC, Heathrow, London, England - [photo by P.B.Toman]",
+        "source": "commons-desc-page"
+      },
+      "DateTimeOriginal": {
+        "value": "between 1980 and 1985<div style=\"display: none;\">date QS:P,+1980-00-00T00:00:00Z/8,P1319,+1980-00-00T00:00:00Z/9,P1326,+1985-00-00T00:00:00Z/9</div>",
+        "source": "commons-desc-page"
+      },
+      "Credit": {
+        "value": "<span class=\"int-own-work\" lang=\"en\">Own work</span>",
+        "source": "commons-desc-page"
+      },
+      "Artist": {
+        "value": "<a href=\"//commons.wikimedia.org/w/index.php?title=User:Plismo&amp;action=edit&amp;redlink=1\" class=\"new\" title=\"User:Plismo (page does not exist)\">Plismo</a>",
+        "source": "commons-desc-page"
+      },
+      "LicenseShortName": {
+        "value": "CC BY-SA 3.0",
+        "source": "commons-desc-page",
+        "hidden": ""
+      },
+      "UsageTerms": {
+        "value": "Creative Commons Attribution-Share Alike 3.0",
+        "source": "commons-desc-page"
+      },
+      "AttributionRequired": {
+        "value": "true",
+        "source": "commons-desc-page",
+        "hidden": ""
+      },
+      "LicenseUrl": {
+        "value": "https://creativecommons.org/licenses/by-sa/3.0",
+        "source": "commons-desc-page"
+      },
+      "Copyrighted": {
+        "value": "True",
+        "source": "commons-desc-page",
+        "hidden": ""
+      },
+      "Restrictions": {
+        "value": "",
+        "source": "commons-desc-page",
+        "hidden": ""
+      },
+      "License": {
+        "value": "cc-by-sa-3.0",
+        "source": "commons-templates",
+        "hidden": ""
+      }
+    }
+  },
+  "global-bus-man-lion-s-city-12-665d31f": {
+    "image": "/vehicles/import-v30-man-lions-city-12.jpg",
+    "imageCredit": "SzSzili01",
+    "imageLicense": "CC BY-SA 4.0",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:MAN_Lion%27s_City_12_(AA_GL-317).jpg",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "caption": "MAN Lion's City 12 - Foto der Variante 12C",
+    "matchingNotes": "Baureihenfoto: MAN Lion's City 12C (AA GL-317), Volánbusz. Nur dem Katalogeintrag Lion's City 12 zugeordnet; nicht auf andere Längen oder Antriebe übertragen.",
+    "imageModification": "Von Wikimedia bereitgestellte verkleinerte JPEG-Fassung; kein inhaltlicher Bildumbau.",
+    "bytes": 119298,
+    "dimensions": {
+      "height": 540,
+      "format": "b96b3cae-0728-11d3-9d7b-0000f81ef32e",
+      "width": 960
+    },
+    "originalFileTitle": "File:MAN Lion's City 12 (AA GL-317).jpg",
+    "originalFileUrl": "https://upload.wikimedia.org/wikipedia/commons/8/81/MAN_Lion%27s_City_12_%28AA_GL-317%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "originalWidth": 6447,
+    "originalHeight": 3627,
+    "originalMetadata": {
+      "DateTime": {
+        "value": "2024-07-23 21:10:38",
+        "source": "mediawiki-metadata",
+        "hidden": ""
+      },
+      "ObjectName": {
+        "value": "MAN Lion's City 12 (AA GL-317)",
+        "source": "mediawiki-metadata"
+      },
+      "CommonsMetadataExtension": {
+        "value": 1.2,
+        "source": "extension",
+        "hidden": ""
+      },
+      "Categories": {
+        "value": "Self-published work|Rail substitute bus transport in Hungary|Files with coordinates missing SDC location of creation|Buses in Hungary photographed in 2024|Night in Pest County|Buses in Gödöllő|Bus line 992 (Budapest)|MAN buses operated by Volánbusz|MAN Lion's City 12 CNG in Hungary",
+        "source": "commons-categories",
+        "hidden": ""
+      },
+      "Assessments": {
+        "value": "",
+        "source": "commons-categories",
+        "hidden": ""
+      },
+      "GPSLatitude": {
+        "value": "47.597437",
+        "source": "commons-desc-page"
+      },
+      "GPSLongitude": {
+        "value": "19.348237",
+        "source": "commons-desc-page"
+      },
+      "GPSMapDatum": {
+        "value": "WGS-84",
+        "source": "commons-desc-page",
+        "hidden": ""
+      },
+      "ImageDescription": {
+        "value": "A <a href=\"https://en.wikipedia.org/wiki/hu:Vol%C3%A1nbusz\" class=\"extiw\" title=\"w:hu:Volánbusz\">Volánbusz Zrt.</a> <a href=\"https://en.wikipedia.org/wiki/hu:MAN_Lion%27s_City_12C\" class=\"extiw\" title=\"w:hu:MAN Lion's City 12C\">MAN Lion's City 12C</a> autóbusza <a href=\"https://en.wikipedia.org/wiki/hu:G%C3%B6d%C3%B6ll%C5%91\" class=\"extiw\" title=\"w:hu:Gödöllő\">Gödöllőn</a> a <a href=\"https://en.wikipedia.org/wiki/hu:992-es_busz_(Budapest)\" class=\"extiw\" title=\"w:hu:992-es busz (Budapest)\">992-es hévpótló vonalon</a>.",
+        "source": "commons-desc-page"
+      },
+      "DateTimeOriginal": {
+        "value": "2024-07-19 01:41:54",
+        "source": "commons-desc-page"
+      },
+      "Credit": {
+        "value": "<span class=\"int-own-work\" lang=\"en\">Own work</span>",
+        "source": "commons-desc-page"
+      },
+      "Artist": {
+        "value": "<a href=\"//commons.wikimedia.org/w/index.php?title=User:SzSzili01&amp;action=edit&amp;redlink=1\" class=\"new\" title=\"User:SzSzili01 (page does not exist)\">SzSzili01</a>",
+        "source": "commons-desc-page"
+      },
+      "LicenseShortName": {
+        "value": "CC BY-SA 4.0",
+        "source": "commons-desc-page",
+        "hidden": ""
+      },
+      "UsageTerms": {
+        "value": "Creative Commons Attribution-Share Alike 4.0",
+        "source": "commons-desc-page"
+      },
+      "AttributionRequired": {
+        "value": "true",
+        "source": "commons-desc-page",
+        "hidden": ""
+      },
+      "LicenseUrl": {
+        "value": "https://creativecommons.org/licenses/by-sa/4.0",
+        "source": "commons-desc-page"
+      },
+      "Copyrighted": {
+        "value": "True",
+        "source": "commons-desc-page",
+        "hidden": ""
+      },
+      "Restrictions": {
+        "value": "",
+        "source": "commons-desc-page",
+        "hidden": ""
+      },
+      "License": {
+        "value": "cc-by-sa-4.0",
+        "source": "commons-templates",
+        "hidden": ""
+      }
+    }
+  },
+  "global-bus-volvo-7900-electric-d1590d5": {
+    "image": "/vehicles/import-v30-volvo-7900-electric.jpg",
+    "imageCredit": "Samson Ng . D201@EAL",
+    "imageLicense": "CC BY-SA 4.0",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:Volvo_7900E_12m.jpg",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "caption": "Volvo 7900 Electric · 12-Meter-Solobus",
+    "matchingNotes": "Commons-Dateiname und Kategorie benennen Volvo 7900E 12m / Volvo 7900 Electric. Nicht der Gelenkvariante zugeordnet.",
+    "imageModification": "Von Wikimedia bereitgestellte verkleinerte JPEG-Fassung; kein inhaltlicher Bildumbau.",
+    "bytes": 193822,
+    "dimensions": {
+      "height": 640,
+      "format": "b96b3cae-0728-11d3-9d7b-0000f81ef32e",
+      "width": 960
+    },
+    "originalFileTitle": "File:Volvo 7900E 12m.jpg",
+    "originalFileUrl": "https://upload.wikimedia.org/wikipedia/commons/4/4f/Volvo_7900E_12m.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "originalWidth": 2000,
+    "originalHeight": 1333,
+    "originalMetadata": {
+      "DateTime": {
+        "value": "2025-09-03 13:48:18",
+        "source": "mediawiki-metadata",
+        "hidden": ""
+      },
+      "ObjectName": {
+        "value": "Volvo 7900E 12m",
+        "source": "mediawiki-metadata"
+      },
+      "CommonsMetadataExtension": {
+        "value": 1.2,
+        "source": "extension",
+        "hidden": ""
+      },
+      "Categories": {
+        "value": "Demonstrator buses in the United Kingdom|Buses in Cardiff|Volvo 7900 Electric|Flickr images reviewed by FlickreviewR 2|Buses in the United Kingdom photographed in June 2018|June 2018 in Cardiff|67 registered buses in the United Kingdom|Photographs by Samson Ng|Cardiff Bus",
+        "source": "commons-categories",
+        "hidden": ""
+      },
+      "Assessments": {
+        "value": "",
+        "source": "commons-categories",
+        "hidden": ""
+      },
+      "ImageDescription": {
+        "value": "Volvo",
+        "source": "commons-desc-page"
+      },
+      "DateTimeOriginal": {
+        "value": "2018-06-11 18:37:37",
+        "source": "commons-desc-page"
+      },
+      "Credit": {
+        "value": "<a rel=\"nofollow\" class=\"external free\" href=\"https://www.flickr.com/photos/64314473@N08/28869621218/\">https://www.flickr.com/photos/64314473@N08/28869621218/</a>",
+        "source": "commons-desc-page"
+      },
+      "Artist": {
+        "value": "Samson Ng . D201@EAL",
+        "source": "commons-desc-page"
+      },
+      "LicenseShortName": {
+        "value": "CC BY-SA 4.0",
+        "source": "commons-desc-page",
+        "hidden": ""
+      },
+      "UsageTerms": {
+        "value": "Creative Commons Attribution-Share Alike 4.0",
+        "source": "commons-desc-page"
+      },
+      "AttributionRequired": {
+        "value": "true",
+        "source": "commons-desc-page",
+        "hidden": ""
+      },
+      "LicenseUrl": {
+        "value": "https://creativecommons.org/licenses/by-sa/4.0",
+        "source": "commons-desc-page"
+      },
+      "Copyrighted": {
+        "value": "True",
+        "source": "commons-desc-page",
+        "hidden": ""
+      },
+      "Restrictions": {
+        "value": "",
+        "source": "commons-desc-page",
+        "hidden": ""
+      },
+      "License": {
+        "value": "cc-by-sa-4.0",
+        "source": "commons-templates",
+        "hidden": ""
+      }
+    }
+  },
+  "global-train-siemens-mobility-ice-4-br-412-57d0656": {
+    "image": "/vehicles/import-v30-ice4.jpg",
+    "imageCredit": "Superalbs",
+    "imageLicense": "CC BY-SA 4.0",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:ICE_4_at_Nuremberg_Hbf.jpg",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "caption": "ICE 4, Baureihe 412, Triebzug 9012 in Nürnberg",
+    "matchingNotes": "Commons-Beschreibung identifiziert ICE 4 9012; Kategorie DBAG Class 412.",
+    "imageModification": "Von Wikimedia bereitgestellte verkleinerte JPEG-Fassung; kein inhaltlicher Bildumbau.",
+    "bytes": 150675,
+    "dimensions": {
+      "height": 720,
+      "format": "b96b3cae-0728-11d3-9d7b-0000f81ef32e",
+      "width": 960
+    },
+    "originalFileTitle": "File:ICE 4 at Nuremberg Hbf.jpg",
+    "originalFileUrl": "https://upload.wikimedia.org/wikipedia/commons/4/4f/ICE_4_at_Nuremberg_Hbf.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "originalWidth": 4320,
+    "originalHeight": 3240,
+    "originalMetadata": {
+      "DateTime": {
+        "value": "2018-08-22 00:30:00",
+        "source": "mediawiki-metadata",
+        "hidden": ""
+      },
+      "ObjectName": {
+        "value": "ICE 4 at Nuremberg Hbf",
+        "source": "mediawiki-metadata"
+      },
+      "CommonsMetadataExtension": {
+        "value": 1.2,
+        "source": "extension",
+        "hidden": ""
+      },
+      "Categories": {
+        "value": "DBAG Class 412|Self-published work|ICE trains in Bavaria|Rail vehicles in DB Fernverkehr livery|Trains at Nürnberg Hauptbahnhof",
+        "source": "commons-categories",
+        "hidden": ""
+      },
+      "Assessments": {
+        "value": "",
+        "source": "commons-categories",
+        "hidden": ""
+      },
+      "ImageDescription": {
+        "value": "The ICE 4 unit number 9012 at Nuremberg Hbf, working the ICE 882 service from Munich Hbf to Hamburg-Altona.",
+        "source": "commons-desc-page"
+      },
+      "DateTimeOriginal": {
+        "value": "2018-04-20 07:36:06",
+        "source": "commons-desc-page"
+      },
+      "Credit": {
+        "value": "<span class=\"int-own-work\" lang=\"en\">Own work</span>",
+        "source": "commons-desc-page"
+      },
+      "Artist": {
+        "value": "<a href=\"//commons.wikimedia.org/w/index.php?title=User:Superalbs&amp;action=edit&amp;redlink=1\" class=\"new\" title=\"User:Superalbs (page does not exist)\">Superalbs</a>",
+        "source": "commons-desc-page"
+      },
+      "LicenseShortName": {
+        "value": "CC BY-SA 4.0",
+        "source": "commons-desc-page",
+        "hidden": ""
+      },
+      "UsageTerms": {
+        "value": "Creative Commons Attribution-Share Alike 4.0",
+        "source": "commons-desc-page"
+      },
+      "AttributionRequired": {
+        "value": "true",
+        "source": "commons-desc-page",
+        "hidden": ""
+      },
+      "LicenseUrl": {
+        "value": "https://creativecommons.org/licenses/by-sa/4.0",
+        "source": "commons-desc-page"
+      },
+      "Copyrighted": {
+        "value": "True",
+        "source": "commons-desc-page",
+        "hidden": ""
+      },
+      "Restrictions": {
+        "value": "",
+        "source": "commons-desc-page",
+        "hidden": ""
+      },
+      "License": {
+        "value": "cc-by-sa-4.0",
+        "source": "commons-templates",
+        "hidden": ""
+      }
+    }
+  },
+  "global-plane-airbus-a380-800-830f67c": {
+    "image": "/vehicles/import-v30-a380-800.jpg",
+    "imageCredit": "Ziongarage",
+    "imageLicense": "CC0",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:Airbus_A380-800_Lufthansa.jpg",
+    "imageLicenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "caption": "Airbus A380-800 D-AIMM der Lufthansa",
+    "matchingNotes": "Commons-Titel und deutsche Bildunterschrift benennen Airbus A380-800; Registrierung D-AIMM.",
+    "imageModification": "Von Wikimedia bereitgestellte verkleinerte JPEG-Fassung; kein inhaltlicher Bildumbau.",
+    "bytes": 106698,
+    "dimensions": {
+      "height": 556,
+      "format": "b96b3cae-0728-11d3-9d7b-0000f81ef32e",
+      "width": 960
+    },
+    "originalFileTitle": "File:Airbus A380-800 Lufthansa.jpg",
+    "originalFileUrl": "https://upload.wikimedia.org/wikipedia/commons/5/55/Airbus_A380-800_Lufthansa.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "originalWidth": 2282,
+    "originalHeight": 1322,
+    "originalMetadata": {
+      "DateTime": {
+        "value": "2025-04-11 22:15:56",
+        "source": "mediawiki-metadata",
+        "hidden": ""
+      },
+      "ObjectName": {
+        "value": "Airbus A380-800 Lufthansa",
+        "source": "mediawiki-metadata"
+      },
+      "CommonsMetadataExtension": {
+        "value": 1.2,
+        "source": "extension",
+        "hidden": ""
+      },
+      "Categories": {
+        "value": "CC-Zero|Self-published work|Airbus A380 of Lufthansa at Los Angeles International Airport",
+        "source": "commons-categories",
+        "hidden": ""
+      },
+      "Assessments": {
+        "value": "",
+        "source": "commons-categories",
+        "hidden": ""
+      },
+      "ImageDescription": {
+        "value": "D-AIMM A380 LAX",
+        "source": "commons-desc-page"
+      },
+      "DateTimeOriginal": {
+        "value": "2025-04-10",
+        "source": "commons-desc-page"
+      },
+      "Credit": {
+        "value": "<span class=\"int-own-work\" lang=\"en\">Own work</span>",
+        "source": "commons-desc-page"
+      },
+      "Artist": {
+        "value": "<a href=\"//commons.wikimedia.org/wiki/User:Ziongarage\" title=\"User:Ziongarage\">Ziongarage</a>",
+        "source": "commons-desc-page"
+      },
+      "LicenseShortName": {
+        "value": "CC0",
+        "source": "commons-desc-page",
+        "hidden": ""
+      },
+      "UsageTerms": {
+        "value": "Creative Commons Zero, Public Domain Dedication",
+        "source": "commons-desc-page"
+      },
+      "AttributionRequired": {
+        "value": "false",
+        "source": "commons-desc-page",
+        "hidden": ""
+      },
+      "LicenseUrl": {
+        "value": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+        "source": "commons-desc-page"
+      },
+      "Copyrighted": {
+        "value": "True",
+        "source": "commons-desc-page",
+        "hidden": ""
+      },
+      "Restrictions": {
+        "value": "",
+        "source": "commons-desc-page",
+        "hidden": ""
+      },
+      "License": {
+        "value": "cc0",
+        "source": "commons-templates",
+        "hidden": ""
+      }
+    }
+  },
+  "global-train-kawasaki-rail-shinkansen-n700-7d94836": {
+    "image": "/vehicles/import-v30-shinkansen-n700.jpg",
+    "imageCredit": "Artem.G",
+    "imageLicense": "CC BY 4.0",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:Shinkansen_N700.jpg",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "caption": "Shinkansen N700 - Foto der Variante N700-1000",
+    "matchingNotes": "Foto zeigt die N700-Familie, laut Commons-Kategorie N700-1000. Als Baureihenfoto gekennzeichnet. Nicht für den eigenständigen Katalogeintrag N700S verwendet.",
+    "imageModification": "Von Wikimedia bereitgestellte verkleinerte JPEG-Fassung; kein inhaltlicher Bildumbau.",
+    "bytes": 214206,
+    "dimensions": {
+      "height": 720,
+      "format": "b96b3cae-0728-11d3-9d7b-0000f81ef32e",
+      "width": 960
+    },
+    "originalFileTitle": "File:Shinkansen N700.jpg",
+    "originalFileUrl": "https://upload.wikimedia.org/wikipedia/commons/6/63/Shinkansen_N700.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "originalWidth": 4000,
+    "originalHeight": 3000,
+    "originalMetadata": {
+      "DateTime": {
+        "value": "2024-05-08 05:57:22",
+        "source": "mediawiki-metadata",
+        "hidden": ""
+      },
+      "ObjectName": {
+        "value": "Shinkansen N700",
+        "source": "mediawiki-metadata"
+      },
+      "CommonsMetadataExtension": {
+        "value": 1.2,
+        "source": "extension",
+        "hidden": ""
+      },
+      "Categories": {
+        "value": "Self-published work|Shinkansen N700-1000|2024 at Kyoto Station|May 2024 in rail transport in Kyoto prefecture|Railway photographs taken on 2024-05-01|Kyoto photographs taken on 2024-05-01|Shinkansen N700 at Kyoto Station|Platforms 13 & 14 of Kyoto Station (JR Central)",
+        "source": "commons-categories",
+        "hidden": ""
+      },
+      "Assessments": {
+        "value": "",
+        "source": "commons-categories",
+        "hidden": ""
+      },
+      "ImageDescription": {
+        "value": "Shinkansen N700",
+        "source": "commons-desc-page"
+      },
+      "DateTimeOriginal": {
+        "value": "1 May 2024, 14:41:41",
+        "source": "commons-desc-page"
+      },
+      "Credit": {
+        "value": "<span class=\"int-own-work\" lang=\"en\">Own work</span>",
+        "source": "commons-desc-page"
+      },
+      "Artist": {
+        "value": "<a href=\"//commons.wikimedia.org/w/index.php?title=User:Artem.G&amp;action=edit&amp;redlink=1\" class=\"new\" title=\"User:Artem.G (page does not exist)\">Artem.G</a>",
+        "source": "commons-desc-page"
+      },
+      "LicenseShortName": {
+        "value": "CC BY 4.0",
+        "source": "commons-desc-page",
+        "hidden": ""
+      },
+      "UsageTerms": {
+        "value": "Creative Commons Attribution 4.0",
+        "source": "commons-desc-page"
+      },
+      "AttributionRequired": {
+        "value": "true",
+        "source": "commons-desc-page",
+        "hidden": ""
+      },
+      "LicenseUrl": {
+        "value": "https://creativecommons.org/licenses/by/4.0",
+        "source": "commons-desc-page"
+      },
+      "Copyrighted": {
+        "value": "True",
+        "source": "commons-desc-page",
+        "hidden": ""
+      },
+      "Restrictions": {
+        "value": "",
+        "source": "commons-desc-page",
+        "hidden": ""
+      },
+      "License": {
+        "value": "cc-by-4.0",
+        "source": "commons-templates",
+        "hidden": ""
+      }
+    }
+  }
+}

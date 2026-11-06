@@ -1,0 +1,1335 @@
+{
+  "notice": "Fotos realer Fahrzeuge. Änderungen: Größenanpassung und WebP-Komprimierung. Die jeweiligen Fotolizenzen gelten weiterhin. Bei Weiterverwendung sind Urheber, Quelle und Lizenz dieses Manifests beizubehalten.",
+  "assets": {
+    "/logistics-vehicles/truck.webp": {
+      "path": "/logistics-vehicles/truck.webp",
+      "alt": "MAN TGX 18.400 – Baureihenfoto; nicht die konkrete 18.520-Ausführung.",
+      "caption": "MAN TGX 18.400 – Baureihenfoto; nicht die konkrete 18.520-Ausführung.",
+      "depicted": "MAN TGX 18.400 Kaptein Cheese and Butter Solutions - Flickr - Joost J. Bakker IJmuiden.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:MAN_TGX_18.400_Kaptein_Cheese_and_Butter_Solutions_-_Flickr_-_Joost_J._Bakker_IJmuiden.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/d/d5/MAN_TGX_18.400_Kaptein_Cheese_and_Butter_Solutions_-_Flickr_-_Joost_J._Bakker_IJmuiden.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Joost J. Bakker",
+      "attribution": "",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 38196,
+      "match": "family",
+      "exactModelPhotoAvailable": false
+    },
+    "/logistics-vehicles/man-tgs.webp": {
+      "path": "/logistics-vehicles/man-tgs.webp",
+      "alt": "MAN TGS – echtes Baureihenfoto",
+      "caption": "MAN TGS (Baureihenfoto)",
+      "depicted": "MAN TGS 18.360 4X2 BLS EEV, Compaxo.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:MAN_TGS_18.360_4X2_BLS_EEV,_Compaxo.JPG",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/7/7b/MAN_TGS_18.360_4X2_BLS_EEV%2C_Compaxo.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Alf van Beem",
+      "attribution": "",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 32050,
+      "match": "family"
+    },
+    "/logistics-vehicles/man-tgm.webp": {
+      "path": "/logistics-vehicles/man-tgm.webp",
+      "alt": "MAN TGM – echtes Baureihenfoto",
+      "caption": "MAN TGM (Baureihenfoto)",
+      "depicted": "2018 MAN TGM 6.9.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:2018_MAN_TGM_6.9.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/5/54/2018_MAN_TGM_6.9.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Vauxford",
+      "attribution": "",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 31452,
+      "match": "family"
+    },
+    "/logistics-vehicles/man-tgl.webp": {
+      "path": "/logistics-vehicles/man-tgl.webp",
+      "alt": "MAN TGL – echtes Baureihenfoto",
+      "caption": "MAN TGL – Baureihenfoto mit Abschleppaufbau.",
+      "depicted": "2017 MAN TGL.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:2017_MAN_TGL.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/0/05/2017_MAN_TGL.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Calreyn88",
+      "attribution": "",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 38770,
+      "match": "family"
+    },
+    "/logistics-vehicles/van.webp": {
+      "path": "/logistics-vehicles/van.webp",
+      "alt": "MAN TGE – echtes Baureihenfoto",
+      "caption": "MAN TGE (Baureihenfoto)",
+      "depicted": "MAN TGE 3.180 Kastenwagen.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:MAN_TGE_3.180_Kastenwagen.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/7/74/MAN_TGE_3.180_Kastenwagen.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "JoachimKohler-HB",
+      "attribution": "",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 33534,
+      "match": "family"
+    },
+    "/logistics-vehicles/mercedes-benz-actros-l-1848-ls-4x2.webp": {
+      "path": "/logistics-vehicles/mercedes-benz-actros-l-1848-ls-4x2.webp",
+      "alt": "Mercedes-Benz Actros L ProCabin – Referenzfoto der Actros-Baureihe; nicht die konkrete F-Ausführung.",
+      "caption": "Mercedes-Benz Actros L ProCabin – Referenzfoto der Actros-Baureihe; nicht die konkrete F-Ausführung.",
+      "depicted": "Mercedes-Benz Actros L ProCabin, Nufam 2025, Rheinstetten (20250927-P1050786).jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Mercedes-Benz_Actros_L_ProCabin,_Nufam_2025,_Rheinstetten_(20250927-P1050786).jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/1/1e/Mercedes-Benz_Actros_L_ProCabin%2C_Nufam_2025%2C_Rheinstetten_%2820250927-P1050786%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Matti Blume",
+      "attribution": "",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.en",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 41714,
+      "match": "related-family",
+      "relatedModelId": "mercedes-benz-actros-l-1848-ls-4x2",
+      "exactModelPhotoAvailable": false
+    },
+    "/logistics-vehicles/mercedes-benz-arocs.webp": {
+      "path": "/logistics-vehicles/mercedes-benz-arocs.webp",
+      "alt": "Mercedes-Benz Arocs – echtes Baureihenfoto",
+      "caption": "Mercedes-Benz Arocs – Baureihenfoto mit Kipperaufbau.",
+      "depicted": "Mercedes-Benz Arocs - dump truck version (1).JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Mercedes-Benz_Arocs_-_dump_truck_version_(1).JPG",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/b/b2/Mercedes-Benz_Arocs_-_dump_truck_version_%281%29.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "High Contrast",
+      "attribution": "",
+      "license": "CC BY 3.0 de",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/de/deed.en",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 50202,
+      "match": "family"
+    },
+    "/logistics-vehicles/reefer.webp": {
+      "path": "/logistics-vehicles/reefer.webp",
+      "alt": "Mercedes-Benz Atego – echtes Baureihenfoto",
+      "caption": "Mercedes-Benz Atego (Baureihenfoto)",
+      "depicted": "Moscow, Mercedes-Benz Atego delivery truck, July 2026 01.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Moscow,_Mercedes-Benz_Atego_delivery_truck,_July_2026_01.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/d/dc/Moscow%2C_Mercedes-Benz_Atego_delivery_truck%2C_July_2026_01.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Retired electrician",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 71150,
+      "match": "family"
+    },
+    "/logistics-vehicles/mercedes-benz-sprinter.webp": {
+      "path": "/logistics-vehicles/mercedes-benz-sprinter.webp",
+      "alt": "Mercedes-Benz Sprinter – echtes Baureihenfoto",
+      "caption": "Mercedes-Benz Sprinter (Baureihenfoto)",
+      "depicted": "2018 Mercedes-Benz Sprinter 314 CDi 2.1 Front.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:2018_Mercedes-Benz_Sprinter_314_CDi_2.1_Front.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/b/b1/2018_Mercedes-Benz_Sprinter_314_CDi_2.1_Front.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Vauxford",
+      "attribution": "",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 35164,
+      "match": "family"
+    },
+    "/logistics-vehicles/volvo-fh.webp": {
+      "path": "/logistics-vehicles/volvo-fh.webp",
+      "alt": "Volvo FH – echtes Baureihenfoto",
+      "caption": "Volvo FH (Baureihenfoto)",
+      "depicted": "Volvo FH 500 in Frauenfeld.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Volvo_FH_500_in_Frauenfeld.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3e/Volvo_FH_500_in_Frauenfeld.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "JoachimKohler-HB",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 45954,
+      "match": "family"
+    },
+    "/logistics-vehicles/volvo-fh16.webp": {
+      "path": "/logistics-vehicles/volvo-fh16.webp",
+      "alt": "Volvo FH16 – echtes Baureihenfoto",
+      "caption": "Volvo FH16 (Baureihenfoto)",
+      "depicted": "2013 Volvo FH16 540 demotruck.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:2013_Volvo_FH16_540_demotruck.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/8/88/2013_Volvo_FH16_540_demotruck.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Mr.choppers",
+      "attribution": "",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 29918,
+      "match": "family"
+    },
+    "/logistics-vehicles/volvo-fh-aero.webp": {
+      "path": "/logistics-vehicles/volvo-fh-aero.webp",
+      "alt": "Volvo FH Aero – echtes Baureihenfoto",
+      "caption": "Volvo FH Aero (Baureihenfoto)",
+      "depicted": "Volvo FH Aero (2024).jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Volvo_FH_Aero_(2024).jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/d/d1/Volvo_FH_Aero_%282024%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Lars Ardarve",
+      "attribution": "",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 52466,
+      "match": "family"
+    },
+    "/logistics-vehicles/volvo-fm.webp": {
+      "path": "/logistics-vehicles/volvo-fm.webp",
+      "alt": "Volvo FM – echtes Baureihenfoto",
+      "caption": "Volvo FM (Baureihenfoto)",
+      "depicted": "Milchtanklastzug Volvo FM 410 am Fähranläger in Nes (Ameland).jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Milchtanklastzug_Volvo_FM_410_am_F%C3%A4hranl%C3%A4ger_in_Nes_(Ameland).jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/7/7b/Milchtanklastzug_Volvo_FM_410_am_F%C3%A4hranl%C3%A4ger_in_Nes_%28Ameland%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "JoachimKohler-HB",
+      "attribution": "",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 28486,
+      "match": "family"
+    },
+    "/logistics-vehicles/volvo-fmx.webp": {
+      "path": "/logistics-vehicles/volvo-fmx.webp",
+      "alt": "Volvo FMX – echtes Baureihenfoto",
+      "caption": "Volvo FMX (Baureihenfoto)",
+      "depicted": "20200507 Volvo FMX 420 8x4.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:20200507_Volvo_FMX_420_8x4.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/b/b0/20200507_Volvo_FMX_420_8x4.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Kahvilokki",
+      "attribution": "",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 54778,
+      "match": "family"
+    },
+    "/logistics-vehicles/volvo-fe.webp": {
+      "path": "/logistics-vehicles/volvo-fe.webp",
+      "alt": "Volvo FE – echtes Baureihenfoto",
+      "caption": "Volvo FE (Baureihenfoto)",
+      "depicted": "Volvo FE-280.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Volvo_FE-280.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a9/Volvo_FE-280.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Bene Riobó",
+      "attribution": "",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 66030,
+      "match": "family"
+    },
+    "/logistics-vehicles/volvo-fl.webp": {
+      "path": "/logistics-vehicles/volvo-fl.webp",
+      "alt": "Volvo FL – echtes Baureihenfoto",
+      "caption": "Volvo FL (Baureihenfoto)",
+      "depicted": "Volvo FL 210 mit Kofferaufbau (2018).jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Volvo_FL_210_mit_Kofferaufbau_(2018).jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/0/03/Volvo_FL_210_mit_Kofferaufbau_%282018%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "JoachimKohler-HB",
+      "attribution": "",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 59920,
+      "match": "family"
+    },
+    "/logistics-vehicles/scania-s-serie.webp": {
+      "path": "/logistics-vehicles/scania-s-serie.webp",
+      "alt": "Scania S-Serie – echtes Baureihenfoto",
+      "caption": "Scania S-Serie (Baureihenfoto)",
+      "depicted": "Scania S730 4.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Scania_S730_4.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3b/Scania_S730_4.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Herranderssvensson",
+      "attribution": "",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 37720,
+      "match": "family"
+    },
+    "/logistics-vehicles/scania-r-serie.webp": {
+      "path": "/logistics-vehicles/scania-r-serie.webp",
+      "alt": "Scania R-Serie – echtes Baureihenfoto",
+      "caption": "Scania R-Serie (Baureihenfoto)",
+      "depicted": "Scania R-Sattelzug im Hafen von Bremen (2024).jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Scania_R-Sattelzug_im_Hafen_von_Bremen_(2024).jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/b/bd/Scania_R-Sattelzug_im_Hafen_von_Bremen_%282024%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "JoachimKohler-HB",
+      "attribution": "",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 55998,
+      "match": "family"
+    },
+    "/logistics-vehicles/scania-g-serie.webp": {
+      "path": "/logistics-vehicles/scania-g-serie.webp",
+      "alt": "Scania G-Serie – echtes Baureihenfoto",
+      "caption": "Scania G-Serie (Baureihenfoto)",
+      "depicted": "Scania G490 in Schlieren ZH.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Scania_G490_in_Schlieren_ZH.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Scania_G490_in_Schlieren_ZH.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "JoachimKohler-HB",
+      "attribution": "",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 54346,
+      "match": "family"
+    },
+    "/logistics-vehicles/scania-p-serie.webp": {
+      "path": "/logistics-vehicles/scania-p-serie.webp",
+      "alt": "Scania P-Serie – echtes Baureihenfoto",
+      "caption": "Scania P-Serie (Baureihenfoto)",
+      "depicted": "Holland & Barrett 2005 Scania P-series delivery truck, 19 May 2009.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Holland_%26_Barrett_2005_Scania_P-series_delivery_truck,_19_May_2009.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/7/7f/Holland_%26_Barrett_2005_Scania_P-series_delivery_truck%2C_19_May_2009.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "bilbobagweed",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 27022,
+      "match": "family"
+    },
+    "/logistics-vehicles/scania-l-serie.webp": {
+      "path": "/logistics-vehicles/scania-l-serie.webp",
+      "alt": "Scania L-Serie – echtes Baureihenfoto",
+      "caption": "Scania L-Serie (Baureihenfoto)",
+      "depicted": "Scania L320.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Scania_L320.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/6/69/Scania_L320.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Herranderssvensson",
+      "attribution": "",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 52296,
+      "match": "family"
+    },
+    "/logistics-vehicles/daf-xf.webp": {
+      "path": "/logistics-vehicles/daf-xf.webp",
+      "alt": "DAF XF – echtes Baureihenfoto",
+      "caption": "DAF XF (Baureihenfoto)",
+      "depicted": "DAF XF 480 der Jürgens Spedition.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:DAF_XF_480_der_J%C3%BCrgens_Spedition.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/6/6c/DAF_XF_480_der_J%C3%BCrgens_Spedition.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "JoachimKohler-HB",
+      "attribution": "",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 81374,
+      "match": "family"
+    },
+    "/logistics-vehicles/daf-xg.webp": {
+      "path": "/logistics-vehicles/daf-xg.webp",
+      "alt": "DAF XG – echtes Baureihenfoto",
+      "caption": "DAF XG (Baureihenfoto)",
+      "depicted": "2022 DAF XG 530.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:2022_DAF_XG_530.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/f/f3/2022_DAF_XG_530.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "MrWalkr",
+      "attribution": "",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 39956,
+      "match": "family"
+    },
+    "/logistics-vehicles/daf-xgplus.webp": {
+      "path": "/logistics-vehicles/daf-xgplus.webp",
+      "alt": "DAF XG+ – echtes Baureihenfoto",
+      "caption": "DAF XG+ (Baureihenfoto)",
+      "depicted": "2025 DAF XG+.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:2025_DAF_XG%2B.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/4/4b/2025_DAF_XG%2B.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Calreyn88",
+      "attribution": "",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 31048,
+      "match": "family"
+    },
+    "/logistics-vehicles/daf-xd.webp": {
+      "path": "/logistics-vehicles/daf-xd.webp",
+      "alt": "DAF XD – echtes Baureihenfoto",
+      "caption": "DAF XD (Baureihenfoto)",
+      "depicted": "DAF XD 450 FT IAA 2022 (DSC04290).jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:DAF_XD_450_FT_IAA_2022_(DSC04290).jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/6/64/DAF_XD_450_FT_IAA_2022_%28DSC04290%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "MarcelX42",
+      "attribution": "",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 42178,
+      "match": "family"
+    },
+    "/logistics-vehicles/daf-xb.webp": {
+      "path": "/logistics-vehicles/daf-xb.webp",
+      "alt": "DAF XB – echtes Baureihenfoto",
+      "caption": "DAF XB Electric – Referenzfoto der XB-Baureihe.",
+      "depicted": "DAF XB 190 Electric FA IAA Transportation 2024 (DSC02189).jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:DAF_XB_190_Electric_FA_IAA_Transportation_2024_(DSC02189).jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/5/56/DAF_XB_190_Electric_FA_IAA_Transportation_2024_%28DSC02189%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "MarcelX42",
+      "attribution": "",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 44678,
+      "match": "family"
+    },
+    "/logistics-vehicles/iveco-s-way.webp": {
+      "path": "/logistics-vehicles/iveco-s-way.webp",
+      "alt": "IVECO S-Way – echtes Baureihenfoto",
+      "caption": "IVECO S-Way (Baureihenfoto)",
+      "depicted": "2019 Iveco S-Way in Madrid.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:2019_Iveco_S-Way_in_Madrid.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/e/e4/2019_Iveco_S-Way_in_Madrid.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "GinaCostanza76",
+      "attribution": "",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 26466,
+      "match": "family"
+    },
+    "/logistics-vehicles/iveco-x-way.webp": {
+      "path": "/logistics-vehicles/iveco-x-way.webp",
+      "alt": "IVECO X-Way – echtes Baureihenfoto",
+      "caption": "IVECO X-Way (Baureihenfoto)",
+      "depicted": "Iveco X-WAY 480.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Iveco_X-WAY_480.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/4/48/Iveco_X-WAY_480.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Alexandre Prevot",
+      "attribution": "",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 65004,
+      "match": "family"
+    },
+    "/logistics-vehicles/iveco-eurocargo.webp": {
+      "path": "/logistics-vehicles/iveco-eurocargo.webp",
+      "alt": "IVECO Eurocargo – echtes Baureihenfoto",
+      "caption": "IVECO Eurocargo (Baureihenfoto)",
+      "depicted": "Iveco Eurocargo.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Iveco_Eurocargo.JPG",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/7/7e/Iveco_Eurocargo.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Denis1992",
+      "attribution": "",
+      "license": "Public domain",
+      "licenseUrl": "https://commons.wikimedia.org/wiki/Commons:Public_domain",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 65046,
+      "match": "family"
+    },
+    "/logistics-vehicles/iveco-daily.webp": {
+      "path": "/logistics-vehicles/iveco-daily.webp",
+      "alt": "IVECO Daily – echtes Baureihenfoto",
+      "caption": "IVECO Daily (Baureihenfoto)",
+      "depicted": "2014 Iveco Daily 35 S13 MWB 2.3.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:2014_Iveco_Daily_35_S13_MWB_2.3.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/6/63/2014_Iveco_Daily_35_S13_MWB_2.3.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Vauxford",
+      "attribution": "",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 30038,
+      "match": "family"
+    },
+    "/logistics-vehicles/renault-trucks-t.webp": {
+      "path": "/logistics-vehicles/renault-trucks-t.webp",
+      "alt": "Renault Trucks T – echtes Baureihenfoto",
+      "caption": "Renault Trucks T (Baureihenfoto)",
+      "depicted": "Renault Trucks T 460 Protect.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Renault_Trucks_T_460_Protect.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/b/b4/Renault_Trucks_T_460_Protect.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "JoachimKohler-HB",
+      "attribution": "",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 59652,
+      "match": "family"
+    },
+    "/logistics-vehicles/renault-trucks-t-high.webp": {
+      "path": "/logistics-vehicles/renault-trucks-t-high.webp",
+      "alt": "Renault Trucks T High – echtes Baureihenfoto",
+      "caption": "Renault Trucks T High (Baureihenfoto)",
+      "depicted": "Renault T High 520 DTi13 Sattelzug.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Renault_T_High_520_DTi13_Sattelzug.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/6/63/Renault_T_High_520_DTi13_Sattelzug.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "JoachimKohler-HB",
+      "attribution": "",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 78348,
+      "match": "family"
+    },
+    "/logistics-vehicles/renault-trucks-d.webp": {
+      "path": "/logistics-vehicles/renault-trucks-d.webp",
+      "alt": "Renault Trucks D – echtes Baureihenfoto",
+      "caption": "Renault D – Baureihenfoto mit Abschleppaufbau.",
+      "depicted": "Renault D Cab 2 m 7.5 Falck (1).jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Renault_D_Cab_2_m_7.5_Falck_(1).jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/5/58/Renault_D_Cab_2_m_7.5_Falck_%281%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Reise Reise",
+      "attribution": "",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 34124,
+      "match": "family"
+    },
+    "/logistics-vehicles/renault-trucks-master.webp": {
+      "path": "/logistics-vehicles/renault-trucks-master.webp",
+      "alt": "Renault Trucks Master – echtes Baureihenfoto",
+      "caption": "Renault Trucks Master (Baureihenfoto)",
+      "depicted": "2015 Renault Master LM35 Business Energy dCi - 2298cc 2.3 (135PS) Diesel - White - 11-2024, Front.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:2015_Renault_Master_LM35_Business_Energy_dCi_-_2298cc_2.3_(135PS)_Diesel_-_White_-_11-2024,_Front.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/7/79/2015_Renault_Master_LM35_Business_Energy_dCi_-_2298cc_2.3_%28135PS%29_Diesel_-_White_-_11-2024%2C_Front.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Harvey Bold",
+      "attribution": "",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 23098,
+      "match": "family"
+    },
+    "/logistics-vehicles/bulkRail.webp": {
+      "path": "/logistics-vehicles/bulkRail.webp",
+      "alt": "Siemens Mobility Vectron MS – echtes Baureihenfoto",
+      "caption": "Siemens Mobility Vectron MS (Baureihenfoto)",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:J27_441_Vectron_193_844.jpg",
+      "author": "Falk2",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 37146,
+      "match": "family"
+    },
+    "/logistics-vehicles/containerRail.webp": {
+      "path": "/logistics-vehicles/containerRail.webp",
+      "alt": "Alstom TRAXX 3 AC – echtes Baureihenfoto",
+      "caption": "Bombardier/Alstom TRAXX 187 002-1 – Baureihenfoto.",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bombardier_TRAXX_187_002-1,_100_years_of_the_L%C3%B6tschberg,_Lalden.jpg",
+      "author": "Fabien Perissinotto",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 56202,
+      "match": "family"
+    },
+    "/logistics-vehicles/flatRail.webp": {
+      "path": "/logistics-vehicles/flatRail.webp",
+      "alt": "Stadler EURO9000 – echtes Baureihenfoto",
+      "caption": "Stadler EURO9000 (Baureihenfoto)",
+      "depicted": "Emmerich RFO 2019 304-5 (53243551255).jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Emmerich_RFO_2019_304-5_(53243551255).jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/3/35/Emmerich_RFO_2019_304-5_%2853243551255%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Rob Dammers",
+      "attribution": "",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 61502,
+      "match": "family"
+    },
+    "/logistics-vehicles/cargoShip.webp": {
+      "path": "/logistics-vehicles/cargoShip.webp",
+      "alt": "Damen Container Feeder 800 – echtes Baureihenfoto",
+      "caption": "Damen Container Feeder 800 (Baureihenfoto)",
+      "depicted": "Eucon Leader (IMO 9328027) Rotterdam 2007.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Eucon_Leader_(IMO_9328027)_Rotterdam_2007.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/e/ea/Eucon_Leader_%28IMO_9328027%29_Rotterdam_2007.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Niels Johannes",
+      "attribution": "",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 50146,
+      "match": "family"
+    },
+    "/logistics-vehicles/damen-cf3850.webp": {
+      "path": "/logistics-vehicles/damen-cf3850.webp",
+      "alt": "Damen Combi Freighter 3850 – echtes Baureihenfoto",
+      "caption": "Damen Combi Freighter 3850 (Baureihenfoto)",
+      "depicted": "Baltic Fin 2023-09-16 JDohrn 1.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Baltic_Fin_2023-09-16_JDohrn_1.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/5/56/Baltic_Fin_2023-09-16_JDohrn_1.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Jens Dohrn",
+      "attribution": "",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 61184,
+      "match": "family"
+    },
+    "/logistics-vehicles/damen-cc2750.webp": {
+      "path": "/logistics-vehicles/damen-cc2750.webp",
+      "alt": "Damen Combi Coaster 2750 – echtes Baureihenfoto",
+      "caption": "Damen Combi Coaster 2750 (Baureihenfoto)",
+      "depicted": "Bravery approaching Port of Rotterdam.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bravery_approaching_Port_of_Rotterdam.JPG",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/d/df/Bravery_approaching_Port_of_Rotterdam.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Alf van Beem",
+      "attribution": "",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 28918,
+      "match": "family"
+    },
+    "/logistics-vehicles/boeing-737-800bcf.webp": {
+      "path": "/logistics-vehicles/boeing-737-800bcf.webp",
+      "alt": "Boeing 737-800BCF – echtes Baureihenfoto",
+      "caption": "Boeing 737-800BCF (Baureihenfoto)",
+      "depicted": "20231223 Boeing 737-84P(BCF)(WL) of Air Central (B-5137) at CGO 02.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:20231223_Boeing_737-84P(BCF)(WL)_of_Air_Central_(B-5137)_at_CGO_02.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/9/98/20231223_Boeing_737-84P%28BCF%29%28WL%29_of_Air_Central_%28B-5137%29_at_CGO_02.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Windmemories",
+      "attribution": "",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 36728,
+      "match": "family"
+    },
+    "/logistics-vehicles/boeing-767-300f.webp": {
+      "path": "/logistics-vehicles/boeing-767-300f.webp",
+      "alt": "Boeing 767-300F – echtes Baureihenfoto",
+      "caption": "Boeing 767-300F (Baureihenfoto)",
+      "depicted": "FedEx Express Boeing 767-300F N263FE departing Boston March 2025 2.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:FedEx_Express_Boeing_767-300F_N263FE_departing_Boston_March_2025_2.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/a/aa/FedEx_Express_Boeing_767-300F_N263FE_departing_Boston_March_2025_2.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "4300streetcar",
+      "attribution": "",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 10756,
+      "match": "family"
+    },
+    "/logistics-vehicles/cargoPlane.webp": {
+      "path": "/logistics-vehicles/cargoPlane.webp",
+      "alt": "Boeing 777F – echtes Baureihenfoto",
+      "caption": "Boeing 777F (Baureihenfoto)",
+      "depicted": "Leipzig Halle Airport Kalitta Air DHL Aviation Boeing 777-F N775CK (DSC07744).jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Leipzig_Halle_Airport_Kalitta_Air_DHL_Aviation_Boeing_777-F_N775CK_(DSC07744).jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/0/03/Leipzig_Halle_Airport_Kalitta_Air_DHL_Aviation_Boeing_777-F_N775CK_%28DSC07744%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "MarcelX42",
+      "attribution": "",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 11154,
+      "match": "family"
+    },
+    "/logistics-vehicles/airbus-a330-200f.webp": {
+      "path": "/logistics-vehicles/airbus-a330-200f.webp",
+      "alt": "Airbus A330-200F – echtes Baureihenfoto",
+      "caption": "Airbus A330-200F (Baureihenfoto)",
+      "depicted": "Turkish Cargo A330-200F TC-JOV.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Turkish_Cargo_A330-200F_TC-JOV.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/f/fa/Turkish_Cargo_A330-200F_TC-JOV.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Stanley Ip - YYZ weekend planes spotter",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 27814,
+      "match": "family"
+    },
+    "/logistics-vehicles/man-etgx.webp": {
+      "path": "/logistics-vehicles/man-etgx.webp",
+      "alt": "MAN eTGX – echtes Baureihenfoto",
+      "caption": "MAN eTGX (Baureihenfoto)",
+      "depicted": "MAN eTGX 20.544 4x2 LLS-U EB IAA Transportation 2024 (DSC04570).jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:MAN_eTGX_20.544_4x2_LLS-U_EB_IAA_Transportation_2024_(DSC04570).jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/9/96/MAN_eTGX_20.544_4x2_LLS-U_EB_IAA_Transportation_2024_%28DSC04570%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "MarcelX42",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 37424,
+      "match": "family"
+    },
+    "/logistics-vehicles/mercedes-benz-eactros-600.webp": {
+      "path": "/logistics-vehicles/mercedes-benz-eactros-600.webp",
+      "alt": "Mercedes-Benz eActros 600 – echtes Baureihenfoto",
+      "caption": "Mercedes-Benz eActros 600 (Baureihenfoto)",
+      "depicted": "Mercedes-Benz eActros 600 autoMOBIL Tübingen 2025 DSC 2789.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Mercedes-Benz_eActros_600_autoMOBIL_T%C3%BCbingen_2025_DSC_2789.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/5/5c/Mercedes-Benz_eActros_600_autoMOBIL_T%C3%BCbingen_2025_DSC_2789.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Alexander Migl",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 53406,
+      "match": "family"
+    },
+    "/logistics-vehicles/volvo-fh16-aero.webp": {
+      "path": "/logistics-vehicles/volvo-fh16-aero.webp",
+      "alt": "Volvo FH16 Aero – echtes Baureihenfoto",
+      "caption": "Volvo FH16 Aero (Baureihenfoto)",
+      "depicted": "Schwerlast-Sattelzugmaschine Volvo FH16 Aero 780 Popp (2025).jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Schwerlast-Sattelzugmaschine_Volvo_FH16_Aero_780_Popp_(2025).jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/0/05/Schwerlast-Sattelzugmaschine_Volvo_FH16_Aero_780_Popp_%282025%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "JoachimKohler-HB",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 63206,
+      "match": "family"
+    },
+    "/logistics-vehicles/volvo-fh-electric.webp": {
+      "path": "/logistics-vehicles/volvo-fh-electric.webp",
+      "alt": "Volvo FH Electric – echtes Baureihenfoto",
+      "caption": "Volvo FH Electric (Baureihenfoto)",
+      "depicted": "Volvo FH Electric Wacken Open Air Truck (2022).jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Volvo_FH_Electric_Wacken_Open_Air_Truck_(2022).jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Volvo_FH_Electric_Wacken_Open_Air_Truck_%282022%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Peter Herford",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 23568,
+      "match": "family"
+    },
+    "/logistics-vehicles/volvo-fm-electric.webp": {
+      "path": "/logistics-vehicles/volvo-fm-electric.webp",
+      "alt": "Volvo FM Electric – echtes Baureihenfoto",
+      "caption": "Volvo FM Electric (Baureihenfoto)",
+      "depicted": "Volvo FM Electric (2024).jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Volvo_FM_Electric_(2024).jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a2/Volvo_FM_Electric_%282024%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Lars Ardarve",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 46302,
+      "match": "family"
+    },
+    "/logistics-vehicles/iveco-t-way.webp": {
+      "path": "/logistics-vehicles/iveco-t-way.webp",
+      "alt": "IVECO T-Way – echtes Baureihenfoto",
+      "caption": "IVECO T-Way (Baureihenfoto)",
+      "depicted": "Iveco T-Way 510 (54489494151).jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Iveco_T-Way_510_(54489494151).jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/f/fb/Iveco_T-Way_510_%2854489494151%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Alexandre Prevot from Nancy, France",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 45650,
+      "match": "family"
+    },
+    "/logistics-vehicles/renault-trucks-c.webp": {
+      "path": "/logistics-vehicles/renault-trucks-c.webp",
+      "alt": "Renault Trucks C – echtes Baureihenfoto",
+      "caption": "Renault Trucks C (Baureihenfoto)",
+      "depicted": "Renault C-Truck (1).jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Renault_C-Truck_(1).jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Renault_C-Truck_%281%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Cjp24",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 53370,
+      "match": "family"
+    },
+    "/logistics-vehicles/renault-trucks-trafic.webp": {
+      "path": "/logistics-vehicles/renault-trucks-trafic.webp",
+      "alt": "Renault Trucks Trafic – echtes Baureihenfoto",
+      "caption": "Renault Trucks Trafic (Baureihenfoto)",
+      "depicted": "2023 Renault Trafic Sport+ Blue dCi - 1997cc 2.0 (150PS) Diesel - Cumulus Blue - 05-2024, Front.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:2023_Renault_Trafic_Sport%2B_Blue_dCi_-_1997cc_2.0_(150PS)_Diesel_-_Cumulus_Blue_-_05-2024,_Front.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/8/8a/2023_Renault_Trafic_Sport%2B_Blue_dCi_-_1997cc_2.0_%28150PS%29_Diesel_-_Cumulus_Blue_-_05-2024%2C_Front.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Harvey Bold",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 39056,
+      "match": "family"
+    },
+    "/logistics-vehicles/renault-trucks-d-wide.webp": {
+      "path": "/logistics-vehicles/renault-trucks-d-wide.webp",
+      "alt": "Renault Trucks D Wide – echtes Baureihenfoto",
+      "caption": "Renault Trucks D Wide (Baureihenfoto)",
+      "depicted": "Renault D Wide (2.3 m wide cab).jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Renault_D_Wide_(2.3_m_wide_cab).jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/4/4c/Renault_D_Wide_%282.3_m_wide_cab%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Achim Raschka",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 47344,
+      "match": "family"
+    },
+    "/logistics-vehicles/volkswagen-crafter.webp": {
+      "path": "/logistics-vehicles/volkswagen-crafter.webp",
+      "alt": "Volkswagen Crafter – echtes Baureihenfoto",
+      "caption": "Volkswagen Crafter (Baureihenfoto)",
+      "depicted": "Gas Service Volkswagen Crafter (2nd Gen) in Izmail, 17.10.2021.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Gas_Service_Volkswagen_Crafter_(2nd_Gen)_in_Izmail,_17.10.2021.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/5/58/Gas_Service_Volkswagen_Crafter_%282nd_Gen%29_in_Izmail%2C_17.10.2021.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "VileGecko",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 59542,
+      "match": "family"
+    },
+    "/logistics-vehicles/ford-transit.webp": {
+      "path": "/logistics-vehicles/ford-transit.webp",
+      "alt": "Ford Transit – echtes Baureihenfoto",
+      "caption": "Ford Transit (Baureihenfoto)",
+      "depicted": "Ford Transit URBX08.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ford_Transit_URBX08.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/0/08/Ford_Transit_URBX08.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Bull-Doser",
+      "license": "Public domain",
+      "licenseUrl": "https://commons.wikimedia.org/wiki/Commons:Public_domain",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 17668,
+      "match": "family"
+    },
+    "/logistics-vehicles/ford-f-max.webp": {
+      "path": "/logistics-vehicles/ford-f-max.webp",
+      "alt": "Ford Trucks F-MAX – echtes Baureihenfoto",
+      "caption": "Ford Trucks F-MAX (Baureihenfoto)",
+      "depicted": "Ford F-MAX 2020.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ford_F-MAX_2020.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/d/de/Ford_F-MAX_2020.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Pieceofmetalwork",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 22774,
+      "match": "family"
+    },
+    "/logistics-vehicles/cessna-408-skycourier-freighter.webp": {
+      "path": "/logistics-vehicles/cessna-408-skycourier-freighter.webp",
+      "alt": "Cessna 408F SkyCourier – FedEx-Frachter",
+      "caption": "Cessna 408F SkyCourier – FedEx-Frachter",
+      "depicted": "FedEx Feeder Cessna 408F SkyCourier N762FX.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:FedEx_Feeder_Cessna_408F_SkyCourier_N762FX.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/1/1e/FedEx_Feeder_Cessna_408F_SkyCourier_N762FX.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Lestocq",
+      "attribution": "",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 21920,
+      "match": "exact",
+      "exactModelPhotoAvailable": true
+    },
+    "/logistics-vehicles/atr-72-600f.webp": {
+      "path": "/logistics-vehicles/atr-72-600f.webp",
+      "alt": "ATR 72-600F – Swiftair / FedEx Feeder",
+      "caption": "ATR 72-600F – Swiftair / FedEx Feeder",
+      "depicted": "Hannover Airport Swiftair FedEx Feeder ATR 72-600F EC-OID (DSC08919).jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Hannover_Airport_Swiftair_FedEx_Feeder_ATR_72-600F_EC-OID_(DSC08919).jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/2/21/Hannover_Airport_Swiftair_FedEx_Feeder_ATR_72-600F_EC-OID_%28DSC08919%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "MarcelX42",
+      "attribution": "",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 32040,
+      "match": "exact",
+      "exactModelPhotoAvailable": true
+    },
+    "/logistics-vehicles/airbus-a321p2f.webp": {
+      "path": "/logistics-vehicles/airbus-a321p2f.webp",
+      "alt": "Airbus A321-231(P2F) – Express Freighters Australia",
+      "caption": "Airbus A321-231(P2F) – Express Freighters Australia",
+      "depicted": "Express Freighters Australia VH-ULY Airbus A321-231(P2F) Melbourne International Airport (MEL YMML) (51814068606).jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Express_Freighters_Australia_VH-ULY_Airbus_A321-231(P2F)_Melbourne_International_Airport_(MEL_YMML)_(51814068606).jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/4/49/Express_Freighters_Australia_VH-ULY_Airbus_A321-231%28P2F%29_Melbourne_International_Airport_%28MEL_YMML%29_%2851814068606%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Mitchul Hope",
+      "attribution": "",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 10814,
+      "match": "exact",
+      "exactModelPhotoAvailable": true
+    },
+    "/logistics-vehicles/airbus-a320p2f.webp": {
+      "path": "/logistics-vehicles/airbus-a320p2f.webp",
+      "alt": "A320-Passagierbaureihe – Referenzfoto, kein P2F-Frachter",
+      "caption": "A320-Passagierbaureihe – Referenzfoto, kein P2F-Frachter",
+      "depicted": "Airbus A320-214, Airbus Industrie JP7617615.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Airbus_A320-214,_Airbus_Industrie_JP7617615.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/c/c1/Airbus_A320-214%2C_Airbus_Industrie_JP7617615.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Pedro Aragão",
+      "attribution": "",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 14350,
+      "match": "family",
+      "exactModelPhotoAvailable": false
+    },
+    "/logistics-vehicles/embraer-e190f.webp": {
+      "path": "/logistics-vehicles/embraer-e190f.webp",
+      "alt": "Embraer-190-Passagierbaureihe – Referenzfoto, kein E190F",
+      "caption": "Embraer-190-Passagierbaureihe – Referenzfoto, kein E190F",
+      "depicted": "D-AECD Embraer 190 Lufthansa Regional (7628492244).jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:D-AECD_Embraer_190_Lufthansa_Regional_(7628492244).jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/6/6b/D-AECD_Embraer_190_Lufthansa_Regional_%287628492244%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Aeroprints.com",
+      "attribution": "aeroprints.com",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 18614,
+      "match": "family",
+      "exactModelPhotoAvailable": false
+    },
+    "/logistics-vehicles/concordia-damen-cds110.webp": {
+      "path": "/logistics-vehicles/concordia-damen-cds110.webp",
+      "alt": "Trockenfrachtschiff Sialirno – Bauartfoto, kein belegter CDS 110",
+      "caption": "Trockenfrachtschiff Sialirno – Bauartfoto, kein belegter CDS 110",
+      "depicted": "Frachtschiff Sialirno - ENI 06004232 - auf dem Rhein Köln-7883.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Frachtschiff_Sialirno_-_ENI_06004232_-_auf_dem_Rhein_K%C3%B6ln-7883.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/6/68/Frachtschiff_Sialirno_-_ENI_06004232_-_auf_dem_Rhein_K%C3%B6ln-7883.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "Raimond Spekking",
+      "attribution": "© Raimond Spekking / CC BY-SA 4.0 (via Wikimedia Commons)",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 54934,
+      "match": "type",
+      "exactModelPhotoAvailable": false
+    },
+    "/logistics-vehicles/concordia-damen-parsifal.webp": {
+      "path": "/logistics-vehicles/concordia-damen-parsifal.webp",
+      "alt": "Binnentanker Main-Spessart – Bauartfoto, kein belegter Parsifal",
+      "caption": "Binnentanker Main-Spessart – Bauartfoto, kein belegter Parsifal",
+      "depicted": "Binnentanker Main-Spessart.JPG",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Binnentanker_Main-Spessart.JPG",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/b/b5/Binnentanker_Main-Spessart.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "author": "No machine-readable author provided. Frila assumed (based on copyright claims).",
+      "attribution": "",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+      "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
+      "bytes": 17728,
+      "match": "type",
+      "exactModelPhotoAvailable": false
+    }
+  },
+  "missingExact": [
+    {
+      "id": "truck",
+      "reason": "Foto zeigt die TGX-Baureihe als 18.400, nicht genau 18.520."
+    },
+    {
+      "id": "mercedes-benz-actros-f",
+      "reason": "Kein frei lizenziertes exaktes F-Foto belegt; verwandtes Actros-Baureihenfoto ist ausdrücklich gekennzeichnet."
+    },
+    {
+      "id": "bulkShip",
+      "reason": "Kein frei lizenziertes exaktes Foto des aktuellen CF5000 belegt; verwandtes Combi-Freighter-Foto ist ausdrücklich gekennzeichnet."
+    },
+    {
+      "id": "airbus-a320p2f",
+      "reason": "A320-Passagierbaureihe – Referenzfoto, kein P2F-Frachter"
+    },
+    {
+      "id": "embraer-e190f",
+      "reason": "Embraer-190-Passagierbaureihe – Referenzfoto, kein E190F"
+    },
+    {
+      "id": "concordia-damen-cds110",
+      "reason": "Trockenfrachtschiff Sialirno – Bauartfoto, kein belegter CDS 110"
+    },
+    {
+      "id": "concordia-damen-parsifal",
+      "reason": "Binnentanker Main-Spessart – Bauartfoto, kein belegter Parsifal"
+    },
+    {
+      "id": "damen-cf7000-ice",
+      "reason": "Damen Combi Freighter 3850 – Baureihenreferenz, kein CF 7000 (ICE)"
+    },
+    {
+      "id": "damen-cf8200-ice",
+      "reason": "Damen Combi Freighter 3850 – Baureihenreferenz, kein CF 8200 (ICE)"
+    },
+    {
+      "id": "damen-cf12000-ice",
+      "reason": "Damen Combi Freighter 3850 – Baureihenreferenz, kein CF 12000 (ICE)"
+    }
+  ],
+  "models": {
+    "truck": {
+      "model": "MAN TGX 18.520 4x2 LL SA",
+      "path": "/logistics-vehicles/truck.webp",
+      "caption": "MAN TGX 18.400 – Baureihenfoto; nicht die konkrete 18.520-Ausführung.",
+      "exactModelPhotoAvailable": false
+    },
+    "man-tgs": {
+      "model": "MAN TGS",
+      "path": "/logistics-vehicles/man-tgs.webp",
+      "caption": "MAN TGS (Baureihenfoto)"
+    },
+    "man-tgm": {
+      "model": "MAN TGM",
+      "path": "/logistics-vehicles/man-tgm.webp",
+      "caption": "MAN TGM (Baureihenfoto)"
+    },
+    "man-tgl": {
+      "model": "MAN TGL",
+      "path": "/logistics-vehicles/man-tgl.webp",
+      "caption": "MAN TGL – Baureihenfoto mit Abschleppaufbau."
+    },
+    "van": {
+      "model": "MAN TGE",
+      "path": "/logistics-vehicles/van.webp",
+      "caption": "MAN TGE (Baureihenfoto)"
+    },
+    "mercedes-benz-actros-l-1848-ls-4x2": {
+      "model": "Mercedes-Benz Actros L 1848 LS 4x2",
+      "path": "/logistics-vehicles/mercedes-benz-actros-l-1848-ls-4x2.webp",
+      "caption": "Mercedes-Benz Actros L ProCabin – Baureihenfoto."
+    },
+    "mercedes-benz-actros-f": {
+      "model": "Mercedes-Benz Actros F",
+      "path": "/logistics-vehicles/mercedes-benz-actros-l-1848-ls-4x2.webp",
+      "caption": "Mercedes-Benz Actros L ProCabin – Referenzfoto der Actros-Baureihe; nicht die konkrete F-Ausführung.",
+      "exactModelPhotoAvailable": false
+    },
+    "mercedes-benz-arocs": {
+      "model": "Mercedes-Benz Arocs",
+      "path": "/logistics-vehicles/mercedes-benz-arocs.webp",
+      "caption": "Mercedes-Benz Arocs – Baureihenfoto mit Kipperaufbau."
+    },
+    "reefer": {
+      "model": "Mercedes-Benz Atego",
+      "path": "/logistics-vehicles/reefer.webp",
+      "caption": "Mercedes-Benz Atego (Baureihenfoto)"
+    },
+    "mercedes-benz-sprinter": {
+      "model": "Mercedes-Benz Sprinter",
+      "path": "/logistics-vehicles/mercedes-benz-sprinter.webp",
+      "caption": "Mercedes-Benz Sprinter (Baureihenfoto)"
+    },
+    "volvo-fh": {
+      "model": "Volvo FH",
+      "path": "/logistics-vehicles/volvo-fh.webp",
+      "caption": "Volvo FH (Baureihenfoto)"
+    },
+    "volvo-fh16": {
+      "model": "Volvo FH16",
+      "path": "/logistics-vehicles/volvo-fh16.webp",
+      "caption": "Volvo FH16 (Baureihenfoto)"
+    },
+    "volvo-fh-aero": {
+      "model": "Volvo FH Aero",
+      "path": "/logistics-vehicles/volvo-fh-aero.webp",
+      "caption": "Volvo FH Aero (Baureihenfoto)"
+    },
+    "volvo-fm": {
+      "model": "Volvo FM",
+      "path": "/logistics-vehicles/volvo-fm.webp",
+      "caption": "Volvo FM (Baureihenfoto)"
+    },
+    "volvo-fmx": {
+      "model": "Volvo FMX",
+      "path": "/logistics-vehicles/volvo-fmx.webp",
+      "caption": "Volvo FMX (Baureihenfoto)"
+    },
+    "volvo-fe": {
+      "model": "Volvo FE",
+      "path": "/logistics-vehicles/volvo-fe.webp",
+      "caption": "Volvo FE (Baureihenfoto)"
+    },
+    "volvo-fl": {
+      "model": "Volvo FL",
+      "path": "/logistics-vehicles/volvo-fl.webp",
+      "caption": "Volvo FL (Baureihenfoto)"
+    },
+    "scania-s-serie": {
+      "model": "Scania S-Serie",
+      "path": "/logistics-vehicles/scania-s-serie.webp",
+      "caption": "Scania S-Serie (Baureihenfoto)"
+    },
+    "scania-r-serie": {
+      "model": "Scania R-Serie",
+      "path": "/logistics-vehicles/scania-r-serie.webp",
+      "caption": "Scania R-Serie (Baureihenfoto)"
+    },
+    "scania-g-serie": {
+      "model": "Scania G-Serie",
+      "path": "/logistics-vehicles/scania-g-serie.webp",
+      "caption": "Scania G-Serie (Baureihenfoto)"
+    },
+    "scania-p-serie": {
+      "model": "Scania P-Serie",
+      "path": "/logistics-vehicles/scania-p-serie.webp",
+      "caption": "Scania P-Serie (Baureihenfoto)"
+    },
+    "scania-l-serie": {
+      "model": "Scania L-Serie",
+      "path": "/logistics-vehicles/scania-l-serie.webp",
+      "caption": "Scania L-Serie (Baureihenfoto)"
+    },
+    "daf-xf": {
+      "model": "DAF XF",
+      "path": "/logistics-vehicles/daf-xf.webp",
+      "caption": "DAF XF (Baureihenfoto)"
+    },
+    "daf-xg": {
+      "model": "DAF XG",
+      "path": "/logistics-vehicles/daf-xg.webp",
+      "caption": "DAF XG (Baureihenfoto)"
+    },
+    "daf-xgplus": {
+      "model": "DAF XG+",
+      "path": "/logistics-vehicles/daf-xgplus.webp",
+      "caption": "DAF XG+ (Baureihenfoto)"
+    },
+    "daf-xd": {
+      "model": "DAF XD",
+      "path": "/logistics-vehicles/daf-xd.webp",
+      "caption": "DAF XD (Baureihenfoto)"
+    },
+    "daf-xb": {
+      "model": "DAF XB",
+      "path": "/logistics-vehicles/daf-xb.webp",
+      "caption": "DAF XB Electric – Referenzfoto der XB-Baureihe."
+    },
+    "iveco-s-way": {
+      "model": "IVECO S-Way",
+      "path": "/logistics-vehicles/iveco-s-way.webp",
+      "caption": "IVECO S-Way (Baureihenfoto)"
+    },
+    "iveco-x-way": {
+      "model": "IVECO X-Way",
+      "path": "/logistics-vehicles/iveco-x-way.webp",
+      "caption": "IVECO X-Way (Baureihenfoto)"
+    },
+    "iveco-eurocargo": {
+      "model": "IVECO Eurocargo",
+      "path": "/logistics-vehicles/iveco-eurocargo.webp",
+      "caption": "IVECO Eurocargo (Baureihenfoto)"
+    },
+    "iveco-daily": {
+      "model": "IVECO Daily",
+      "path": "/logistics-vehicles/iveco-daily.webp",
+      "caption": "IVECO Daily (Baureihenfoto)"
+    },
+    "renault-trucks-t": {
+      "model": "Renault Trucks T",
+      "path": "/logistics-vehicles/renault-trucks-t.webp",
+      "caption": "Renault Trucks T (Baureihenfoto)"
+    },
+    "renault-trucks-t-high": {
+      "model": "Renault Trucks T High",
+      "path": "/logistics-vehicles/renault-trucks-t-high.webp",
+      "caption": "Renault Trucks T High (Baureihenfoto)"
+    },
+    "renault-trucks-d": {
+      "model": "Renault Trucks D",
+      "path": "/logistics-vehicles/renault-trucks-d.webp",
+      "caption": "Renault D – Baureihenfoto mit Abschleppaufbau."
+    },
+    "renault-trucks-master": {
+      "model": "Renault Trucks Master",
+      "path": "/logistics-vehicles/renault-trucks-master.webp",
+      "caption": "Renault Trucks Master (Baureihenfoto)"
+    },
+    "bulkRail": {
+      "model": "Siemens Vectron MS",
+      "path": "/logistics-vehicles/bulkRail.webp",
+      "caption": "Siemens Mobility Vectron MS (Baureihenfoto)"
+    },
+    "containerRail": {
+      "model": "Alstom Traxx Universal",
+      "path": "/logistics-vehicles/containerRail.webp",
+      "caption": "Bombardier/Alstom TRAXX 187 002-1 – Baureihenfoto."
+    },
+    "flatRail": {
+      "model": "Stadler EURO9000",
+      "path": "/logistics-vehicles/flatRail.webp",
+      "caption": "Stadler EURO9000 (Baureihenfoto)"
+    },
+    "cargoShip": {
+      "model": "Damen Container Feeder 800",
+      "path": "/logistics-vehicles/cargoShip.webp",
+      "caption": "Damen Container Feeder 800 (Baureihenfoto)"
+    },
+    "bulkShip": {
+      "model": "Damen Combi Freighter 5000",
+      "path": "/logistics-vehicles/damen-cf3850.webp",
+      "caption": "Damen CF3850 – Referenzfoto der Combi-Freighter-Serie; nicht der konkrete CF5000.",
+      "exactModelPhotoAvailable": false
+    },
+    "damen-cc2750": {
+      "model": "Damen Combi Coaster 2750",
+      "path": "/logistics-vehicles/damen-cc2750.webp",
+      "caption": "Damen Combi Coaster 2750 (Baureihenfoto)"
+    },
+    "damen-cf3850": {
+      "model": "Damen Combi Freighter 3850",
+      "path": "/logistics-vehicles/damen-cf3850.webp",
+      "caption": "Damen Combi Freighter 3850 (Baureihenfoto)"
+    },
+    "boeing-737-800bcf": {
+      "model": "Boeing 737-800BCF",
+      "path": "/logistics-vehicles/boeing-737-800bcf.webp",
+      "caption": "Boeing 737-800BCF (Baureihenfoto)"
+    },
+    "boeing-767-300f": {
+      "model": "Boeing 767-300F",
+      "path": "/logistics-vehicles/boeing-767-300f.webp",
+      "caption": "Boeing 767-300F (Baureihenfoto)"
+    },
+    "cargoPlane": {
+      "model": "Boeing 777F",
+      "path": "/logistics-vehicles/cargoPlane.webp",
+      "caption": "Boeing 777F (Baureihenfoto)"
+    },
+    "airbus-a330-200f": {
+      "model": "Airbus A330-200F",
+      "path": "/logistics-vehicles/airbus-a330-200f.webp",
+      "caption": "Airbus A330-200F (Baureihenfoto)"
+    },
+    "man-etgx": {
+      "model": "MAN eTGX",
+      "path": "/logistics-vehicles/man-etgx.webp",
+      "caption": "MAN eTGX (Baureihenfoto)"
+    },
+    "mercedes-benz-eactros-600": {
+      "model": "Mercedes-Benz eActros 600",
+      "path": "/logistics-vehicles/mercedes-benz-eactros-600.webp",
+      "caption": "Mercedes-Benz eActros 600 (Baureihenfoto)"
+    },
+    "volvo-fh16-aero": {
+      "model": "Volvo FH16 Aero",
+      "path": "/logistics-vehicles/volvo-fh16-aero.webp",
+      "caption": "Volvo FH16 Aero (Baureihenfoto)"
+    },
+    "volvo-fh-electric": {
+      "model": "Volvo FH Electric",
+      "path": "/logistics-vehicles/volvo-fh-electric.webp",
+      "caption": "Volvo FH Electric (Baureihenfoto)"
+    },
+    "volvo-fm-electric": {
+      "model": "Volvo FM Electric",
+      "path": "/logistics-vehicles/volvo-fm-electric.webp",
+      "caption": "Volvo FM Electric (Baureihenfoto)"
+    },
+    "iveco-t-way": {
+      "model": "IVECO T-Way",
+      "path": "/logistics-vehicles/iveco-t-way.webp",
+      "caption": "IVECO T-Way (Baureihenfoto)"
+    },
+    "renault-trucks-c": {
+      "model": "Renault Trucks C",
+      "path": "/logistics-vehicles/renault-trucks-c.webp",
+      "caption": "Renault Trucks C (Baureihenfoto)"
+    },
+    "renault-trucks-trafic": {
+      "model": "Renault Trucks Trafic",
+      "path": "/logistics-vehicles/renault-trucks-trafic.webp",
+      "caption": "Renault Trucks Trafic (Baureihenfoto)"
+    },
+    "renault-trucks-d-wide": {
+      "model": "Renault Trucks D Wide",
+      "path": "/logistics-vehicles/renault-trucks-d-wide.webp",
+      "caption": "Renault Trucks D Wide (Baureihenfoto)"
+    },
+    "volkswagen-crafter": {
+      "model": "Volkswagen Crafter",
+      "path": "/logistics-vehicles/volkswagen-crafter.webp",
+      "caption": "Volkswagen Crafter (Baureihenfoto)"
+    },
+    "ford-transit": {
+      "model": "Ford Transit",
+      "path": "/logistics-vehicles/ford-transit.webp",
+      "caption": "Ford Transit (Baureihenfoto)"
+    },
+    "ford-f-max": {
+      "model": "Ford Trucks F-MAX",
+      "path": "/logistics-vehicles/ford-f-max.webp",
+      "caption": "Ford Trucks F-MAX (Baureihenfoto)"
+    },
+    "cessna-408-skycourier-freighter": {
+      "model": "Cessna 408 SkyCourier Freighter",
+      "path": "/logistics-vehicles/cessna-408-skycourier-freighter.webp",
+      "caption": "Cessna 408F SkyCourier – FedEx-Frachter",
+      "exactModelPhotoAvailable": true
+    },
+    "atr-72-600f": {
+      "model": "ATR 72-600F",
+      "path": "/logistics-vehicles/atr-72-600f.webp",
+      "caption": "ATR 72-600F – Swiftair / FedEx Feeder",
+      "exactModelPhotoAvailable": true
+    },
+    "airbus-a321p2f": {
+      "model": "Airbus A321P2F",
+      "path": "/logistics-vehicles/airbus-a321p2f.webp",
+      "caption": "Airbus A321-231(P2F) – Express Freighters Australia",
+      "exactModelPhotoAvailable": true
+    },
+    "airbus-a320p2f": {
+      "model": "Airbus A320P2F",
+      "path": "/logistics-vehicles/airbus-a320p2f.webp",
+      "caption": "A320-Passagierbaureihe – Referenzfoto, kein P2F-Frachter",
+      "exactModelPhotoAvailable": false
+    },
+    "embraer-e190f": {
+      "model": "Embraer E190F",
+      "path": "/logistics-vehicles/embraer-e190f.webp",
+      "caption": "Embraer-190-Passagierbaureihe – Referenzfoto, kein E190F",
+      "exactModelPhotoAvailable": false
+    },
+    "concordia-damen-cds110": {
+      "model": "Concordia Damen CDS Dry Cargo 110",
+      "path": "/logistics-vehicles/concordia-damen-cds110.webp",
+      "caption": "Trockenfrachtschiff Sialirno – Bauartfoto, kein belegter CDS 110",
+      "exactModelPhotoAvailable": false
+    },
+    "concordia-damen-parsifal": {
+      "model": "Concordia Damen Parsifal 110",
+      "path": "/logistics-vehicles/concordia-damen-parsifal.webp",
+      "caption": "Binnentanker Main-Spessart – Bauartfoto, kein belegter Parsifal",
+      "exactModelPhotoAvailable": false
+    },
+    "damen-cf7000-ice": {
+      "model": "Damen Combi Freighter 7000 (ICE)",
+      "path": "/logistics-vehicles/damen-cf3850.webp",
+      "caption": "Damen Combi Freighter 3850 – Baureihenreferenz, kein CF 7000 (ICE)",
+      "exactModelPhotoAvailable": false
+    },
+    "damen-cf8200-ice": {
+      "model": "Damen Combi Freighter 8200 (ICE)",
+      "path": "/logistics-vehicles/damen-cf3850.webp",
+      "caption": "Damen Combi Freighter 3850 – Baureihenreferenz, kein CF 8200 (ICE)",
+      "exactModelPhotoAvailable": false
+    },
+    "damen-cf12000-ice": {
+      "model": "Damen Combi Freighter 12000 (ICE)",
+      "path": "/logistics-vehicles/damen-cf3850.webp",
+      "caption": "Damen Combi Freighter 3850 – Baureihenreferenz, kein CF 12000 (ICE)",
+      "exactModelPhotoAvailable": false
+    }
+  }
+}

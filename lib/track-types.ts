@@ -1,0 +1,3 @@
+export const trackTypes={local:{name:'Nebenbahn',speed:80,build:90000,maintenance:35,toll:7},regional:{name:'Regionalgleis',speed:160,build:180000,maintenance:65,toll:13},main:{name:'Hauptstrecke',speed:230,build:300000,maintenance:100,toll:20},highspeed:{name:'Schnellfahrstrecke',speed:320,build:500000,maintenance:160,toll:32}};
+export type TrackType=keyof typeof trackTypes;
+export function trackSpec(t:{kind?:string;electrified?:boolean}){const kind=Object.hasOwn(trackTypes,t.kind||'')?t.kind as TrackType:'regional',base=trackTypes[kind],electric=t.electrified!==false;return {...base,kind,electric,build:base.build+(electric?55000:0),maintenance:base.maintenance+(electric?15:0),toll:base.toll+(electric?3:0)};}

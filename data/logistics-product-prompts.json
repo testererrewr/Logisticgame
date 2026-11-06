@@ -1,0 +1,284 @@
+{
+  "method": "Built-in image_gen tool",
+  "status": "Generation paused at user request; no further generation is scheduled.",
+  "completedCount": 54,
+  "promptSet": {
+    "useCase": "product-mockup",
+    "assetType": "Square inventory thumbnail for logistics strategy game Weltverbund",
+    "subjectRule": "One recognizable representative physical sample of the named freight product, with plausible plain packaging where needed. Wheat: open burlap sack with grain and ears. Medicines: distinct generic pharmaceutical packaging.",
+    "sharedStyle": "Clean polished realistic 3D studio product still life. Centered isolated on very light warm gray background, soft contact shadow, realistic textures. Product fills 75% of square, distinctive silhouette at 80px. No text, letters, labels, logos, watermarks or people. Only this product.",
+    "postprocessing": "Lossless original retained in Codex generated_images; project copy resized to at most 320 px and encoded as WebP."
+  },
+  "assets": [
+    {
+      "id": "wheat",
+      "subject": "Weizen",
+      "path": "public/logistics-products/wheat.webp"
+    },
+    {
+      "id": "corn",
+      "subject": "Mais",
+      "path": "public/logistics-products/corn.webp"
+    },
+    {
+      "id": "milk",
+      "subject": "Milch",
+      "path": "public/logistics-products/milk.webp"
+    },
+    {
+      "id": "apples",
+      "subject": "Äpfel",
+      "path": "public/logistics-products/apples.webp"
+    },
+    {
+      "id": "timber",
+      "subject": "Rundholz",
+      "path": "public/logistics-products/timber.webp"
+    },
+    {
+      "id": "ironOre",
+      "subject": "Eisenerz",
+      "path": "public/logistics-products/ironOre.webp"
+    },
+    {
+      "id": "rareEarth",
+      "subject": "Seltene Erden",
+      "path": "public/logistics-products/rareEarth.webp"
+    },
+    {
+      "id": "flour",
+      "subject": "Mehl",
+      "path": "public/logistics-products/flour.webp"
+    },
+    {
+      "id": "bread",
+      "subject": "Brot",
+      "path": "public/logistics-products/bread.webp"
+    },
+    {
+      "id": "pastry",
+      "subject": "Gebäck",
+      "path": "public/logistics-products/pastry.webp"
+    },
+    {
+      "id": "biscuits",
+      "subject": "Kekse",
+      "path": "public/logistics-products/biscuits.webp"
+    },
+    {
+      "id": "lumber",
+      "subject": "Schnittholz",
+      "path": "public/logistics-products/lumber.webp"
+    },
+    {
+      "id": "steel",
+      "subject": "Stahl",
+      "path": "public/logistics-products/steel.webp"
+    },
+    {
+      "id": "electronics",
+      "subject": "Elektronik",
+      "path": "public/logistics-products/electronics.webp"
+    },
+    {
+      "id": "packaging",
+      "subject": "Verpackungen",
+      "path": "public/logistics-products/packaging.webp"
+    },
+    {
+      "id": "containers",
+      "subject": "Containerfracht",
+      "path": "public/logistics-products/containers.webp"
+    },
+    {
+      "id": "barley",
+      "subject": "Gerste",
+      "path": "public/logistics-products/barley.webp"
+    },
+    {
+      "id": "oats",
+      "subject": "Hafer",
+      "path": "public/logistics-products/oats.webp"
+    },
+    {
+      "id": "rye",
+      "subject": "Roggen",
+      "path": "public/logistics-products/rye.webp"
+    },
+    {
+      "id": "rice",
+      "subject": "Reis",
+      "path": "public/logistics-products/rice.webp"
+    },
+    {
+      "id": "soy",
+      "subject": "Sojabohnen",
+      "path": "public/logistics-products/soy.webp"
+    },
+    {
+      "id": "sugarBeet",
+      "subject": "Zuckerrüben",
+      "path": "public/logistics-products/sugarBeet.webp"
+    },
+    {
+      "id": "potatoes",
+      "subject": "Kartoffeln",
+      "path": "public/logistics-products/potatoes.webp"
+    },
+    {
+      "id": "sand",
+      "subject": "Sand",
+      "path": "public/logistics-products/sand.webp"
+    },
+    {
+      "id": "gravel",
+      "subject": "Kies",
+      "path": "public/logistics-products/gravel.webp"
+    },
+    {
+      "id": "limestone",
+      "subject": "Kalkstein",
+      "path": "public/logistics-products/limestone.webp"
+    },
+    {
+      "id": "coal",
+      "subject": "Kohle",
+      "path": "public/logistics-products/coal.webp"
+    },
+    {
+      "id": "bauxite",
+      "subject": "Bauxit",
+      "path": "public/logistics-products/bauxite.webp"
+    },
+    {
+      "id": "copperOre",
+      "subject": "Kupfererz",
+      "path": "public/logistics-products/copperOre.webp"
+    },
+    {
+      "id": "lithium",
+      "subject": "Lithiumkonzentrat",
+      "path": "public/logistics-products/lithium.webp"
+    },
+    {
+      "id": "salt",
+      "subject": "Salz",
+      "path": "public/logistics-products/salt.webp"
+    },
+    {
+      "id": "cement",
+      "subject": "Zement",
+      "path": "public/logistics-products/cement.webp"
+    },
+    {
+      "id": "fertilizer",
+      "subject": "Dünger",
+      "path": "public/logistics-products/fertilizer.webp"
+    },
+    {
+      "id": "sugar",
+      "subject": "Zucker",
+      "path": "public/logistics-products/sugar.webp"
+    },
+    {
+      "id": "malt",
+      "subject": "Malz",
+      "path": "public/logistics-products/malt.webp"
+    },
+    {
+      "id": "animalFeed",
+      "subject": "Tierfutter",
+      "path": "public/logistics-products/animalFeed.webp"
+    },
+    {
+      "id": "coffeeBeans",
+      "subject": "Kaffeebohnen",
+      "path": "public/logistics-products/coffeeBeans.webp"
+    },
+    {
+      "id": "cocoa",
+      "subject": "Kakao",
+      "path": "public/logistics-products/cocoa.webp"
+    },
+    {
+      "id": "vegetables",
+      "subject": "Gemüse",
+      "path": "public/logistics-products/vegetables.webp"
+    },
+    {
+      "id": "tomatoes",
+      "subject": "Tomaten",
+      "path": "public/logistics-products/tomatoes.webp"
+    },
+    {
+      "id": "grapes",
+      "subject": "Trauben",
+      "path": "public/logistics-products/grapes.webp"
+    },
+    {
+      "id": "eggs",
+      "subject": "Eier",
+      "path": "public/logistics-products/eggs.webp"
+    },
+    {
+      "id": "beef",
+      "subject": "Rindfleisch",
+      "path": "public/logistics-products/beef.webp"
+    },
+    {
+      "id": "pork",
+      "subject": "Schweinefleisch",
+      "path": "public/logistics-products/pork.webp"
+    },
+    {
+      "id": "poultry",
+      "subject": "Geflügelfleisch",
+      "path": "public/logistics-products/poultry.webp"
+    },
+    {
+      "id": "fish",
+      "subject": "Fisch",
+      "path": "public/logistics-products/fish.webp"
+    },
+    {
+      "id": "cheese",
+      "subject": "Käse",
+      "path": "public/logistics-products/cheese.webp"
+    },
+    {
+      "id": "butter",
+      "subject": "Butter",
+      "path": "public/logistics-products/butter.webp"
+    },
+    {
+      "id": "yogurt",
+      "subject": "Joghurt",
+      "path": "public/logistics-products/yogurt.webp"
+    },
+    {
+      "id": "frozenFood",
+      "subject": "Tiefkühlkost",
+      "path": "public/logistics-products/frozenFood.webp"
+    },
+    {
+      "id": "freshJuice",
+      "subject": "Frischsaft",
+      "path": "public/logistics-products/freshJuice.webp"
+    },
+    {
+      "id": "pasta",
+      "subject": "Teigwaren",
+      "path": "public/logistics-products/pasta.webp"
+    },
+    {
+      "id": "cannedFood",
+      "subject": "Konserven",
+      "path": "public/logistics-products/cannedFood.webp"
+    },
+    {
+      "id": "cardboard",
+      "subject": "Karton",
+      "path": "public/logistics-products/cardboard.webp"
+    }
+  ]
+}

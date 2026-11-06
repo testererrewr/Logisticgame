@@ -1,0 +1,6 @@
+import {env} from 'cloudflare:workers';
+import type {UsedVehicleOffer} from './vehicle-sales';
+export const usedVehicleKey=(world:string,id:string)=>'used-vehicle-v20:'+world+':'+id;
+export async function readUsedVehicleOffer(world:string,id:string){if(typeof id!=='string'||!/^[-a-zA-Z0-9_]{16,90}$/.test(id))throw Error('Ungültiges Fahrzeugangebot.');const row=await env.DB!.prepare('SELECT payload FROM logistics_runtime WHERE id=?').bind(usedVehicleKey(world,id)).first<{payload:string}>();if(!row)throw Error('Fahrzeugangebot nicht gefunden.');const offer=JSON.parse(row.payload) as UsedVehicleOffer;if(offer.worldId!==world)throw Error('Angebot gehört zu einer anderen Welt.');return offer;}
+export async function readUsedVehicleOffers(world:string){const prefix=usedVehicleKey(world,'');const rows=await env.DB!.prepare("SELECT payload FROM logistics_runtime WHERE id>=? AND id<? AND json_extract(payload,'$.status')='open' ORDER BY updated DESC LIMIT 500").bind(prefix,prefix+'\uffff').all<{payload:string}>();return rows.results.map(r=>JSON.parse(r.payload) as UsedVehicleOffer).filter(o=>o.worldId===world&&o.status==='open');}
+export const saveUsedVehicleOffer=(offer:UsedVehicleOffer)=>env.DB!.prepare('INSERT OR REPLACE INTO logistics_runtime(id,payload,updated) VALUES(?,?,?)').bind(usedVehicleKey(offer.worldId,offer.id),JSON.stringify(offer),Date.now());

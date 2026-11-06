@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import crypto from 'node:crypto';
+import React from 'react';
+import {renderToStaticMarkup} from 'react-dom/server';
+import {validateCatalog} from '../lib/catalog-schema.mjs';
+import {modelIllustrationFile} from '../lib/vehicle-art.mjs';
+import {vehicleIllustration,isVehicleIllustration} from '../lib/vehicle-models.ts';
+import {selectCatalog,CatalogPagination,CatalogFooter} from '../app/catalog-browser.tsx';
+import VehiclePhoto from '../app/vehicle-photo.tsx';
+import TrainBuilder from '../app/train-builder.tsx';
+const models=validateCatalog(JSON.parse(await fs.readFile('data/catalog-import-1084.json','utf8'))),imageFields=['image','imageCredit','imageLicense','imageSource','imageLicenseUrl','notes'],nonImage=models.map(m=>Object.fromEntries(Object.entries(m).filter(([k])=>!imageFields.includes(k))));
+assert.equal(crypto.createHash('sha256').update(JSON.stringify(nonImage)).digest('hex'),'3667c5414b815389b5f26dfe2f887f39af9c1c545b9d42029662bf6a42470b9f','All 1084 model IDs, availability, prices, dimensions and operating data preserved');
+const illustrations=new Set();for(const m of models){assert.ok(!m.image.startsWith('/vehicles/catalog-'),'No generic type placeholder: '+m.id);assert.match(m.imageLicenseUrl,/^https:/);assert.ok((await fs.stat('public'+m.image)).size>200);const fallback=vehicleIllustration(m);assert.equal(fallback,modelIllustrationFile(m.id));assert.ok(!illustrations.has(fallback),'Every model has distinct fallback artwork');illustrations.add(fallback);const svg=await fs.readFile('public'+fallback,'utf8');assert.ok(svg.includes(m.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;')));assert.match(svg,/schematische Modellillustration/);assert.ok(!/<script|onload=|href=/.test(svg));}
+assert.match(vehicleIllustration({...models[0],id:'future-model-unknown'}),/catalog-bus.svg$/,'Unknown future catalog IDs retain a working generic fallback');
+for(const query of ['oebb taurus','taurus öbb','TAURUS ÖBB'])assert.ok(selectCatalog(models,query).some(m=>m.id==='train-taurus'),'Accent/case independent AND terms, any word order: '+query);
+assert.ok(selectCatalog(models,'nonexistent model qzx').length===0);assert.ok(selectCatalog(models,'a320 airbus').every(m=>/a320/i.test(m.name)&&m.manufacturer==='Airbus'));const cheapest=selectCatalog(models,'','Airbus','price');assert.ok(cheapest.every((m,i)=>!i||m.price>=cheapest[i-1].price));
+const render=(C,p)=>renderToStaticMarkup(React.createElement(C,p)),browser={query:'Citaro',page:2,pages:20,total:458,setQuery:()=>{},setPage:()=>{}};
+let html=render(CatalogFooter,{browser});assert.match(html,/Fahrzeugseiten unten/);assert.match(html,/aria-label="Fahrzeugmodelle suchen unten"/);assert.match(html,/value="Citaro"/);assert.match(html,/aria-label="Modellseite unten"/);assert.match(html,/value="20"/);assert.match(html,/Weiter/);
+html=render(CatalogPagination,{browser:{...browser,page:1},bottom:true});assert.match(html,/aria-label="Vorherige Modellseite unten" disabled/);assert.ok(!html.includes('aria-label="Nächste Modellseite unten" disabled'));
+html=render(CatalogPagination,{browser:{...browser,page:20},bottom:true});assert.match(html,/aria-label="Nächste Modellseite unten" disabled/);
+html=render(TrainBuilder,{catalog:models,quantity:1,cash:1e9,disabled:false,onBuy:()=>{}});assert.match(html,/Fahrzeugseiten oben/);assert.match(html,/Fahrzeugseiten unten/);assert.ok(html.indexOf('Fahrzeugseiten unten')>html.indexOf('class="train-parts"'));assert.equal((html.match(/loading="lazy"/g)||[]).length,24);
+const own=models.find(isVehicleIllustration);assert.ok(own);html=render(VehiclePhoto,{model:own});assert.match(html,/Modellillustration · schematisch · kein Foto/);assert.ok(html.includes(own.name.replace(/&/g,'&amp;')));const photo=models.find(m=>m.image.startsWith('/vehicles/photo31-'));assert.ok(photo);html=render(VehiclePhoto,{model:photo});assert.ok(html.includes(photo.image));assert.ok(html.includes('Bildnachweise'));
+console.log('PASS v31: all1084 model images and unique local schematic fallbacks; strict game-data preservation; tokenized accent-insensitive search; top/bottom page controls, direct page selector and endpoint buttons; 24 lazy train cards; honest photo/illustration labels.');

@@ -1,0 +1,777 @@
+[
+  {
+    "id": "auto-engineBlock",
+    "name": "Motorblock fertigen",
+    "output": "engineBlock",
+    "inputs": {
+      "steel": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 180,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-pistons",
+    "name": "Kolben fertigen",
+    "output": "pistons",
+    "inputs": {
+      "aluminium": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 183,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-crankshaft",
+    "name": "Kurbelwelle fertigen",
+    "output": "crankshaft",
+    "inputs": {
+      "steel": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 186,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-camshaft",
+    "name": "Nockenwelle fertigen",
+    "output": "camshaft",
+    "inputs": {
+      "steel": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 189,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-cylinderHead",
+    "name": "Zylinderkopf fertigen",
+    "output": "cylinderHead",
+    "inputs": {
+      "aluminium": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 192,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-engineValves",
+    "name": "Motorventile fertigen",
+    "output": "engineValves",
+    "inputs": {
+      "steel": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 195,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-fuelInjectors",
+    "name": "Einspritzdüsen fertigen",
+    "output": "fuelInjectors",
+    "inputs": {
+      "steel": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 198,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-turbocharger",
+    "name": "Turbolader fertigen",
+    "output": "turbocharger",
+    "inputs": {
+      "steel": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 201,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-gearbox",
+    "name": "Getriebe fertigen",
+    "output": "gearbox",
+    "inputs": {
+      "steel": 0.4,
+      "driveShaft": 0.3,
+      "clutch": 0.3
+    },
+    "fee": 204,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-clutch",
+    "name": "Kupplung fertigen",
+    "output": "clutch",
+    "inputs": {
+      "steel": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 207,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-driveShaft",
+    "name": "Antriebswelle fertigen",
+    "output": "driveShaft",
+    "inputs": {
+      "steel": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 210,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-differential",
+    "name": "Differential fertigen",
+    "output": "differential",
+    "inputs": {
+      "steel": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 213,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-axles",
+    "name": "Achsen fertigen",
+    "output": "axles",
+    "inputs": {
+      "steel": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 216,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-wheelRims",
+    "name": "Felgen fertigen",
+    "output": "wheelRims",
+    "inputs": {
+      "aluminium": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 219,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-brakeDiscs",
+    "name": "Bremsscheiben fertigen",
+    "output": "brakeDiscs",
+    "inputs": {
+      "steel": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 222,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-brakePads",
+    "name": "Bremsbeläge fertigen",
+    "output": "brakePads",
+    "inputs": {
+      "rubber": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 225,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-brakeCalipers",
+    "name": "Bremssättel fertigen",
+    "output": "brakeCalipers",
+    "inputs": {
+      "aluminium": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 228,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-steeringRack",
+    "name": "Lenkgetriebe fertigen",
+    "output": "steeringRack",
+    "inputs": {
+      "steel": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 231,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-shockAbsorbers",
+    "name": "Stoßdämpfer fertigen",
+    "output": "shockAbsorbers",
+    "inputs": {
+      "steel": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 234,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-springs",
+    "name": "Fahrwerksfedern fertigen",
+    "output": "springs",
+    "inputs": {
+      "steel": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 237,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-exhaustSystem",
+    "name": "Abgasanlage fertigen",
+    "output": "exhaustSystem",
+    "inputs": {
+      "steel": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 240,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-radiator",
+    "name": "Kühler fertigen",
+    "output": "radiator",
+    "inputs": {
+      "aluminium": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 243,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-waterPump",
+    "name": "Wasserpumpe fertigen",
+    "output": "waterPump",
+    "inputs": {
+      "steel": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 246,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-oilPump",
+    "name": "Ölpumpe fertigen",
+    "output": "oilPump",
+    "inputs": {
+      "steel": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 249,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-fuelPump",
+    "name": "Kraftstoffpumpe fertigen",
+    "output": "fuelPump",
+    "inputs": {
+      "steel": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 252,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-wiringHarness",
+    "name": "Kabelbaum fertigen",
+    "output": "wiringHarness",
+    "inputs": {
+      "copper": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 255,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-alternator",
+    "name": "Lichtmaschine fertigen",
+    "output": "alternator",
+    "inputs": {
+      "copper": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 258,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-starterMotor",
+    "name": "Anlasser fertigen",
+    "output": "starterMotor",
+    "inputs": {
+      "copper": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 261,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-headlights",
+    "name": "Scheinwerfer fertigen",
+    "output": "headlights",
+    "inputs": {
+      "glass": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 264,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-tailLights",
+    "name": "Rückleuchten fertigen",
+    "output": "tailLights",
+    "inputs": {
+      "glass": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 267,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-windshield",
+    "name": "Windschutzscheiben fertigen",
+    "output": "windshield",
+    "inputs": {
+      "glass": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 270,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-sideWindows",
+    "name": "Seitenscheiben fertigen",
+    "output": "sideWindows",
+    "inputs": {
+      "glass": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 273,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-carSeats",
+    "name": "Fahrzeugsitze fertigen",
+    "output": "carSeats",
+    "inputs": {
+      "textiles": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 276,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-dashboard",
+    "name": "Armaturenbrett fertigen",
+    "output": "dashboard",
+    "inputs": {
+      "plasticGranules": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 279,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-doorPanels",
+    "name": "Türverkleidungen fertigen",
+    "output": "doorPanels",
+    "inputs": {
+      "plasticGranules": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 282,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-bodyPanels",
+    "name": "Karosserieteile fertigen",
+    "output": "bodyPanels",
+    "inputs": {
+      "steel": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 285,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-chassis",
+    "name": "Fahrzeugrahmen fertigen",
+    "output": "chassis",
+    "inputs": {
+      "steel": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 288,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-controlUnits",
+    "name": "Steuergeräte fertigen",
+    "output": "controlUnits",
+    "inputs": {
+      "electronics": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 291,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-sensors",
+    "name": "Fahrzeugsensoren fertigen",
+    "output": "sensors",
+    "inputs": {
+      "electronics": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 294,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-electricMotor",
+    "name": "Elektromotor fertigen",
+    "output": "electricMotor",
+    "inputs": {
+      "copper": 0.5,
+      "steel": 0.3,
+      "controlUnits": 0.2
+    },
+    "fee": 297,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-inverter",
+    "name": "Leistungselektronik fertigen",
+    "output": "inverter",
+    "inputs": {
+      "electronics": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 300,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-batteryCells",
+    "name": "Batteriezellen fertigen",
+    "output": "batteryCells",
+    "inputs": {
+      "lithium": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 303,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-evBatteryPack",
+    "name": "Traktionsbatterie fertigen",
+    "output": "evBatteryPack",
+    "inputs": {
+      "batteryCells": 0.7,
+      "controlUnits": 0.15,
+      "aluminium": 0.15
+    },
+    "fee": 306,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-chargingPort",
+    "name": "Ladebuchse fertigen",
+    "output": "chargingPort",
+    "inputs": {
+      "copper": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 309,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-trailerAxles",
+    "name": "Anhängerachsen fertigen",
+    "output": "trailerAxles",
+    "inputs": {
+      "steel": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 312,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-fifthWheel",
+    "name": "Sattelkupplung fertigen",
+    "output": "fifthWheel",
+    "inputs": {
+      "steel": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 315,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-airBrakeSystem",
+    "name": "Druckluftbremse fertigen",
+    "output": "airBrakeSystem",
+    "inputs": {
+      "steel": 0.85,
+      "machineryParts": 0.15
+    },
+    "fee": 318,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-truckCab",
+    "name": "LKW-Fahrerhaus fertigen",
+    "output": "truckCab",
+    "inputs": {
+      "bodyPanels": 0.35,
+      "windshield": 0.15,
+      "carSeats": 0.2,
+      "dashboard": 0.15,
+      "wiringHarness": 0.15
+    },
+    "fee": 321,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-truckEngine",
+    "name": "LKW-Motor fertigen",
+    "output": "truckEngine",
+    "inputs": {
+      "engineBlock": 0.25,
+      "pistons": 0.15,
+      "crankshaft": 0.15,
+      "cylinderHead": 0.15,
+      "engineValves": 0.1,
+      "fuelInjectors": 0.1,
+      "turbocharger": 0.1
+    },
+    "fee": 324,
+    "yield": 0.92
+  },
+  {
+    "id": "auto-truckGearbox",
+    "name": "LKW-Getriebe fertigen",
+    "output": "truckGearbox",
+    "inputs": {
+      "gearbox": 0.65,
+      "clutch": 0.2,
+      "controlUnits": 0.15
+    },
+    "fee": 327,
+    "yield": 0.92
+  },
+  {
+    "id": "heavy-transformer",
+    "name": "Großtransformator herstellen",
+    "output": "transformer",
+    "inputs": {
+      "copper": 0.45,
+      "steel": 0.45,
+      "electronics": 0.1
+    },
+    "fee": 380,
+    "yield": 0.95
+  },
+  {
+    "id": "heavy-excavator",
+    "name": "Großbagger herstellen",
+    "output": "excavator",
+    "inputs": {
+      "steel": 0.5,
+      "truckEngine": 0.25,
+      "controlUnits": 0.1,
+      "machineryParts": 0.15
+    },
+    "fee": 410,
+    "yield": 0.95
+  },
+  {
+    "id": "heavy-craneModule",
+    "name": "Raupenkran-Baugruppe herstellen",
+    "output": "craneModule",
+    "inputs": {
+      "steel": 0.7,
+      "machineryParts": 0.3
+    },
+    "fee": 440,
+    "yield": 0.95
+  },
+  {
+    "id": "heavy-windTurbineBlade",
+    "name": "Windradflügel herstellen",
+    "output": "windTurbineBlade",
+    "inputs": {
+      "plasticGranules": 0.6,
+      "glass": 0.3,
+      "steel": 0.1
+    },
+    "fee": 470,
+    "yield": 0.95
+  },
+  {
+    "id": "heavy-windTurbineTower",
+    "name": "Windrad-Turmsegment herstellen",
+    "output": "windTurbineTower",
+    "inputs": {
+      "steel": 0.9,
+      "machineryParts": 0.1
+    },
+    "fee": 500,
+    "yield": 0.95
+  },
+  {
+    "id": "heavy-industrialPress",
+    "name": "Industriepresse herstellen",
+    "output": "industrialPress",
+    "inputs": {
+      "steel": 0.7,
+      "machines": 0.2,
+      "controlUnits": 0.1
+    },
+    "fee": 530,
+    "yield": 0.95
+  },
+  {
+    "id": "heavy-bridgeGirder",
+    "name": "Brücken-Großträger herstellen",
+    "output": "bridgeGirder",
+    "inputs": {
+      "steel": 0.95,
+      "machineryParts": 0.05
+    },
+    "fee": 560,
+    "yield": 0.95
+  },
+  {
+    "id": "auto-final-assembly",
+    "name": "Fahrzeug-Endmontage",
+    "output": "vehicles",
+    "inputs": {
+      "chassis": 0.2,
+      "truckEngine": 0.2,
+      "gearbox": 0.1,
+      "axles": 0.1,
+      "wheelRims": 0.05,
+      "tires": 0.05,
+      "truckCab": 0.15,
+      "controlUnits": 0.05,
+      "brakeDiscs": 0.05,
+      "wiringHarness": 0.05
+    },
+    "fee": 550,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-books",
+    "name": "Bücher herstellen",
+    "output": "books",
+    "inputs": {
+      "paper": 0.9,
+      "packaging": 0.1
+    },
+    "fee": 120,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-stationery",
+    "name": "Schreibwaren herstellen",
+    "output": "stationery",
+    "inputs": {
+      "paper": 0.6,
+      "plasticGranules": 0.4
+    },
+    "fee": 120,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-petFood",
+    "name": "Tiernahrung herstellen",
+    "output": "petFood",
+    "inputs": {
+      "animalFeed": 0.5,
+      "poultry": 0.5
+    },
+    "fee": 120,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-toys",
+    "name": "Spielwaren herstellen",
+    "output": "toys",
+    "inputs": {
+      "plasticGranules": 0.7,
+      "textiles": 0.3
+    },
+    "fee": 120,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-sportsEquipment",
+    "name": "Sportartikel herstellen",
+    "output": "sportsEquipment",
+    "inputs": {
+      "rubber": 0.5,
+      "textiles": 0.5
+    },
+    "fee": 120,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-cosmetics",
+    "name": "Kosmetik herstellen",
+    "output": "cosmetics",
+    "inputs": {
+      "chemicals": 0.5,
+      "vegetableOil": 0.3,
+      "packaging": 0.2
+    },
+    "fee": 120,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-footwear",
+    "name": "Schuhe herstellen",
+    "output": "footwear",
+    "inputs": {
+      "textiles": 0.6,
+      "rubber": 0.4
+    },
+    "fee": 120,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-smartphones",
+    "name": "Smartphones herstellen",
+    "output": "smartphones",
+    "inputs": {
+      "electronics": 0.7,
+      "batteries": 0.2,
+      "glass": 0.1
+    },
+    "fee": 120,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-paint",
+    "name": "Farben & Lacke herstellen",
+    "output": "paint",
+    "inputs": {
+      "chemicals": 0.7,
+      "vegetableOil": 0.3
+    },
+    "fee": 120,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-tools",
+    "name": "Werkzeuge herstellen",
+    "output": "tools",
+    "inputs": {
+      "steel": 0.8,
+      "rubber": 0.2
+    },
+    "fee": 120,
+    "yield": 0.95
+  }
+]

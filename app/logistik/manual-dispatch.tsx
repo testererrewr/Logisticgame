@@ -1,0 +1,21 @@
+import {activeContainerOrder} from '../../lib/logistics/container-routing';
+'use client';
+import {useState} from 'react';
+import {good,availableToLoad,cargoCapacity,requestManualDeparture,type State,type Vehicle,type GoodId} from '../../lib/logistics/engine';
+import {selectedGoOrders,manualLoadingSources} from '../../lib/logistics/manual-loading';
+import type {OnlineAction} from '../../lib/logistics/online-actions';
+import ContainerSelection from './container-selection';
+export default function ManualDispatch({state,vehicle:v,commit}:{state:State;vehicle:Vehicle;commit:(fn:(s:State)=>void,message?:string,cmd?:OnlineAction)=>boolean}){
+ const [all,setAll]=useState(true),[selected,setSelected]=useState<GoodId[]>([]),[orders,setOrders]=useState<string[]|undefined>(undefined),[adjacent,setAdjacent]=useState(true);
+ if(!v.manualHold||!state.lines.some(l=>l.id===(v.onReturnRoute?v.returnLineId:v.lineId)&&l.active&&!l.deleted&&(l.endDay===null||l.endDay>state.day)))return null;
+ const line=state.lines.find(l=>l.id===(v.onReturnRoute?v.returnLineId:v.lineId)),stop=line?.stops[v.manualHold.index],loading=stop?.action==='load',sources=manualLoadingSources(state,v.locationId),included=adjacent?sources:sources.slice(0,1),siteIds=included.map(p=>p.id),stock=[...new Set(included.flatMap(p=>Object.keys(state.inventory[p.id]||{})))].filter(id=>cargoCapacity(v,id)>0&&included.some(p=>availableToLoad(state,p.id,id)>0)),quantity=(id:string)=>included.reduce((n,p)=>n+availableToLoad(state,p.id,id),0);
+ return <section className="log-manual-dispatch"><h3>Manuelle Abfahrt · Stopp {v.manualHold.index+1}</h3><p>Wartet auf Go · {state.sites.find(p=>p.id===v.locationId)?.name}</p>
+ {loading?<>{sources.length>1&&<><label className="log-manual-toggle"><span>Benachbarte eigene Bauwerke · bis 750 m</span><input type="checkbox" checked={adjacent} onChange={e=>setAdjacent(e.target.checked)}/></label><p className="log-manual-sources">{included.map(p=>p.name).join(' · ')}<br/>Nur Fracht deiner Spedition. Benachbarte Bestände werden für dieses Fahrzeug reserviert und vor der Abfahrt direkt verladen (0,25 €/EH, mindestens 2 Spielminuten).</p></>}
+ <p className="log-help">Go erlaubt alle mit diesem Fahrzeug transportierbaren Güter. Alles laden umfasst auch die vorhandenen Containeraufträge. Eine Auftragsauswahl unten begrenzt die Containerladung. Geladen wird bis zur freien Fahrzeugkapazität, ohne Begrenzung durch das Zwischenlager. Am Ziel wird nur in freien Lagerraum entladen; Restfracht bleibt an Bord.</p>
+ <label className="log-manual-toggle"><span>Alle passenden Güter laden</span><input type="checkbox" checked={all} onChange={e=>setAll(e.target.checked)}/></label>
+ {stock.map(id=><label key={id}><input type="checkbox" disabled={all} checked={all||selected.includes(id)} onChange={e=>setSelected(ids=>e.target.checked?[...ids,id]:ids.filter(g=>g!==id))}/><span>{good(id)?.name} · {quantity(id).toLocaleString('de-DE')} EH bereit<small style={{display:'block'}}>{included.filter(p=>availableToLoad(state,p.id,id)>0).map(p=>p.name+': '+availableToLoad(state,p.id,id).toLocaleString('de-DE')+' EH').join(' · ')} · Fahrzeug bis {cargoCapacity(v,id).toLocaleString('de-DE')} EH</small></span></label>)}
+ {!stock.length&&<p className="log-help">Momentan keine passende eigene Fracht bereit. Go erlaubt auch eine leere Abfahrt.</p>}
+ {cargoCapacity(v,'containers')>0&&<ContainerSelection state={state} value={orders} siteIds={siteIds} allByGo={all&&orders===undefined} manual={!all||orders!==undefined} onChange={ids=>{setOrders(ids);if(ids?.length&&!all)setSelected(old=>[...new Set([...old,'containers'])]);}}/>}
+ </>:<p className="log-help">Mit Go wird passende Fracht entladen und danach zum nächsten Stopp gefahren. An jedem Stopp wartet dieses Fahrzeug erneut auf Go.</p>}
+ <button className="log-primary log-wide" onClick={()=>{const goods=all?'all':selected,orderIds=selectedGoOrders(state,siteIds,orders,all),sourceIds=loading?siteIds.filter(id=>id!==v.locationId):[];commit(s=>requestManualDeparture(s,v.id,goods,orderIds,sourceIds),'Go bestätigt: Stationsaktion ausführen und zum nächsten Stopp fahren.',{type:'manualGo',vehicleId:v.id,goods,orderIds,sourceIds});}}>{loading?'Go · laden und losfahren':'Go · entladen und weiterfahren'}</button></section>;
+}

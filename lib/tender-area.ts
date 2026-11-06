@@ -1,0 +1,4 @@
+import {meters,type LatLon} from './real-map';
+export type TenderArea={name:string;point:LatLon;radiusKm:number;regionId?:string;polygons?:number[][][][]};
+export function areaContains(p:LatLon,a:TenderArea){if(!a.polygons)return meters(p,a.point)<=a.radiusKm*1000;const [y,x]=p;const ring=(r:number[][])=>{let inside=false;for(let i=0,j=r.length-1;i<r.length;j=i++){const aa=r[i],b=r[j];if((aa[1]>y)!==(b[1]>y)&&x<(b[0]-aa[0])*(y-aa[1])/(b[1]-aa[1])+aa[0])inside=!inside;}return inside;};return a.polygons.some(poly=>ring(poly[0])&&!poly.slice(1).some(ring));}
+export function tenderJourneyMatches(t:{type:string;from:TenderArea;to?:TenderArea},from:LatLon,to:LatLon){return t.to?(areaContains(from,t.from)&&areaContains(to,t.to)||areaContains(to,t.from)&&areaContains(from,t.to)):areaContains(from,t.from)&&areaContains(to,t.from);}

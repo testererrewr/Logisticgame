@@ -1,0 +1,553 @@
+[
+  {
+    "id": "engineBlock",
+    "name": "Motorblock",
+    "type": "general",
+    "purchase": 1800,
+    "sale": 2700,
+    "icon": "⚙️"
+  },
+  {
+    "id": "pistons",
+    "name": "Kolben",
+    "type": "general",
+    "purchase": 1885,
+    "sale": 2820,
+    "icon": "⚙️"
+  },
+  {
+    "id": "crankshaft",
+    "name": "Kurbelwelle",
+    "type": "general",
+    "purchase": 1970,
+    "sale": 2940,
+    "icon": "⚙️"
+  },
+  {
+    "id": "camshaft",
+    "name": "Nockenwelle",
+    "type": "general",
+    "purchase": 2055,
+    "sale": 3060,
+    "icon": "⚙️"
+  },
+  {
+    "id": "cylinderHead",
+    "name": "Zylinderkopf",
+    "type": "general",
+    "purchase": 2140,
+    "sale": 3180,
+    "icon": "⚙️"
+  },
+  {
+    "id": "engineValves",
+    "name": "Motorventile",
+    "type": "general",
+    "purchase": 2225,
+    "sale": 3300,
+    "icon": "⚙️"
+  },
+  {
+    "id": "fuelInjectors",
+    "name": "Einspritzdüsen",
+    "type": "general",
+    "purchase": 2310,
+    "sale": 3420,
+    "icon": "⚙️"
+  },
+  {
+    "id": "turbocharger",
+    "name": "Turbolader",
+    "type": "general",
+    "purchase": 2395,
+    "sale": 3540,
+    "icon": "⚙️"
+  },
+  {
+    "id": "gearbox",
+    "name": "Getriebe",
+    "type": "general",
+    "purchase": 2480,
+    "sale": 3660,
+    "icon": "⚙️"
+  },
+  {
+    "id": "clutch",
+    "name": "Kupplung",
+    "type": "general",
+    "purchase": 2565,
+    "sale": 3780,
+    "icon": "⚙️"
+  },
+  {
+    "id": "driveShaft",
+    "name": "Antriebswelle",
+    "type": "general",
+    "purchase": 2650,
+    "sale": 3900,
+    "icon": "⚙️"
+  },
+  {
+    "id": "differential",
+    "name": "Differential",
+    "type": "general",
+    "purchase": 2735,
+    "sale": 4020,
+    "icon": "⚙️"
+  },
+  {
+    "id": "axles",
+    "name": "Achsen",
+    "type": "general",
+    "purchase": 2820,
+    "sale": 4140,
+    "icon": "⚙️"
+  },
+  {
+    "id": "wheelRims",
+    "name": "Felgen",
+    "type": "general",
+    "purchase": 2905,
+    "sale": 4260,
+    "icon": "⚙️"
+  },
+  {
+    "id": "brakeDiscs",
+    "name": "Bremsscheiben",
+    "type": "general",
+    "purchase": 2990,
+    "sale": 4380,
+    "icon": "⚙️"
+  },
+  {
+    "id": "brakePads",
+    "name": "Bremsbeläge",
+    "type": "general",
+    "purchase": 3075,
+    "sale": 4500,
+    "icon": "🔩"
+  },
+  {
+    "id": "brakeCalipers",
+    "name": "Bremssättel",
+    "type": "general",
+    "purchase": 3160,
+    "sale": 4620,
+    "icon": "⚙️"
+  },
+  {
+    "id": "steeringRack",
+    "name": "Lenkgetriebe",
+    "type": "general",
+    "purchase": 3245,
+    "sale": 4740,
+    "icon": "⚙️"
+  },
+  {
+    "id": "shockAbsorbers",
+    "name": "Stoßdämpfer",
+    "type": "general",
+    "purchase": 3330,
+    "sale": 4860,
+    "icon": "⚙️"
+  },
+  {
+    "id": "springs",
+    "name": "Fahrwerksfedern",
+    "type": "general",
+    "purchase": 3415,
+    "sale": 4980,
+    "icon": "⚙️"
+  },
+  {
+    "id": "exhaustSystem",
+    "name": "Abgasanlage",
+    "type": "general",
+    "purchase": 3500,
+    "sale": 5100,
+    "icon": "⚙️"
+  },
+  {
+    "id": "radiator",
+    "name": "Kühler",
+    "type": "general",
+    "purchase": 3585,
+    "sale": 5220,
+    "icon": "⚙️"
+  },
+  {
+    "id": "waterPump",
+    "name": "Wasserpumpe",
+    "type": "general",
+    "purchase": 3670,
+    "sale": 5340,
+    "icon": "⚙️"
+  },
+  {
+    "id": "oilPump",
+    "name": "Ölpumpe",
+    "type": "general",
+    "purchase": 3755,
+    "sale": 5460,
+    "icon": "⚙️"
+  },
+  {
+    "id": "fuelPump",
+    "name": "Kraftstoffpumpe",
+    "type": "general",
+    "purchase": 3840,
+    "sale": 5580,
+    "icon": "⚙️"
+  },
+  {
+    "id": "wiringHarness",
+    "name": "Kabelbaum",
+    "type": "container",
+    "purchase": 3925,
+    "sale": 5700,
+    "icon": "🔌"
+  },
+  {
+    "id": "alternator",
+    "name": "Lichtmaschine",
+    "type": "container",
+    "purchase": 4010,
+    "sale": 5820,
+    "icon": "🔌"
+  },
+  {
+    "id": "starterMotor",
+    "name": "Anlasser",
+    "type": "container",
+    "purchase": 4095,
+    "sale": 5940,
+    "icon": "🔌"
+  },
+  {
+    "id": "headlights",
+    "name": "Scheinwerfer",
+    "type": "container",
+    "purchase": 4180,
+    "sale": 6060,
+    "icon": "🔌"
+  },
+  {
+    "id": "tailLights",
+    "name": "Rückleuchten",
+    "type": "container",
+    "purchase": 4265,
+    "sale": 6180,
+    "icon": "🔌"
+  },
+  {
+    "id": "windshield",
+    "name": "Windschutzscheiben",
+    "type": "general",
+    "purchase": 4350,
+    "sale": 6300,
+    "icon": "🪟"
+  },
+  {
+    "id": "sideWindows",
+    "name": "Seitenscheiben",
+    "type": "general",
+    "purchase": 4435,
+    "sale": 6420,
+    "icon": "🪟"
+  },
+  {
+    "id": "carSeats",
+    "name": "Fahrzeugsitze",
+    "type": "general",
+    "purchase": 4520,
+    "sale": 6540,
+    "icon": "💺"
+  },
+  {
+    "id": "dashboard",
+    "name": "Armaturenbrett",
+    "type": "general",
+    "purchase": 4605,
+    "sale": 6660,
+    "icon": "💺"
+  },
+  {
+    "id": "doorPanels",
+    "name": "Türverkleidungen",
+    "type": "general",
+    "purchase": 4690,
+    "sale": 6780,
+    "icon": "💺"
+  },
+  {
+    "id": "bodyPanels",
+    "name": "Karosserieteile",
+    "type": "general",
+    "purchase": 4775,
+    "sale": 6900,
+    "icon": "⚙️"
+  },
+  {
+    "id": "chassis",
+    "name": "Fahrzeugrahmen",
+    "type": "general",
+    "purchase": 4860,
+    "sale": 7020,
+    "icon": "⚙️"
+  },
+  {
+    "id": "controlUnits",
+    "name": "Steuergeräte",
+    "type": "container",
+    "purchase": 4945,
+    "sale": 7140,
+    "icon": "🔌"
+  },
+  {
+    "id": "sensors",
+    "name": "Fahrzeugsensoren",
+    "type": "container",
+    "purchase": 5030,
+    "sale": 7260,
+    "icon": "🔌"
+  },
+  {
+    "id": "electricMotor",
+    "name": "Elektromotor",
+    "type": "container",
+    "purchase": 5115,
+    "sale": 7380,
+    "icon": "🔌"
+  },
+  {
+    "id": "inverter",
+    "name": "Leistungselektronik",
+    "type": "container",
+    "purchase": 5200,
+    "sale": 7500,
+    "icon": "🔌"
+  },
+  {
+    "id": "batteryCells",
+    "name": "Batteriezellen",
+    "type": "container",
+    "purchase": 5285,
+    "sale": 7620,
+    "icon": "🔌"
+  },
+  {
+    "id": "evBatteryPack",
+    "name": "Traktionsbatterie",
+    "type": "container",
+    "purchase": 5370,
+    "sale": 7740,
+    "icon": "🔌"
+  },
+  {
+    "id": "chargingPort",
+    "name": "Ladebuchse",
+    "type": "container",
+    "purchase": 5455,
+    "sale": 7860,
+    "icon": "🔌"
+  },
+  {
+    "id": "trailerAxles",
+    "name": "Anhängerachsen",
+    "type": "general",
+    "purchase": 5540,
+    "sale": 7980,
+    "icon": "⚙️"
+  },
+  {
+    "id": "fifthWheel",
+    "name": "Sattelkupplung",
+    "type": "general",
+    "purchase": 5625,
+    "sale": 8100,
+    "icon": "⚙️"
+  },
+  {
+    "id": "airBrakeSystem",
+    "name": "Druckluftbremse",
+    "type": "general",
+    "purchase": 5710,
+    "sale": 8220,
+    "icon": "🔩"
+  },
+  {
+    "id": "truckCab",
+    "name": "LKW-Fahrerhaus",
+    "type": "general",
+    "purchase": 5795,
+    "sale": 8340,
+    "icon": "🔩"
+  },
+  {
+    "id": "truckEngine",
+    "name": "LKW-Motor",
+    "type": "general",
+    "purchase": 5880,
+    "sale": 8460,
+    "icon": "🔩"
+  },
+  {
+    "id": "truckGearbox",
+    "name": "LKW-Getriebe",
+    "type": "general",
+    "purchase": 5965,
+    "sale": 8580,
+    "icon": "🔩"
+  },
+  {
+    "id": "transformer",
+    "name": "Großtransformator",
+    "type": "heavy",
+    "purchase": 4000,
+    "sale": 6000,
+    "icon": "🏗️",
+    "requiresHeavy": true
+  },
+  {
+    "id": "excavator",
+    "name": "Großbagger",
+    "type": "heavy",
+    "purchase": 4600,
+    "sale": 6900,
+    "icon": "🏗️",
+    "requiresHeavy": true
+  },
+  {
+    "id": "craneModule",
+    "name": "Raupenkran-Baugruppe",
+    "type": "heavy",
+    "purchase": 5200,
+    "sale": 7800,
+    "icon": "🏗️",
+    "requiresHeavy": true
+  },
+  {
+    "id": "windTurbineBlade",
+    "name": "Windradflügel",
+    "type": "heavy",
+    "purchase": 5800,
+    "sale": 8700,
+    "icon": "🏗️",
+    "requiresHeavy": true
+  },
+  {
+    "id": "windTurbineTower",
+    "name": "Windrad-Turmsegment",
+    "type": "heavy",
+    "purchase": 6400,
+    "sale": 9600,
+    "icon": "🏗️",
+    "requiresHeavy": true
+  },
+  {
+    "id": "industrialPress",
+    "name": "Industriepresse",
+    "type": "heavy",
+    "purchase": 7000,
+    "sale": 10500,
+    "icon": "🏗️",
+    "requiresHeavy": true
+  },
+  {
+    "id": "bridgeGirder",
+    "name": "Brücken-Großträger",
+    "type": "heavy",
+    "purchase": 7600,
+    "sale": 11400,
+    "icon": "🏗️",
+    "requiresHeavy": true
+  },
+  {
+    "id": "books",
+    "name": "Bücher",
+    "type": "general",
+    "icon": "📚",
+    "purchase": 700,
+    "sale": 1050
+  },
+  {
+    "id": "stationery",
+    "name": "Schreibwaren",
+    "type": "general",
+    "icon": "✏️",
+    "purchase": 600,
+    "sale": 900
+  },
+  {
+    "id": "cutFlowers",
+    "name": "Schnittblumen",
+    "type": "chilled",
+    "icon": "💐",
+    "purchase": 2000,
+    "sale": 3000
+  },
+  {
+    "id": "petFood",
+    "name": "Tiernahrung",
+    "type": "general",
+    "icon": "🐾",
+    "purchase": 800,
+    "sale": 1200
+  },
+  {
+    "id": "toys",
+    "name": "Spielwaren",
+    "type": "general",
+    "icon": "🧸",
+    "purchase": 1300,
+    "sale": 1950
+  },
+  {
+    "id": "sportsEquipment",
+    "name": "Sportartikel",
+    "type": "general",
+    "icon": "⚽",
+    "purchase": 1600,
+    "sale": 2400
+  },
+  {
+    "id": "cosmetics",
+    "name": "Kosmetik",
+    "type": "general",
+    "icon": "🧴",
+    "purchase": 2100,
+    "sale": 3150
+  },
+  {
+    "id": "footwear",
+    "name": "Schuhe",
+    "type": "general",
+    "icon": "👟",
+    "purchase": 1500,
+    "sale": 2250
+  },
+  {
+    "id": "smartphones",
+    "name": "Smartphones",
+    "type": "container",
+    "icon": "📱",
+    "purchase": 12000,
+    "sale": 18000
+  },
+  {
+    "id": "paint",
+    "name": "Farben & Lacke",
+    "type": "hazardous",
+    "icon": "🎨",
+    "purchase": 900,
+    "sale": 1350
+  },
+  {
+    "id": "tools",
+    "name": "Werkzeuge",
+    "type": "general",
+    "icon": "🔨",
+    "purchase": 1800,
+    "sale": 2700
+  }
+]

@@ -1,0 +1,27 @@
+import {GOODS,RECIPES,availableToLoad,cargoCapacity,demandFor,vehicleCargo,hash,type State,type Vehicle,type Line,type GoodId} from './engine';
+import {remainingDemand,newMarket,type DailyMarket} from './business-rules';
+import {isManualLine} from './manual-line';
+export interface ServicePlan {lineId:string;day:number;signature:number;kind:'collect'|'distribute';claims:{index:number;good:GoodId;quantity:number}[]}
+const effectiveLine=(v:Vehicle)=>v.onReturnRoute?v.returnLineId:v.lineId;
+const signature=(l:Line)=>hash(JSON.stringify([l.stops,l.stopWhenDemandMet,l.stopWhenSourcesEmpty]));
+function siblings(s:State,l:Line){return s.vehicles.filter(v=>!v.detaching&&effectiveLine(v)===l.id&&v.status!=='returning');}
+export function coordinated(s:State,l:Line){return !isManualLine(l)&&!!(l.stopWhenDemandMet||l.stopWhenSourcesEmpty)&&siblings(s,l).length>1;}
+function valid(s:State,l:Line,p:ServicePlan|undefined){return !!p&&p.lineId===l.id&&p.day===Math.floor(s.day)&&p.signature===signature(l);}
+/** Claims reserve remaining station work for a vehicle, not additional stock or production. */
+export function ensureServicePlan(s:State,v:Vehicle,l:Line,market?:DailyMarket){
+ if(!coordinated(s,l)){v.servicePlan=undefined;return;}
+ const kind=l.stopWhenDemandMet?'distribute':'collect',fleet=siblings(s,l),book=market||s.localMarket||newMarket(s.day),sites=new Map(s.sites.map(p=>[p.id,p]));
+ const raw=(index:number,id:GoodId)=>{const st=l.stops[index],p=st&&sites.get(st.siteId);if(!p||p.hidden||(st.good||l.good)!=='all'&&(st.good||l.good)!==id)return 0;if(kind==='collect')return st.action==='load'?availableToLoad(s,p.id,id):0;return st.action!=='load'&&!p.owned&&!p.cooperative?remainingDemand(book,p.id,id,demandFor(p)[id]||0,s.day):0;};
+ if(valid(s,l,v.servicePlan)){v.servicePlan!.claims=v.servicePlan!.claims.filter(c=>raw(c.index,c.good)>.001);if(v.servicePlan!.claims.length)return;}
+ const others=fleet.filter(x=>x.id!==v.id&&valid(s,l,x.servicePlan));
+ const claimed=(index:number,id:GoodId)=>others.reduce((n,x)=>n+x.servicePlan!.claims.filter(c=>l.stops[c.index]?.siteId===l.stops[index].siteId&&c.good===id).reduce((m,c)=>m+c.quantity,0),0);
+ const cargo=vehicleCargo(v),budget=new Map<GoodId,number>(),aboard=new Map<GoodId,number>();let free=1-cargo.reduce((n,c)=>n+c.quantity/Math.max(cargoCapacity(v,c.good),c.legacyCapacity||0,1),0);
+ for(const g of GOODS){const cap=cargoCapacity(v,g.id);if(!cap)continue;aboard.set(g.id,cargo.filter(c=>c.good===g.id).reduce((n,c)=>n+c.quantity,0));if(kind==='distribute'){const sourceIds=new Set(l.stops.filter(st=>st.action==='load'&&['all',g.id].includes(st.good||l.good)).map(st=>st.siteId));const source=[...sourceIds].reduce((n,id)=>n+availableToLoad(s,id,g.id),0),promised=others.reduce((n,x)=>n+Math.max(0,x.servicePlan!.claims.filter(c=>c.good===g.id).reduce((m,c)=>m+c.quantity,0)-vehicleCargo(x).filter(c=>c.good===g.id).reduce((m,c)=>m+c.quantity,0)),0);budget.set(g.id,(aboard.get(g.id)||0)+Math.max(0,source-promised));}}
+ const eligible=new Set<number>();const candidates:{index:number;good:GoodId;quantity:number;claimed:number}[]=[],seen=new Set<string>();for(let index=0;index<l.stops.length;index++)for(const g of GOODS){if(g.id==='containers'||!cargoCapacity(v,g.id))continue;const key=l.stops[index].siteId+'/'+g.id;if(seen.has(key))continue;const available=raw(index,g.id);if(!available)continue;eligible.add(index);seen.add(key);const other=claimed(index,g.id),quantity=Math.max(0,available-other);if(quantity>.001)candidates.push({index,good:g.id,quantity,claimed:other});}
+ candidates.sort((a,b)=>a.claimed-b.claimed||a.index-b.index);
+ const maxStops=Math.max(1,Math.ceil(eligible.size/fleet.length)),chosen=new Set<number>(),claims:ServicePlan['claims']=[];
+ for(const c of candidates){if(!chosen.has(c.index)&&chosen.size>=maxStops)continue;const cap=cargoCapacity(v,c.good),loaded=kind==='distribute'?(aboard.get(c.good)||0):0;let quantity=Math.min(c.quantity,loaded+Math.max(0,free)*cap,kind==='distribute'?(budget.get(c.good)||0):Infinity);quantity=Math.floor((quantity+1e-8)*100)/100;if(quantity<.01)continue;chosen.add(c.index);claims.push({index:c.index,good:c.good,quantity});const fromBoard=Math.min(loaded,quantity);aboard.set(c.good,loaded-fromBoard);free-=Math.max(0,quantity-fromBoard)/cap;if(kind==='distribute')budget.set(c.good,(budget.get(c.good)||0)-quantity);}
+ v.servicePlan={lineId:l.id,day:Math.floor(s.day),signature:signature(l),kind,claims};
+}
+export function serviceQuantity(s:State,v:Vehicle,l:Line,index:number,id:GoodId){if(id==='containers'||!coordinated(s,l))return Infinity;const st=l.stops[index],p=s.sites.find(p=>p.id===st?.siteId),kind=l.stopWhenDemandMet?'distribute':'collect';if(kind==='collect'?st?.action!=='load':st?.action==='load'||p?.owned||p?.cooperative||!p||!(demandFor(p)[id]>0))return Infinity;if(!valid(s,l,v.servicePlan))return 0;return v.servicePlan!.claims.filter(c=>c.index===index&&c.good===id).reduce((n,c)=>n+c.quantity,0);}
+export function consumeService(v:Vehicle,index:number,id:GoodId,quantity:number){if(!v.servicePlan)return;for(const c of v.servicePlan.claims)if(c.index===index&&c.good===id){const used=Math.min(c.quantity,quantity);c.quantity-=used;quantity-=used;}v.servicePlan.claims=v.servicePlan.claims.filter(c=>c.quantity>.001);}

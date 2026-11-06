@@ -1,0 +1,7 @@
+'use client';
+import {useEffect,useState} from 'react';
+import {vehicleIllustration,isVehicleIllustration,type VehicleModel} from '../lib/vehicle-models';
+export default function VehiclePhoto({model}:{model:VehicleModel}){
+ const [failed,setFailed]=useState(false);useEffect(()=>setFailed(false),[model.id,model.image]);const illustration=failed||isVehicleIllustration(model),src=failed?vehicleIllustration(model):model.image||vehicleIllustration(model),individual=src.startsWith('/vehicles/model31-');
+ return <figure className={'vehicle-model-photo '+(illustration?'is-illustration':'')}><img src={src} alt={illustration?model.name+' · schematische '+(individual?'Modellillustration':'Typillustration'):model.name+' · '+model.vehicleType} loading="lazy" referrerPolicy="no-referrer" onError={()=>setFailed(true)}/><figcaption>{!illustration&&model.notes.includes('Bildhinweis: ')&&<span className="vehicle-photo-caption">{model.notes.split('Bildhinweis: ')[1]}<small>Verkleinerte Darstellung · <a href="/vehicles/CREDITS.md" target="_blank" rel="noopener noreferrer">Bildnachweise</a></small></span>}{illustration?<span>{individual?'Modellillustration · schematisch · kein Foto':'Typillustration · kein Modellfoto'} · <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener noreferrer">CC0</a></span>:<><a href={model.imageSource} target="_blank" rel="noopener noreferrer">{model.imageCredit}</a> · <a href={model.imageLicenseUrl} target="_blank" rel="noopener noreferrer">{model.imageLicense}</a></>}</figcaption></figure>;
+}

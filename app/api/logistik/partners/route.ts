@@ -1,0 +1,6 @@
+import {NextRequest,NextResponse} from 'next/server';
+import {registryArea,seedRegistry} from '../../../../lib/logistics/partner-registry';
+import {queuePartnerArea,continuePartnerImports} from '../../../../lib/logistics/partner-import';
+/** Serve the durable register immediately. External OSM imports never block a map response. */
+export async function loadPartnerArea(request:NextRequest,force=false){const p=request.nextUrl.searchParams,lat=Number(p.get('lat')),lon=Number(p.get('lon')),radius=Math.max(1000,Math.min(30000,Number(p.get('radius')||18000)));if(!Number.isFinite(lat)||!Number.isFinite(lon)||!Number.isFinite(radius)||Math.abs(lat)>85||Math.abs(lon)>180)return NextResponse.json({error:'Ungültiges Kartengebiet.'},{status:400});await seedRegistry();const [sites,progress]=await Promise.all([registryArea(lat,lon,radius),queuePartnerArea(lat,lon,radius,force)]);if(progress.pendingTiles)continuePartnerImports();return NextResponse.json({sites,source:'Weltverbund-Betriebsregister · Server',registry:true,...progress,updating:progress.pendingTiles>0,needImport:false},{headers:{'Cache-Control':'no-store'}});}
+export async function GET(request:NextRequest){try{return await loadPartnerArea(request);}catch(e:any){return NextResponse.json({error:e.message||'Betriebsregister nicht verfügbar.'},{status:503});}}

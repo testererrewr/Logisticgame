@@ -1,0 +1,222 @@
+[
+  {
+    "id": "bus-standard",
+    "name": "Mercedes-Benz Citaro",
+    "image": "/vehicles/bus-standard.jpg",
+    "imageCredit": "Florian Fèvre",
+    "imageLicense": "CC BY-SA 4.0",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:Mercedes_Citaro_C2_R%C3%A9publique_OPTYMO.jpg",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "changes": "Wikimedia thumbnail resized for display. Original image via source link."
+  },
+  {
+    "id": "bus-mini",
+    "name": "Mercedes-Benz Citaro K",
+    "image": "/vehicles/bus-mini.jpg",
+    "imageCredit": "Anthony Levrot",
+    "imageLicense": "CC BY-SA 4.0",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:Thonon-les-Bains_-_74200_-_2023.06.05_-_Eva%E2%80%99d_-_STAT_-_Mercedes-Benz_Citaro_K_C2_n%C2%B030_%C2%A9_Anthony_Levrot.jpg",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "changes": "Wikimedia thumbnail resized for display. Original image via source link."
+  },
+  {
+    "id": "bus-articulated",
+    "name": "Mercedes-Benz Citaro G",
+    "image": "/vehicles/bus-articulated.jpg",
+    "imageCredit": "Florian Fèvre",
+    "imageLicense": "CC BY-SA 4.0",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:Mercedes_Citaro_G_C2_n%C2%B01300_Promenade_des_Arts.jpg",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "changes": "Wikimedia thumbnail resized for display. Original image via source link."
+  },
+  {
+    "id": "train-regional",
+    "name": "Stadler FLIRT 160",
+    "image": "/vehicles/train-regional.jpg",
+    "imageCredit": "DXR",
+    "imageLicense": "CC BY-SA 4.0",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:VIAS_Stadler_FLIRT_double_traction_near_Hattenheim_20141011_3.jpg",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "changes": "Wikimedia thumbnail resized for display. Original image via source link."
+  },
+  {
+    "id": "train-intercity",
+    "name": "Siemens Railjet",
+    "image": "/vehicles/train-intercity.jpg",
+    "imageCredit": "Liberaler Humanist",
+    "imageLicense": "CC BY-SA 4.0",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:Railjet_Garnitur_49,_Kalte_Rinne,_09.07.2016.jpg",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "changes": "Wikimedia thumbnail resized for display. Original image via source link."
+  },
+  {
+    "id": "train-express",
+    "name": "Siemens Velaro D",
+    "image": "/vehicles/train-express.jpg",
+    "imageCredit": "Skililipappa",
+    "imageLicense": "CC BY-SA 4.0",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:Siemens_BR_407_(Velaro_D)_%E2%80%94_gare_de_Paris-Est.1.jpg",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "changes": "Wikimedia thumbnail resized for display. Original image via source link."
+  },
+  {
+    "id": "plane-regional",
+    "name": "Embraer E190-E2",
+    "image": "/vehicles/plane-regional.jpg",
+    "imageCredit": "Steve Lynes from Sandshurst, United Kingdom",
+    "imageLicense": "CC BY 2.0",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:EGLF_-_Embraer_E190-E2_-_PR-ZGQ_(42923565984).jpg",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "changes": "Wikimedia thumbnail resized for display. Original image via source link."
+  },
+  {
+    "id": "plane-turboprop",
+    "name": "ATR 72-600",
+    "image": "/vehicles/plane-turboprop.jpg",
+    "imageCredit": "Timothy A. Gonsalves",
+    "imageLicense": "CC BY-SA 4.0",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:Indigo_ATR72_VT-IYG_Approach_Chennai_Aug22_A7C_02270.jpg",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "changes": "Wikimedia thumbnail resized for display. Original image via source link."
+  },
+  {
+    "id": "plane-airliner",
+    "name": "Airbus A320neo",
+    "image": "/vehicles/plane-airliner.jpg",
+    "imageCredit": "Acroterion",
+    "imageLicense": "CC BY-SA 4.0",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:Frontier_Airbus_A320neo_N353FR_BWI_MD1.jpg",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "changes": "Wikimedia thumbnail resized for display. Original image via source link."
+  },
+  {
+    "id": "ship-ferry",
+    "name": "Damen Waterbus 2407",
+    "image": "/vehicles/ship-ferry.svg",
+    "imageCredit": "Weltverbund · Typillustration",
+    "imageLicense": "CC0 1.0",
+    "imageSource": "https://www.damen.com/vessels/ferries/city-ferries/waterbus-2407",
+    "imageLicenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "changes": "Wikimedia thumbnail resized for display. Original image via source link."
+  },
+  {
+    "id": "ship-catamaran",
+    "name": "Damen Fast Ferry 4212",
+    "image": "/vehicles/ship-catamaran.jpg",
+    "imageCredit": "Blue Bus Fan",
+    "imageLicense": "CC BY-SA 4.0",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:Hullo_Ferry_Sthuqi%27-a.jpg",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "changes": "Wikimedia thumbnail resized for display. Original image via source link."
+  },
+  {
+    "id": "ship-large",
+    "name": "Damen RoPax Ferry 8017",
+    "image": "/vehicles/ship-large.jpg",
+    "imageCredit": "Paul Asman and Jill Lenoble",
+    "imageLicense": "CC BY 2.0",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:Fogo_Island_Ferry_MV_Veteran_(33093091394).jpg",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "changes": "Wikimedia thumbnail resized for display. Original image via source link."
+  },
+  {
+    "id": "train-taurus",
+    "name": "Siemens ÖBB 1116 Taurus",
+    "image": "/vehicles/rail-v27-taurus.jpg",
+    "imageCredit": "Rolf Heinrich, Köln",
+    "imageLicense": "CC BY 3.0",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:1116_057_K%C3%B6ln-Kalk_Nord_2015-10-10-01.JPG",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by/3.0",
+    "changes": "Wikimedia thumbnail resized for display. Original image via source link."
+  },
+  {
+    "id": "train-vectron",
+    "name": "Siemens Vectron AC",
+    "image": "/vehicles/rail-v27-vectron.jpg",
+    "imageCredit": "Leif Jørgensen",
+    "imageLicense": "CC BY-SA 4.0",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:DSB_EB_3201_at_Hedehusene_Station.jpg",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "changes": "Wikimedia thumbnail resized for display. Original image via source link."
+  },
+  {
+    "id": "train-cityshuttle",
+    "name": "ÖBB CityShuttle Zwischenwagen",
+    "image": "/vehicles/rail-v27-cityshuttle.jpg",
+    "imageCredit": "Linie29",
+    "imageLicense": "CC BY-SA 4.0",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:Bmpz-l_21-73_390-3.JPG",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "changes": "Wikimedia thumbnail resized for display. Original image via source link."
+  },
+  {
+    "id": "train-dosto",
+    "name": "ÖBB Doppelstock-Zwischenwagen",
+    "image": "/vehicles/rail-v27-dosto.jpg",
+    "imageCredit": "GT1976",
+    "imageLicense": "CC BY-SA 4.0",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:2018-03-01_(419)_%C3%96BB_50_81_26-33_540-7_at_Bahnhof_Krems_an_der_Donau.jpg",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "changes": "Wikimedia thumbnail resized for display. Original image via source link."
+  },
+  {
+    "id": "train-hercules",
+    "name": "Siemens ÖBB 2016 Hercules",
+    "image": "/vehicles/rail-v27-hercules.jpg",
+    "imageCredit": "Benedictus",
+    "imageLicense": "CC BY-SA 3.0",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:OEBB2016.jpg",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "changes": "Wikimedia thumbnail resized for display. Original image via source link."
+  },
+  {
+    "id": "train-1144",
+    "name": "ÖBB 1144",
+    "image": "/vehicles/rail-v27-1144-portrait.jpg",
+    "imageCredit": "Linie29",
+    "imageLicense": "CC BY 4.0",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:1144.101_50_Jahre.jpg",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "changes": "Wikimedia thumbnail resized for display. Original image via source link."
+  },
+  {
+    "id": "train-desiro-diesel",
+    "name": "Siemens ÖBB 5022 Desiro Classic",
+    "image": "/vehicles/rail-v27-desiro-diesel.jpg",
+    "imageCredit": "Linie29",
+    "imageLicense": "CC BY-SA 4.0",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:5022_017_Oepping.jpg",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "changes": "Wikimedia thumbnail resized for display. Original image via source link."
+  },
+  {
+    "id": "train-cityjet",
+    "name": "Siemens ÖBB 4744 Cityjet",
+    "image": "/vehicles/rail-v27-cityjet.jpg",
+    "imageCredit": "Samson Ng . D201@EAL",
+    "imageLicense": "CC BY-SA 4.0",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:Class_4744_Desiro_EMU.jpg",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "changes": "Wikimedia thumbnail resized for display. Original image via source link."
+  },
+  {
+    "id": "train-talent",
+    "name": "Bombardier ÖBB 4024 Talent",
+    "image": "/vehicles/rail-v27-talent.jpg",
+    "imageCredit": "Andrew Bossi",
+    "imageLicense": "CC BY-SA 2.5",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:0673_-_Schladming_-_%C3%96BB_Talent_EMU.JPG",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/2.5",
+    "changes": "Wikimedia thumbnail resized for display. Original image via source link."
+  },
+  {
+    "id": "train-dosto-control",
+    "name": "ÖBB Doppelstock-Steuerwagen",
+    "image": "/vehicles/rail-v27-dosto-control.jpg",
+    "imageCredit": "Tokfo",
+    "imageLicense": "CC0",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:86-33_119-7,_Wien_Mitte.jpg",
+    "imageLicenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "changes": "Wikimedia thumbnail resized for display. Original image via source link."
+  }
+]

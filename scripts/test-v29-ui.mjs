@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import React from 'react';
+import {renderToStaticMarkup} from 'react-dom/server';
+import {newState,newCompany} from '../lib/game.ts';
+import {configOf} from '../lib/world-config.ts';
+import FleetPage from '../app/fleet-page.tsx';
+import LineWindow,{newDraft} from '../app/line-window.tsx';
+import {WorldEditor} from '../app/admin-panel.tsx';
+const state=newState(),c=newCompany('a','Alpha');state.companies=[c];c.facilities=[{id:'d',type:'busdepot',point:[52.52,13.4],city:'berlin',cell:0,footprint:[],name:'Depot'}];c.lines=[{id:'l',name:'Line',mode:'bus',active:true,vehicles:0,a:'berlin',b:'berlin',fare:1}];c.fleet=[{id:'bus',name:'Bus 1',mode:'bus',model:'bus-mini',depot:'d',purchasePrice:100}];const world={id:'v29',name:'World',status:'running',state,config:configOf({}),revision:1},common={world,myId:'a',busy:false,onAction:async()=>true},render=(C,p)=>renderToStaticMarkup(React.createElement(C,p));
+let html=render(FleetPage,{...common,now:Date.now()});assert.match(html,/Sammelbefehl/);assert.match(html,/Sichtbare Fahrzeuge auswählen/);assert.match(html,/Bus 1 auswählen/);assert.match(html,/Befehl ausführen/);
+html=render(LineWindow,{...common,draft:{...newDraft(),mode:'train'},setDraft:()=>{},onClose:()=>{},onPreview:()=>{},onFocusStop:()=>{},onOpenDepots:()=>{}});assert.match(html,/Linienführung/);assert.match(html,/Ringlinie/);
+html=render(LineWindow,{...common,draft:null,setDraft:()=>{},onClose:()=>{},onPreview:()=>{},onFocusStop:()=>{},onOpenDepots:()=>{}});assert.match(html,/v29\/statistik\?linie=l/);assert.match(html,/Linienstatistik/);
+html=render(WorldEditor,{world,busy:false,serverError:'',close:()=>{},save:()=>{}});assert.match(html,/Stabile Preise/);assert.match(html,/echter Kalenderwoche/);assert.match(html,/value="2500"/);assert.match(html,/max="10000"/);
+console.log('PASS v29 rendered controls: per-vehicle/page selection, bulk commands, rail/ship route mode, line-statistics link, stable weekly real-time prices and 2,500-line default.');

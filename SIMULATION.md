@@ -1,0 +1,17 @@
+# Hintergrundsimulation
+
+Der veröffentlichte Site bietet einen geschützten MCP-Schreiber `settle_running_worlds`. Sites authentifiziert MCP-Aufrufe; der Server lässt Werkzeugausführungen nur für die bestätigte Site-Besitzer-E-Mail aus `SIMULATION_OWNER_EMAIL` zu. Die E-Mail wird nicht aus Werkzeugparametern übernommen. Keine Passwörter oder Schlüssel gehören in den Zeitplan, Quellcode oder Browser.
+
+Das Werkzeug verarbeitet ausschließlich Welten mit Status `running`. Standard: vier Welten, je höchstens vier Pakete. `maxWorlds` und `maxBatches` sind jeweils ganzzahlig von 1 bis 8 begrenzt. Ein Aufruf arbeitet höchstens ungefähr 20 Sekunden zuzüglich eines gerade laufenden Datenbank-/Weltpakets. Welten werden nach dem ältesten Hintergrundkontrollzeitpunkt gewählt. Revisionen verhindern doppelte Buchung bei gleichzeitigem Spielerverkehr oder mehreren Schreibern.
+
+Ein geplanter Lauf verwendet `maxWorlds: 8`, `maxBatches: 8`. Die Antwort enthält `totalRunning`, `processed` mit Welt-IDs, Revisionen, Rückstand und Fehlern. Bei mehr als acht Welten wiederholt der Lauf den Aufruf, bis alle laufenden Welt-IDs einmal bearbeitet sind. Rückstände können weitere Pakete erfordern; maximal 20 Aufrufe pro geplanten Lauf. Vorübergehende Fehler einmal erneut versuchen, dauerhafte Fehler melden. Normale erfolgreiche Läufe bleiben ohne Benachrichtigung. Der Lauf ändert weder Spielregeln noch Fahrzeuge noch Inhalte und veröffentlicht keine neue Site-Version.
+
+Die Metadaten des letzten Abgleichs sind spielintern nur für Administratoren unter `GET /api/admin/simulation` zugänglich. `POST /api/admin/simulation` mit denselben begrenzten Parametern erlaubt einen manuellen Abgleich. Öffentliche Besucher erhalten keinen Schreibzugang. Konten, die nur im Spiel Administrator sind, erhalten dadurch keinen Zugriff auf das Site-MCP-Werkzeug.
+
+Einrichtung: Site mit MCP-Fähigkeit veröffentlichen, die von Sites erzeugte private Plugin-Verbindung verwenden, einen echten Werkzeugaufruf prüfen und das gespeicherte Ergebnis kontrollieren. Erst danach den verknüpften Sites-Zeitplan anlegen. Zeitplanstatus ist in den Sites-Metadaten sichtbar. Ohne eingerichteten Cloud-Zeitplan gibt es weiterhin Nachberechnung beim nächsten Serverkontakt, aber keinen dauerhaften Auslöser bei geschlossener Seite.
+
+## Eingerichteter Lauf
+
+Der verknüpfte Lauf „Weltverbund: Offline-Simulation“ ist für einen stündlichen Lauf eingerichtet, Zeitzone Europe/Berlin. Ein nach einem Fehler pausierter Lauf muss in der Auftragskarte wieder aktiviert werden; der aktuelle Zustand steht in den Sites-Metadaten. Häufigere Cloud-Aufrufe als einmal pro Stunde werden von der Hosting-Plattform abgewiesen. Während Spieler verbunden sind, läuft der normale Serverabgleich im bisherigen kurzen Abstand weiter. Der stündliche Auslöser ergänzt diesen für Zeiten ohne Spieler. Ein gespeicherter Zeitplan bestätigt noch keinen erfolgreichen ersten Werkzeuglauf; dessen Ergebnis wird über `simulation_jobs` bzw. die Administrationsabfrage kontrolliert.
+
+Die Zuordnung des Cloud-Schreibers stammt aus der von Sites bestätigten Besitzerrolle und wird als geheime Runtime-Variable `SIMULATION_OWNER_EMAIL` hinterlegt. Das Spiel-Besitzerkonto in `ADMIN_EMAIL` kann eine andere E-Mail besitzen und wird dadurch nicht verändert. Nach einem Site-Besitzerwechsel muss diese Zuordnung in den Sites-Runtime-Einstellungen aktualisiert werden.

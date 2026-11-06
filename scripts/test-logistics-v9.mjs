@@ -1,0 +1,34 @@
+import assert from 'node:assert/strict';
+import {newState,build,purchaseVehicle,createLine,assignVehicle,stepTime,stock,normalizeFreightState,profile,signSupply,signProcess,VEHICLES} from '../lib/logistics/engine.ts';
+import {vehicleAgeDays,recordVehicleDistance,ensureVehicleStatistics} from '../lib/logistics/vehicle-statistics.ts';
+const close=(a,b)=>assert.ok(Math.abs(a-b)<1e-6,`${a} != ${b}`);
+const road=(a,b,km)=>({fromId:a.id,toId:b.id,km,path:[[a.lat,a.lon],[b.lat,b.lon]],source:'osm-strassen'});
+const s=newState();s.cash=1e9;
+const depot=build(s,'depot',47.07,15.44),warehouse=build(s,'warehouseSmall',47.071,15.44);
+s.inventory[depot.id]={bread:40,packaging:35};
+const before=Date.now(),v=purchaseVehicle(s,'truck','krone-profi');
+assert.ok(v.purchasedAt>=before&&v.purchasedAt<=Date.now());
+assert.equal(vehicleAgeDays(v,v.purchasedAt+2*86400000+86399999),2);
+const line=createLine(s,{name:'Mixed delivery',duration:null,mode:'truck',good:'all',stops:[{siteId:depot.id,action:'load',good:'all',quantity:1e9},{siteId:warehouse.id,action:'unload',good:'all',quantity:1e9}],legs:[road(depot,warehouse,2),road(warehouse,depot,3)],tripLimit:1});
+s.roadRoutes=[road(warehouse,depot,3)];assignVehicle(s,v.id,line.id);
+let loaded=stepTime(s,1.001);assert.ok(loaded.vehicles[0].handlingUntil>loaded.day,'loading takes time');loaded=stepTime(loaded,loaded.vehicles[0].handlingUntil+50/86400);assert.equal(loaded.vehicles[0].transportedEh,0,'loading is not delivery');
+assert.ok(loaded.vehicles[0].odometerKm>0&&loaded.vehicles[0].odometerKm<2,'partial journey counts');
+let done=stepTime(loaded,1.03);close(done.vehicles[0].odometerKm,5);
+assert.equal(done.vehicles[0].transportedEh,75,'all cargo types summed without a type breakdown');
+assert.equal(done.vehicles[0].status,'idle');assert.equal(stock(done,warehouse.id,'bread'),40);
+let idle=stepTime(done,1.04);close(idle.vehicles[0].odometerKm,5);assert.equal(idle.vehicles[0].transportedEh,75);
+const persisted=normalizeFreightState(JSON.parse(JSON.stringify(idle)));assert.equal(persisted.vehicles[0].purchasedAt,v.purchasedAt);close(persisted.vehicles[0].odometerKm,5);
+const again=createLine(persisted,{name:'Next assignment',duration:null,mode:'truck',good:'all',stops:line.stops,legs:line.legs});assignVehicle(persisted,v.id,again.id);assert.equal(persisted.vehicles[0].transportedEh,75,'line changes preserve lifetime counts');close(persisted.vehicles[0].odometerKm,5);
+// Counters are idempotent across repeated settlement, including partial legs.
+const partial={id:'moving',modelId:'truck',locationId:'x',nextStop:0,status:'enroute',departDay:1,etaDay:2,currentLeg:{km:10},odometerKm:0,legRecordedKm:0};
+recordVehicleDistance(partial,1.4);recordVehicleDistance(partial,1.4);close(partial.odometerKm,4);recordVehicleDistance(partial,2);recordVehicleDistance(partial,3);close(partial.odometerKm,10);
+const legacy={...partial};delete legacy.odometerKm;delete legacy.purchasedAt;delete legacy.statisticsSince;ensureVehicleStatistics(legacy,1.5,123456);assert.equal(legacy.statisticsSince,123456);assert.equal(legacy.purchasedAt,undefined);recordVehicleDistance(legacy,2);close(legacy.odometerKm,5);ensureVehicleStatistics(legacy,2,999999);assert.equal(legacy.statisticsSince,123456);
+// Depot return unloads count only goods actually accepted, with no duplicate credit.
+const returning=newState();returning.live=true;returning.cash=1e8;const rd=build(returning,'depot',47,15),rw=build(returning,'warehouseSmall',47.001,15);const rv=purchaseVehicle(returning,'truck','krone-profi');rv.locationId=rw.id;rv.cargo={good:'bread',quantity:12,loadedAtId:rw.id};returning.roadRoutes=[road(rw,rd,4)];assignVehicle(returning,rv.id,'');const back=stepTime(returning,1.02);close(back.vehicles[0].odometerKm,4);assert.equal(back.vehicles[0].transportedEh,12);
+const same=structuredClone(returning);same.vehicles[0].cargo.loadedAtId=rd.id;const sameDone=stepTime(same,1.02);assert.equal(sameDone.vehicles[0].transportedEh,0,'return of unaccepted goods to their origin is not a new transport');
+// Refineries require delivered crude oil; oil wells remain producers.
+for(let i=0;i<20;i++){const refinery={id:'refinery-'+i,name:'Refinery',kind:'refinery',lat:47,lon:15};assert.deepEqual(profile(refinery).production,{});assert.deepEqual(profile(refinery).recipes,['diesel','petrol','kerosene']);assert.equal(profile({...refinery,businessRole:'supplier'}).recipes.length,3);}
+const refinery={id:'refinery',name:'Refinery',kind:'refinery',lat:47,lon:15};const oil={...refinery,id:'well',kind:'oilWell'};assert.ok(profile(oil).production.crudeOil>0);
+const refining=newState();refining.cash=1e8;refining.sites.push(refinery,oil);assert.throws(()=>signSupply(refining,refinery.id,'crudeOil',10));signProcess(refining,refinery.id,'diesel',10);let refined=stepTime(refining,1.001);assert.equal(stock(refined,refinery.id,'diesel'),0,'no input no output');refined.inventory[refinery.id]={crudeOil:10};refined=stepTime(refined,1.002);assert.equal(stock(refined,refinery.id,'crudeOil'),0);assert.equal(stock(refined,refinery.id,'diesel'),5);
+const obsolete=newState();obsolete.cash=1e6;obsolete.sites.push(refinery);obsolete.contracts.push({id:'old',kind:'supply',siteId:refinery.id,good:'crudeOil',daily:10,fee:45,startDay:1,endDay:5,paid:0,delivered:0,loadedToday:0,deliveredToday:0});obsolete.inventory[refinery.id]={crudeOil:4};const fixed=stepTime(obsolete,1.001);assert.equal(fixed.contracts[0].cancelled,true);assert.equal(fixed.cash,obsolete.cash);assert.equal(stock(fixed,refinery.id,'crudeOil'),4,'previously purchased stock preserved');
+console.log('PASS v9: persistent vehicle odometers, partial/empty/depot trips, real-day age, legacy recording, summed delivered EH, mixed cargo, no duplicate counts, refinery input requirements and legacy contract migration.');

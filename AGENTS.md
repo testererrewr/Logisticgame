@@ -1,0 +1,3 @@
+# Auslieferung
+
+Philipp verlangt ab jetzt bei jeder Veröffentlichung eine vollständige aktuelle Game-ZIP einschließlich aller Live-Welten und gespeicherten Daten. Nach erfolgreicher Veröffentlichung die private Besitzer-Sicherung über `/api/logistik/admin/backup?download=1` herunterladen, mit `scripts/package-full-game.py` validieren und zusammen mit Quellcode und passendem Build als ZIP in den Aufgaben-Outputs ausliefern. Keine Hoster-Schlüssel, Umgebungsgeheimnisse oder aktiven Sitzungen aufnehmen. `FULL-GAME-RESTORE.md` und Wiederherstellungsprüfung gehören dazu. Nie einen lokalen QA-Spielstand als Live-Backup ausgeben.

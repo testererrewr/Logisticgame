@@ -1,0 +1,11 @@
+'use client';
+import {useEffect,useRef} from 'react';
+import {canTransfer} from '../lib/contracts';
+import {facilityGeometry} from '../lib/site-details';
+import type {World} from '../lib/game';
+export default function StationWaitingMarkers({world,myId,foreign,map,L,zoom,enabled=true}:{enabled?:boolean;zoom:number;world:World;myId:string;foreign:boolean;map:any;L:any}){
+ const layer=useRef<any>(null),markers=useRef(new Map<string,any>());
+ useEffect(()=>{if(!map||!L)return;const group=L.layerGroup().addTo(map);layer.current=group;return()=>{group.remove();layer.current=null;markers.current.clear();};},[map,L]);
+ useEffect(()=>{if(!layer.current||!map||!L)return;const visible=new Set<string>();if(!enabled||zoom<10){for(const marker of markers.current.values())layer.current.removeLayer(marker);markers.current.clear();return;}for(const c of world.state.companies){if(c.id!==myId&&!canTransfer(world.state,myId,c.id))continue;for(const s of [...(c.stops||[]),...(c.facilities||[]).filter(f=>['station','airport','port'].includes(f.type))]){const n=Object.values(world.state.waiting?.[s.id]||{}).reduce((a,b)=>a+b,0);if(!n)continue;visible.add(s.id);const point='footprint'in s?facilityGeometry(s).center:s.point;let marker=markers.current.get(s.id);if(!marker){const text=document.createElement('span');text.textContent=String(n);marker=L.marker(point,{interactive:false,keyboard:false,zIndexOffset:1600,icon:L.divIcon({className:'station-waiting-marker',html:text,iconSize:[24,14],iconAnchor:[12,28]})}).addTo(layer.current);markers.current.set(s.id,marker);}const el=marker.getElement();if(el){const text=el.querySelector('span');if(text&&text.textContent!==String(n))text.textContent=String(n);const usage=world.state.usage?.stops[s.id],denied=usage?.day===Math.floor((world.state.simTime||0)/86400000)?usage.denied||0:0;el.classList.toggle('has-overload',denied>0);el.setAttribute('aria-label',n+' Wartende · '+s.name+(denied?' · heute '+denied+' verpasste Einstiege':''));el.title=n+' Wartende'+(denied?' · heute '+denied+' verpasste Einstiege':'');}}}for(const [id,marker]of markers.current)if(!visible.has(id)){layer.current.removeLayer(marker);markers.current.delete(id);}},[enabled,zoom,world.state.usage,world.state.waiting,world.state.companies,foreign,myId,map,L]);
+ return null;
+}

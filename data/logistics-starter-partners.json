@@ -1,0 +1,95 @@
+{
+  "checked": "2026-11-03",
+  "licence": "ODbL 1.0 / © OpenStreetMap contributors",
+  "sources": [
+    "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=4&extratags=1&q=Bio%20Hofladen%20Grottenhof",
+    "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=4&extratags=1&q=Martin%20Auer%20Graz",
+    "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=4&extratags=1&q=Billa%20Graz"
+  ],
+  "sites": [
+    {
+      "id": "osm:node:7832711702",
+      "name": "Bio - Hofladen Grottenhof",
+      "lat": 47.0461992,
+      "lon": 15.3858711,
+      "kind": "farm",
+      "osmUrl": "https://www.openstreetmap.org/node/7832711702",
+      "tags": {
+        "name": "Bio - Hofladen Grottenhof",
+        "shop": "farm"
+      }
+    },
+    {
+      "id": "osm:way:130470943",
+      "name": "Martin Auer",
+      "lat": 47.0487328,
+      "lon": 15.4612723,
+      "kind": "bakery",
+      "osmUrl": "https://www.openstreetmap.org/way/130470943",
+      "tags": {
+        "name": "Martin Auer",
+        "shop": "bakery"
+      }
+    },
+    {
+      "id": "osm:node:1316046688",
+      "name": "Martin Auer",
+      "lat": 47.0564565,
+      "lon": 15.4728054,
+      "kind": "bakery",
+      "osmUrl": "https://www.openstreetmap.org/node/1316046688",
+      "tags": {
+        "name": "Martin Auer",
+        "shop": "bakery"
+      }
+    },
+    {
+      "id": "osm:way:1279102240",
+      "name": "Billa",
+      "lat": 47.0548117,
+      "lon": 15.4114641,
+      "kind": "supermarket",
+      "osmUrl": "https://www.openstreetmap.org/way/1279102240",
+      "tags": {
+        "name": "Billa",
+        "shop": "supermarket"
+      }
+    },
+    {
+      "id": "osm:way:107877896",
+      "name": "Billa",
+      "lat": 47.1007771,
+      "lon": 15.4260451,
+      "kind": "supermarket",
+      "osmUrl": "https://www.openstreetmap.org/way/107877896",
+      "tags": {
+        "name": "Billa",
+        "shop": "supermarket"
+      }
+    },
+    {
+      "id": "osm:way:237518128",
+      "name": "Billa",
+      "lat": 47.049003,
+      "lon": 15.4150466,
+      "kind": "supermarket",
+      "osmUrl": "https://www.openstreetmap.org/way/237518128",
+      "tags": {
+        "name": "Billa",
+        "shop": "supermarket"
+      }
+    },
+    {
+      "id": "osm:way:209747834",
+      "name": "Billa",
+      "lat": 47.0813929,
+      "lon": 15.4445914,
+      "kind": "supermarket",
+      "osmUrl": "https://www.openstreetmap.org/way/209747834",
+      "tags": {
+        "name": "Billa",
+        "shop": "supermarket"
+      }
+    }
+  ]
+}

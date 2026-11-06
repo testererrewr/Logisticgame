@@ -1,0 +1,9 @@
+import type {State} from './engine';
+export interface FinanceDay {income:number;expenses:number;incomeCategories:Record<string,number>;expenseCategories:Record<string,number>}
+export interface FinanceBook {prunedDay?:number;sinceDay:number;openingCash:number;days:Record<string,FinanceDay>}
+export function ensureFinance(s:State){return s.finance??={sinceDay:Math.floor(s.day),openingCash:s.cash,days:{}};}
+export function recordFinance(s:State,amount:number,income:boolean,category='Handel & Sonstiges'){
+ if(!Number.isFinite(amount)||amount<=0)return;const book=ensureFinance(s),day=Math.floor(s.day),row=book.days[day]??={income:0,expenses:0,incomeCategories:{},expenseCategories:{}};row[income?'income':'expenses']+=amount;const categories=income?row.incomeCategories:row.expenseCategories;categories[category]=(categories[category]||0)+amount;
+ if(book.prunedDay!==day){book.prunedDay=day;for(const id of Object.keys(book.days))if(Number(id)<day-364){book.openingCash+=book.days[id].income-book.days[id].expenses;delete book.days[id];book.sinceDay=Math.max(book.sinceDay,Number(id)+1);}}
+}
+export function financeRows(s:State,weekly=false,minDay=-Infinity){const book=s.finance;if(!book)return [];const result=new Map<number,FinanceDay>();for(let day=Math.max(book.sinceDay,Math.floor(s.day)-364,minDay);day<=Math.floor(s.day);day++){const key=weekly?Math.floor((day-1)/7)*7+1:day,row=book.days[day],out=result.get(key)||{income:0,expenses:0,incomeCategories:{},expenseCategories:{}};if(row){out.income+=row.income;out.expenses+=row.expenses;for(const field of ['incomeCategories','expenseCategories'] as const)for(const [category,n]of Object.entries(row[field]))out[field][category]=(out[field][category]||0)+n;}result.set(key,out);}return [...result].map(([day,row])=>({day,...row,net:row.income-row.expenses})).sort((a,b)=>b.day-a.day);}

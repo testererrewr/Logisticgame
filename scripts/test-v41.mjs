@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {requestApi} from '../lib/client-api.ts';
+import {liveClock} from '../lib/vehicle-telemetry.ts';
+import {liveSnapshot,applyLiveSnapshot} from '../lib/live-world.ts';
+import {fixture,time} from './v33-fixtures.mjs';
+let calls=0;const fetcher=async(url,options)=>{calls++;assert.equal(url,'/api/worlds/test/snapshot');assert.equal(options.method,'GET');assert.ok(options.signal);return Response.json({world:{revision:7,syncPending:true}});};
+assert.equal((await requestApi('worlds/test/snapshot',undefined,fetcher)).world.revision,7);assert.equal(calls,1);
+await assert.rejects(requestApi('worlds/test/live',undefined,async()=>{calls++;throw new DOMException('signal timed out','TimeoutError');}),/Live-Abgleich verzögert/);assert.equal(calls,2,'A timed out request is not immediately duplicated');
+await assert.rejects(requestApi('me',undefined,async()=>{throw new DOMException('signal timed out','TimeoutError');}),/Server antwortet gerade zu langsam/);
+await assert.rejects(requestApi('me',undefined,async()=>new Response('<h1>Gateway timeout</h1>',{status:504})),/Serverantwort wurde unterbrochen/);
+await assert.rejects(requestApi('me',undefined,async()=>Response.json({error:'Bitte zuerst anmelden.'},{status:401})),e=>e.status===401&&e.message==='Bitte zuerst anmelden.');
+await assert.rejects(requestApi('worlds/test/action',{type:'sell'},async(_url,options)=>{assert.ok(options.signal);assert.ok(options.headers['Idempotency-Key']);assert.equal(options.method,'POST');throw new TypeError('Network failed');}),/Server ist gerade nicht erreichbar/);
+const f=fixture('snapshot41'),world={...f.world,syncPending:true,receivedAt:time};assert.deepEqual(liveClock(world,time+600000),{age:0,stale:true,time:world.state.simTime},'A saved snapshot does not invent movement or departures');
+const next={...f.world,revision:world.revision+1},merged=applyLiveSnapshot(world,liveSnapshot(next),time+600000);assert.equal(merged.syncPending,false);assert.equal(liveClock(merged,time+600000).stale,false);assert.equal(applyLiveSnapshot(world,{...liveSnapshot(next),structure:'changed'},time),null,'A changed world still needs its complete current structure');
+console.log('PASS v41: saved snapshots freeze telemetry until a confirmed refresh; live packets clear pending status; readable timeout/network/proxy/auth errors; safe identified action retries.');
