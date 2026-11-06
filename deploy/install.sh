@@ -105,6 +105,14 @@ elif [[ -z "$(find "$STATE_DIR" -name '*.sqlite' 2>/dev/null)" ]]; then
   echo "importieren (oder --empty für eine leere Datenbank)."
 fi
 
+if ss -ltnpH '( sport = :443 or sport = :80 )' 2>/dev/null | grep -v '"caddy"' | grep -q .; then
+  log "Ports 80/443 sind schon belegt (z. B. Caddy/Nginx in Docker) – System-Caddy wird nicht eingerichtet"
+  systemctl disable --now caddy 2>/dev/null || true
+  echo "Trage im vorhandenen Webserver ein:  $DOMAIN  →  reverse_proxy <BIND_IP>:$PORT"
+  echo "Siehe VPS-INSTALLATION.md, Abschnitt 'Wenn schon ein Caddy in Docker läuft'."
+  SKIP_CADDY=1
+fi
+if [[ -z "${SKIP_CADDY:-}" ]]; then
 log "Caddy für https://$DOMAIN"
 mkdir -p /etc/caddy/sites
 sed "s/play\.crackgaming\.org/$DOMAIN/; s/127\.0\.0\.1:8787/127.0.0.1:$PORT/" "$APP/deploy/Caddyfile" > /etc/caddy/sites/logistik.caddy
@@ -118,6 +126,7 @@ fi
 caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 systemctl enable caddy >/dev/null
 systemctl reload caddy || systemctl restart caddy
+fi
 
 if command -v ufw >/dev/null && ufw status | grep -q 'Status: active'; then
   log "Firewall: Ports 80/443 freigeben"
@@ -126,7 +135,7 @@ fi
 
 log "Test der Hintergrundabrechnung"
 sleep 3
-runuser -u logistik -- env $(grep -E '^(PORT|SIMULATION_TRIGGER_SECRET)=' /etc/logistik/logistik.env | xargs) bash "$APP/deploy/tick.sh" || echo "(Tick fehlgeschlagen – siehe journalctl -u logistik)"
+runuser -u logistik -- env $(grep -E '^(PORT|BIND_IP|SIMULATION_TRIGGER_SECRET)=' /etc/logistik/logistik.env | xargs) bash "$APP/deploy/tick.sh" || echo "(Tick fehlgeschlagen – siehe journalctl -u logistik)"
 
 echo
 echo "Fertig. Öffne https://$DOMAIN"

@@ -20,9 +20,9 @@ if [[ "$SRC" != "--empty" ]]; then
 fi
 [[ -f "$APP/dist/server/wrangler.json" ]] || { echo "Erst bauen: sudo bash $APP/deploy/update.sh --no-pull" >&2; exit 1; }
 
-d1() { # führt eine SQL-Datei in der lokalen D1-Datenbank aus
+d1_command() { # einen SQL-Befehl über Wrangler in der lokalen D1-Datenbank ausführen
   runuser -u logistik -- env HOME=/opt/logistik WRANGLER_SEND_METRICS=false bash -c \
-    "cd '$APP' && node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to '$STATE_DIR' --file '$1'"
+    "cd '$APP' && node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to '$STATE_DIR' --command '$1'"
 }
 
 systemctl stop logistik-tick.timer 2>/dev/null || true
@@ -36,20 +36,21 @@ fi
 mkdir -p "$STATE_DIR"
 chown -R logistik:logistik "$STATE_DIR"
 
-tmp="$(mktemp -d)"; chmod 755 "$tmp"; trap 'rm -rf "$tmp"' EXIT
+# Leere D1-Datenbank von Wrangler anlegen lassen, dann direkt per sqlite3 befüllen
+# (wrangler d1 execute ist für eine 63-MB-Datei viel zu langsam).
+d1_command "CREATE TABLE _init(x); DROP TABLE _init;"
+DB="$(find "$STATE_DIR" -name '*.sqlite' ! -name 'metadata.sqlite' | head -1)"
+[[ -n "$DB" ]] || { echo "Datenbankdatei wurde nicht angelegt." >&2; exit 1; }
+echo "Datenbankdatei: $DB"
 if [[ "$SRC" == "--empty" ]]; then
   echo "Lege leere Datenbank aus den Migrationen an …"
-  for f in $(ls "$APP"/drizzle/*.sql | sort); do
-    cp "$f" "$tmp/m.sql"; chmod 644 "$tmp/m.sql"; echo "  $(basename "$f")"; d1 "$tmp/m.sql"
-  done
+  for f in $(ls "$APP"/drizzle/*.sql | sort); do echo "  $(basename "$f")"; sqlite3 -bail "$DB" < "$f"; done
 else
-  echo "Importiere Spielstand (63 MB, das dauert einige Minuten) …"
-  cp "$SRC/game.sql" "$tmp/game.sql"; chmod 644 "$tmp/game.sql"
-  d1 "$tmp/game.sql"
+  echo "Importiere Spielstand …"
+  sqlite3 -bail "$DB" < "$SRC/game.sql"
   # Echtzeit-Anker auf jetzt setzen: die Welten werden NICHT um die Offline-Zeit vorgespult.
-  if [[ -f "$SRC/resume-clock.sql" ]]; then cp "$SRC/resume-clock.sql" "$tmp/resume.sql"; else
-    echo "UPDATE logistics_worlds SET last_tick=CAST((julianday('now')-2440587.5)*86400000 AS INTEGER);" > "$tmp/resume.sql"; fi
-  chmod 644 "$tmp/resume.sql"; d1 "$tmp/resume.sql"
+  sqlite3 "$DB" "UPDATE logistics_worlds SET last_tick=CAST((julianday('now')-2440587.5)*86400000 AS INTEGER);"
+  echo "Benutzer: $(sqlite3 "$DB" 'SELECT count(*) FROM users') · Welten: $(sqlite3 "$DB" "SELECT group_concat(name, ', ') FROM logistics_worlds")"
 fi
 chown -R logistik:logistik "$STATE_DIR"
 

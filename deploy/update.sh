@@ -7,6 +7,7 @@ set -euo pipefail
 APP=/opt/logistik/app
 set -a; . /etc/logistik/logistik.env; set +a
 PORT="${PORT:-8787}"
+BIND_IP="${BIND_IP:-127.0.0.1}"
 
 as_app() { runuser -u logistik -- env HOME=/opt/logistik bash -c "cd '$APP' && $1"; }
 
@@ -39,7 +40,7 @@ systemctl enable --now logistik-tick.timer logistik-backup.timer >/dev/null
 
 echo -n "==> Warte auf den Server "
 for i in $(seq 1 90); do
-  code="$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT/" || true)"
+  code="$(curl -s -o /dev/null -w '%{http_code}' "http://$BIND_IP:$PORT/" || true)"
   if [[ "$code" =~ ^(200|30[0-9])$ ]]; then echo " ok ($code)"; exit 0; fi
   echo -n "."; sleep 2
 done

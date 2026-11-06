@@ -6,6 +6,7 @@ cd "$(dirname "$0")/.."
 
 DOMAIN="${DOMAIN:-play.crackgaming.org}"
 PORT="${PORT:-8787}"
+BIND_IP="${BIND_IP:-127.0.0.1}"   # z. B. Docker-Gateway-IP, wenn ein Caddy im Docker-Container weiterleitet
 STATE_DIR="${STATE_DIR:-/var/lib/logistik/state}"
 
 if [[ ! -f dist/server/wrangler.json ]]; then
@@ -23,7 +24,7 @@ exec node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.
   --config dist/server/wrangler.json \
   --local \
   --persist-to "$STATE_DIR" \
-  --ip 127.0.0.1 \
+  --ip "$BIND_IP" \
   --port "$PORT" \
   --inspector-port 0 \
   --local-upstream "$DOMAIN" \

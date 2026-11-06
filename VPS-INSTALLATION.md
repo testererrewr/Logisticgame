@@ -100,6 +100,27 @@ die Secrets `VPS_HOST`, `VPS_USER` und `VPS_SSH_KEY` anlegen. Dann führt
 Konfiguration: `/etc/logistik/logistik.env` (Domain, Port, Scheduler-Secret, Weltimport-Tempo).
 Nach Änderungen: `sudo systemctl restart logistik`.
 
+## Wenn schon ein Caddy in Docker läuft (Ports 80/443 belegt)
+
+Dann übernimmt dieser Container HTTPS, und der Spielserver lauscht auf der Docker-Gateway-IP,
+damit nur Container ihn erreichen:
+
+```bash
+systemctl disable --now caddy                         # System-Caddy nicht nötig
+GW=$(docker inspect cg_web_edge --format '{{range .NetworkSettings.Networks}}{{.Gateway}} {{end}}' | awk '{print $1}')
+grep -q '^BIND_IP=' /etc/logistik/logistik.env && sed -i "s/^BIND_IP=.*/BIND_IP=$GW/" /etc/logistik/logistik.env || echo "BIND_IP=$GW" >> /etc/logistik/logistik.env
+systemctl restart logistik
+```
+
+Im Caddyfile des Containers ergänzen und `docker exec cg_web_edge caddy reload --config /etc/caddy/Caddyfile`:
+
+```
+play.crackgaming.org {
+	encode zstd gzip
+	reverse_proxy GATEWAY-IP:8787
+}
+```
+
 ## Fehlersuche
 
 - **Zertifikat kommt nicht:** `journalctl -u caddy -n 50`. Meist zeigt der DNS-Eintrag noch nicht auf den
