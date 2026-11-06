@@ -1,0 +1,6 @@
+[Unit]
+Description=Weltverbund Logistik – Wächter (Neustart bei Absturz oder Speichermangel)
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /opt/logistik/app/deploy/watchdog.sh

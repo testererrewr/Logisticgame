@@ -11,7 +11,7 @@ import {newMarket,resetMarket} from '../../../../lib/logistics/business-rules';
 import {ensureContainerDay,acceptContainerOrder,factoryPartner,type ContainerOffer} from '../../../../lib/logistics/container-market';
 import {registryByIds} from '../../../../lib/logistics/partner-registry';
 import {NextRequest,NextResponse} from 'next/server';
-import {env,waitUntil} from 'cloudflare:workers';
+import {env} from 'cloudflare:workers';
 import {MAX_FLEET_VEHICLES,GOODS,VEHICLES,depotFor,profile,stock,normalizeFreightState,routePartners,mergeSites,stepSharedWorld,type Coords,type GoodId,type Site,type State,type Track} from '../../../../lib/logistics/engine.ts';
 import {applyAction,type OnlineAction,type OnlineCommand} from '../../../../lib/logistics/online-actions.ts';
 import {settleTrade,tradeTerminal} from '../../../../lib/logistics/cooperation.ts';
@@ -62,16 +62,16 @@ export async function adjustAdminCompanyCash(actor:User,body:{worldId:string;use
 }
 const settling=new Map<string,Promise<World>>();
 const behind=new Set<string>();
-export function settleWorld(id:string):Promise<World>{const running=settling.get(id);if(running)return running;const job=settleWorldNow(id).finally(()=>{settling.delete(id);if(behind.delete(id))waitUntil(new Promise(r=>setTimeout(r,250)).then(()=>settleWorld(id)).catch(()=>{}));});settling.set(id,job);return job;}
+export function settleWorld(id:string,budgetMs=1500):Promise<World>{const running=settling.get(id);if(running){if(budgetMs>=10000)return running;return readWorld(id).then(w=>{if(!w)throw Error('Diese Welt existiert nicht.');return w;});}const job=settleWorldNow(id,budgetMs).finally(()=>{settling.delete(id);behind.delete(id);});settling.set(id,job);return job;}
 export function catchUpHours(world:World,now=Date.now()){return Math.max(0,(clockTarget(world,now)-world.day)*24);}
 const catchRate=new Map<string,number>();
-export function catchUpSeconds(world:World){const hours=catchUpHours(world);if(hours<=0)return 0;const rate=catchRate.get(world.id)||.5,net=rate-(world.time_scale||1)/3600;return net>0?Math.ceil(hours/net):null;}
-async function settleWorldNow(id:string):Promise<World>{
+export function catchUpSeconds(world:World){const hours=catchUpHours(world);if(hours<=0)return 0;const rate=(catchRate.get(world.id)||.5)*.7,net=rate-(world.time_scale||1)/3600;return net>0?Math.ceil(hours/net):null;}
+async function settleWorldNow(id:string,budgetMs:number):Promise<World>{
  const settleAt=Date.now();let latest:World|undefined,startDay:number|undefined;
  const measure=(w:World)=>{const seconds=(Date.now()-settleAt)/1000;if(startDay!==undefined&&seconds>.5){const rate=(w.day-startDay)*24/seconds,old=catchRate.get(id);catchRate.set(id,old?old*.6+rate*.4:rate);}};
  for(let attempt=0;attempt<2000;attempt++){
   const world=await readWorld(id);if(!world)throw Error('Diese Welt existiert nicht.');latest=world;startDay??=world.day;if(settleAt-world.last_tick<4000)return world;
-  if(attempt>0&&Date.now()-settleAt>6000){measure(world);behind.add(id);return world;}
+  if(attempt>0&&Date.now()-settleAt>budgetMs){measure(world);behind.add(id);return world;}
   const target=clockTarget(world,settleAt);if(target<=world.day+1e-8)return world;
   const next=Math.min(target,world.day+1/72),rows=await readCompanies(id);
   const permissions=(await db().prepare('SELECT owner_id,grantee_id FROM logistics_world_permissions WHERE world_id=? AND enabled=1').bind(id).all<{owner_id:string;grantee_id:string}>()).results;
@@ -224,7 +224,7 @@ export async function POST(req:NextRequest){try{
 export async function settleAllWorlds(source='scheduled'){
  const rows=(await db().prepare("SELECT id FROM logistics_worlds WHERE status='running' ORDER BY last_tick LIMIT 50").all<{id:string}>()).results;
  const completed:string[]=[],errors:{id:string;error:string}[]=[];
- for(const row of rows){try{await settleWorld(row.id);completed.push(row.id);}catch(e:any){errors.push({id:row.id,error:e.message});}}
+ for(const row of rows){try{await settleWorld(row.id,15000);completed.push(row.id);}catch(e:any){errors.push({id:row.id,error:e.message});}}
  continuePartnerImports();
  const payload={source,completed,errors,at:Date.now()};
  await db().prepare('INSERT INTO logistics_runtime(id,updated,payload) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET updated=excluded.updated,payload=excluded.payload').bind('simulation',Date.now(),JSON.stringify(payload)).run();

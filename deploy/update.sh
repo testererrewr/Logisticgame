@@ -34,7 +34,7 @@ install -m 644 "$APP"/deploy/systemd/*.service "$APP"/deploy/systemd/*.timer /et
 systemctl daemon-reload
 systemctl enable logistik >/dev/null 2>&1
 systemctl restart logistik
-systemctl enable --now logistik-tick.timer logistik-backup.timer >/dev/null
+systemctl enable --now logistik-tick.timer logistik-backup.timer logistik-watchdog.timer >/dev/null
 
 echo -n "==> Warte auf den Server "
 for i in $(seq 1 90); do

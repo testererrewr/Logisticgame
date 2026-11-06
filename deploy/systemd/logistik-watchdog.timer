@@ -1,0 +1,11 @@
+[Unit]
+Description=Weltverbund Logistik – Wächter jede Minute
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=60s
+AccuracySec=5s
+Unit=logistik-watchdog.service
+
+[Install]
+WantedBy=timers.target
