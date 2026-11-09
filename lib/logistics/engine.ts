@@ -235,9 +235,9 @@ function baseProfile(site:Site):Profile {
  switch(site.kind){
  case 'hospital':return {production:{},recipes:[],demand:['antibiotics','painkillers','insulin','vaccines','infusions','medicalOxygen','medicalSupplies','bandages','syringes','cleaners'],capacity:base(18)};
  case 'pharmacy':return {production:{},recipes:[],demand:['antibiotics','painkillers','insulin','vaccines','bandages','medicalSupplies'],capacity:base(3)};
- case 'chemical':return {production:{chemicals:base(20),industrialGases:base(8)},recipes:['antibiotics','painkillers','insulin','vaccines','infusions','oxygen','plastic','medicals','bandages','syringes'],demand:[],capacity:base(90)};
+ case 'chemical':return {production:{chemicals:base(20),industrialGases:base(8)},recipes:['retail-fertilizer','antibiotics','painkillers','insulin','vaccines','infusions','oxygen','plastic','medicals','bandages','syringes'],demand:[],capacity:base(90)};
  case 'oilWell':return {production:{crudeOil:base(45)},recipes:[],demand:[],capacity:base(180)};
- case 'refinery':return {production:{},recipes:['diesel','petrol','kerosene'],demand:[],capacity:base(180)};
+ case 'refinery':return {production:{},recipes:['diesel','petrol','kerosene','retail-solvents'],demand:[],capacity:base(180)};
  case 'forestry':return {production:{timber:base(50)},recipes:[],demand:[],capacity:base(90)};
  case 'sawmill':return {production:{},recipes:['lumber','paper','packaging'],demand:[],capacity:base(90)};
  case 'recycling':return {production:{scrapMetal:base(24)},recipes:['recycle'],demand:['scrapMetal','paper','glass','plasticGranules'],capacity:base(100)};
@@ -248,7 +248,7 @@ function baseProfile(site:Site):Profile {
  case 'textile':return {production:{},recipes:['textiles','clothing','bandages'],demand:[],capacity:base(50)};
  case 'construction':return {production:{},recipes:[],demand:['insulation','roofTiles','steelPipes','cables','woodPallets','transformer','excavator','craneModule','bridgeGirder','cement','sand','gravel','concreteElements','steelBeams','lumber','bricks','glass'],capacity:base(180)};
  case 'wholesale':return {production:{},recipes:[],demand:['softDrinks','sausages','detergent','toiletPaper','bedding','bags','woodPallets','bread','milk','apples','vegetables','potatoes','eggs','cheese','butter','yogurt','pasta','cannedFood','chocolate','roastedCoffee','frozenFood','freshJuice','soap','cleaners','clothing','footwear','furniture','electronics','computers','packaging','books','stationery','petFood'],capacity:base(95)};
- case 'farm':return {production:{cutFlowers:base(2),wheat:base(24),corn:base(15),milk:base(9),apples:base(7),barley:base(15),potatoes:base(18),vegetables:base(10),eggs:base(3),sugarBeet:base(25),soy:base(12),grapes:base(7),cattle:base(4),pigs:base(5),livePoultry:base(3)},recipes:[],demand:[],capacity:0};
+ case 'farm':return {production:{oats:base(10),rye:base(10),rice:base(8),tomatoes:base(6),cotton:base(5),coffeeBeans:base(2),cocoa:base(2),rubber:base(2),fish:base(3),cutFlowers:base(2),wheat:base(24),corn:base(15),milk:base(9),apples:base(7),barley:base(15),potatoes:base(18),vegetables:base(10),eggs:base(3),sugarBeet:base(25),soy:base(12),grapes:base(7),cattle:base(4),pigs:base(5),livePoultry:base(3)},recipes:[],demand:[],capacity:0};
  case 'mine':return {production:{ironOre:base(55),rareEarth:base(3),coal:base(30),bauxite:base(25),copperOre:base(15),lithium:base(4),limestone:base(60),salt:base(20),sand:base(45),gravel:base(45)},recipes:[],demand:[],capacity:0};
  case 'mill':return {production:{},recipes:['flour','malt','feed'],demand:[],capacity:base(46)};
  case 'bakery':return {production:{},recipes:['bread','pastry','biscuits'],demand:[],capacity:base(24)};

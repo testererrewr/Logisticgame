@@ -1002,5 +1002,150 @@
     },
     "fee": 474,
     "yield": 0.95
+  },
+  {
+    "id": "retail-cannedFood",
+    "name": "Konserven herstellen",
+    "output": "cannedFood",
+    "inputs": {
+      "vegetables": 0.5,
+      "tomatoes": 0.3,
+      "packaging": 0.2
+    },
+    "fee": 60,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-frozenFood",
+    "name": "Tiefkühlkost herstellen",
+    "output": "frozenFood",
+    "inputs": {
+      "vegetables": 0.45,
+      "poultry": 0.35,
+      "packaging": 0.2
+    },
+    "fee": 70,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-soap",
+    "name": "Seife sieden",
+    "output": "soap",
+    "inputs": {
+      "vegetableOil": 0.6,
+      "chemicals": 0.4
+    },
+    "fee": 55,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-cleaners",
+    "name": "Reinigungsmittel mischen",
+    "output": "cleaners",
+    "inputs": {
+      "chemicals": 0.7,
+      "packaging": 0.3
+    },
+    "fee": 50,
+    "yield": 0.95
+  },
+  {
+    "id": "auto-spareParts",
+    "name": "Ersatzteile fertigen",
+    "output": "spareParts",
+    "inputs": {
+      "steel": 0.7,
+      "rubber": 0.3
+    },
+    "fee": 110,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-woodPellets",
+    "name": "Holzpellets pressen",
+    "output": "woodPellets",
+    "inputs": {
+      "timber": 1
+    },
+    "fee": 25,
+    "yield": 0.95
+  },
+  {
+    "id": "heavy-machineryParts",
+    "name": "Maschinenkomponenten fertigen",
+    "output": "machineryParts",
+    "inputs": {
+      "steel": 0.85,
+      "copper": 0.15
+    },
+    "fee": 160,
+    "yield": 0.95
+  },
+  {
+    "id": "heavy-machines",
+    "name": "Maschinen bauen",
+    "output": "machines",
+    "inputs": {
+      "machineryParts": 0.6,
+      "steel": 0.3,
+      "electronics": 0.1
+    },
+    "fee": 420,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-bricks",
+    "name": "Ziegel brennen",
+    "output": "bricks",
+    "inputs": {
+      "sand": 0.5,
+      "limestone": 0.3,
+      "coal": 0.2
+    },
+    "fee": 30,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-vegetableOil",
+    "name": "Pflanzenöl pressen",
+    "output": "vegetableOil",
+    "inputs": {
+      "soy": 0.9,
+      "bottles": 0.1
+    },
+    "fee": 45,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-molasses",
+    "name": "Melasse gewinnen",
+    "output": "molasses",
+    "inputs": {
+      "sugarBeet": 1
+    },
+    "fee": 20,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-solvents",
+    "name": "Lösungsmittel destillieren",
+    "output": "solvents",
+    "inputs": {
+      "crudeOil": 0.8,
+      "chemicals": 0.2
+    },
+    "fee": 70,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-fertilizer",
+    "name": "Dünger herstellen",
+    "output": "fertilizer",
+    "inputs": {
+      "chemicals": 0.5,
+      "limestone": 0.5
+    },
+    "fee": 40,
+    "yield": 0.95
   }
 ]
