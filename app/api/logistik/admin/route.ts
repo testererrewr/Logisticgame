@@ -45,7 +45,7 @@ export async function POST(req:NextRequest){try{
   result={deleted:id};
  }else if(body.action==='worldSettings'){
   const id=String(body.worldId||''),name=String(body.name||'').trim(),scale=Number(body.timeScale),status=String(body.status||'running');
-  if(name.length<3||name.length>60||!Number.isFinite(scale)||scale<.1||scale>1440||!['draft','running','paused','stopped'].includes(status))throw Error('Ungültige Welteinstellungen.');
+  if(name.length<3||name.length>60||!Number.isFinite(scale)||scale<.1||scale>1440||!['draft','running','paused','stopped','finished'].includes(status))throw Error('Ungültige Welteinstellungen.');
   await settleWorld(id);await db().prepare('UPDATE logistics_worlds SET name=?,description=?,time_scale=?,tick_ms=?,status=?,last_tick=?,revision=revision+1 WHERE id=?').bind(name,String(body.description||'').slice(0,300),scale,86400000/scale,status,Date.now(),id).run();
  }else if(body.action==='role'){
   if(u.role!=='owner')return reply({error:'Nur der Besitzer kann Administratoren ernennen.'},403);

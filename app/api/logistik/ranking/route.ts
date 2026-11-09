@@ -2,21 +2,12 @@ import {NextRequest,NextResponse} from 'next/server';
 import {env} from 'cloudflare:workers';
 import {currentUser} from '../online/route';
 import {decodeCompany} from '../../../../lib/logistics/company-codec';
-import {BUILDINGS,type State} from '../../../../lib/logistics/engine';
-import {dealerValue} from '../../../../lib/logistics/vehicle-sales';
 import {ensureAllianceTables} from '../../../../lib/logistics/alliance-server';
 import {ensureBrandingTables} from '../../../../lib/logistics/branding-server';
 
-interface Row {logo?:string;color?:string;tag?:string;id:string;name:string;value:number;cash:number;revenue7:number;revenue30:number;profit30:number;vehicles:number;transported:number;buildings:number;lines:number;orders:number}
+import {parseSettings,seasonEndDay} from '../../../../lib/logistics/world-settings';
+import {rowFor,type Row} from '../../../../lib/logistics/ranking';
 const cache=new Map<string,{at:number;rows:Row[]}>();
-function sumDays(s:State,days:number,key:'income'|'expenses'){const book=s.finance;if(!book)return 0;const today=Math.floor(s.day);let n=0;for(const [d,row] of Object.entries(book.days))if(Number(d)>today-days)n+=row[key]||0;return n;}
-function rowFor(id:string,name:string,s:State):Row{
- const vehicles=s.vehicles.filter(v=>!v.wrecked);
- const fleet=vehicles.reduce((n,v)=>{try{return n+dealerValue(v);}catch{return n;}},0);
- const buildings=s.sites.filter(p=>p.owned),property=buildings.reduce((n,p)=>n+(BUILDINGS.find(b=>b.id===p.kind)?.price||0)*.6,0);
- const r=(n:number)=>Math.round(n);
- return {id,name,value:r(s.cash+fleet+property),cash:r(s.cash),revenue7:r(sumDays(s,7,'income')),revenue30:r(sumDays(s,30,'income')),profit30:r(sumDays(s,30,'income')-sumDays(s,30,'expenses')),vehicles:vehicles.length,transported:r(s.vehicles.reduce((n,v)=>n+(v.transportedEh||0),0)),buildings:buildings.length,lines:s.lines.filter(l=>l.active&&!l.deleted).length,orders:s.contracts.filter(c=>c.kind==='haulage'&&c.completedDay!==undefined).length};
-}
 export async function GET(req:NextRequest){try{
  const u=await currentUser(req);if(!u||u.status!=='active')return NextResponse.json({error:'Bitte anmelden.'},{status:401});
  const world=(req.nextUrl.searchParams.get('world')||'').slice(0,100);if(!world)throw Error('Welt fehlt.');
@@ -29,5 +20,6 @@ export async function GET(req:NextRequest){try{
   try{await ensureBrandingTables();const br=(await env.DB!.prepare('SELECT user_id,primary_color,logo IS NOT NULL AS has_logo,updated FROM logistics_branding WHERE world_id=?').bind(world).all<{user_id:string;primary_color:string;has_logo:number;updated:number}>()).results;const bm=new Map(br.map(b=>[b.user_id,b]));for(const r of rows){const b=bm.get(r.id);if(b){r.color=b.primary_color;if(b.has_logo)r.logo=`/api/logistik/branding/image?world=${encodeURIComponent(world)}&user=${r.id}&kind=logo&v=${b.updated}`;}}}catch{}
   hit={at:Date.now(),rows};cache.set(world,hit);if(cache.size>50)cache.delete(cache.keys().next().value!);
  }
- return NextResponse.json({updated:hit.at,me:u.id,rows:hit.rows},{headers:{'Cache-Control':'no-store'}});
+ const wrow=await env.DB!.prepare('SELECT day,settings,status FROM logistics_worlds WHERE id=?').bind(world).first<{day:number;settings:string;status:string}>(),end=wrow?seasonEndDay(parseSettings(wrow.settings)):null;
+ return NextResponse.json({updated:hit.at,me:u.id,rows:hit.rows,season:end?{end,day:wrow!.day,finished:wrow!.status==='finished'}:null},{headers:{'Cache-Control':'no-store'}});
 }catch(e:any){return NextResponse.json({error:e.message||'Rangliste nicht verfügbar.'},{status:503});}}

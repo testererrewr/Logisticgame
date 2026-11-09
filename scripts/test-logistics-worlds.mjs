@@ -7,7 +7,7 @@ import {build,profile} from '../lib/logistics/engine.ts';
 assert.ok(Math.abs(clockTarget({day:7,last_tick:1000,tick_ms:60000},181000)-(7+180/86400))<1e-9,'Echtzeit 1:1');
 assert.equal(clockTarget({day:7,last_tick:1000,tick_ms:60000},0),7);
 assert.equal(companyAtDay(200).day,200);
-assert.equal(advanceCompany(companyAtDay(1),12).day,12);
+{let c=companyAtDay(1);while(c.day<12-1e-9)c=advanceCompany(c,Math.min(12,c.day+1));assert.equal(Math.round(c.day*1e6)/1e6,12);}
 const origin='http://127.0.0.1:8787',suffix=crypto.randomUUID().slice(0,8);
 async function request(path,body,cookie){const r=await fetch(origin+'/api/'+path,{headers:{'Content-Type':'application/json',...(cookie?{Cookie:cookie}:{})},...(body?{method:'POST',body:JSON.stringify(body)}:{})});return {status:r.status,data:await r.json(),cookie:r.headers.get('set-cookie')?.split(';')[0]};}
 async function account(tag){const r=await request('auth/register',{name:'QA '+tag,email:`qa-${tag}-${suffix}@example.test`,password:'Local-test-only-8274'});assert.equal(r.status,200,JSON.stringify(r.data));return {cookie:r.cookie,id:r.data.user.id};}

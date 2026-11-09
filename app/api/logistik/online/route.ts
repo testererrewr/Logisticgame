@@ -12,7 +12,9 @@ import {ensureContainerDay,acceptContainerOrder,factoryPartner,type ContainerOff
 import {registryByIds} from '../../../../lib/logistics/partner-registry';
 import {NextRequest,NextResponse} from 'next/server';
 import {env} from 'cloudflare:workers';
-import {allianceMap,allySites,allianceSitesFor} from '../../../../lib/logistics/alliance-server';
+import {allianceMap,allySites,allianceSitesFor,settleAllianceOrders} from '../../../../lib/logistics/alliance-server';
+import {seasonFinalStatements} from '../../../../lib/logistics/season-server';
+import {seasonEndDay} from '../../../../lib/logistics/world-settings';
 import {parseSettings,settingsSummary,modeGroup,buildingModeGroup,MODE_GROUPS} from '../../../../lib/logistics/world-settings';
 import {ensureWorldSettingsColumn,assertInRegion} from '../../../../lib/logistics/world-region-server';
 import {MAX_FLEET_VEHICLES,GOODS,VEHICLES,depotFor,profile,stock,normalizeFreightState,routePartners,mergeSites,stepSharedWorld,type Coords,type GoodId,type Site,type State,type Track} from '../../../../lib/logistics/engine.ts';
@@ -75,7 +77,8 @@ async function settleWorldNow(id:string,budgetMs:number):Promise<World>{
  for(let attempt=0;attempt<2000;attempt++){
   const world=await readWorld(id);if(!world)throw Error('Diese Welt existiert nicht.');latest=world;startDay??=world.day;if(settleAt-world.last_tick<4000)return world;
   if(attempt>0&&Date.now()-settleAt>budgetMs){measure(world);behind.add(id);return world;}
-  const target=clockTarget(world,settleAt);if(target<=world.day+1e-8)return world;
+  const seasonEnd=seasonEndDay(parseSettings(world.settings));
+  const target=Math.min(clockTarget(world,settleAt),seasonEnd??Infinity);if(target<=world.day+1e-8)return world;
   const next=Math.min(target,world.day+1/72),rows=await readCompanies(id);
   const permissions=(await db().prepare('SELECT owner_id,grantee_id FROM logistics_world_permissions WHERE world_id=? AND enabled=1').bind(id).all<{owner_id:string;grantee_id:string}>()).results;
   const rules=await readPartnerRules(),market={...newMarket(world.day),...JSON.parse(world.market||'{}')};
@@ -83,12 +86,14 @@ async function settleWorldNow(id:string,budgetMs:number):Promise<World>{
   const statements:D1PreparedStatement[]=[];
   {const cfg=parseSettings(world.settings);for(const st of states.values()){st.maintenanceOff=!cfg.maintenance;st.fuelOff=!cfg.fuel;}}
   for(const row of rows){const state=states.get(row.user_id)!;state.borrowedTracks=permissions.filter(p=>p.grantee_id===row.user_id).flatMap(p=>states.get(p.owner_id)?.tracks||[]);}
-  {const amap=await allianceMap(id);for(const row of rows){const aid=amap.get(row.user_id);if(!aid)continue;const own=states.get(row.user_id)!;own.sites.push(...allySites(own,rows.filter(r=>r.user_id!==row.user_id&&amap.get(r.user_id)===aid).map(r=>({id:r.user_id,name:r.name||'Spedition',state:states.get(r.user_id)!}))));}}
+  {const amap=await allianceMap(id);for(const row of rows){const aid=amap.get(row.user_id);if(!aid)continue;const own=states.get(row.user_id)!;own.sites.push(...allySites(own,rows.filter(r=>r.user_id!==row.user_id&&amap.get(r.user_id)===aid).map(r=>({id:r.user_id,name:r.name||'Spedition',state:states.get(r.user_id)!})),amap.storage.get(aid)!==false));}}
   if(attempt===0)for(const state of states.values())await prepareVehicleRoads(state);
   const advanced=stepSharedWorld(states,next,market);
+  try{statements.push(...await settleAllianceOrders(id,advanced,next));}catch(e){console.error('alliance orders',e);}
   for(const row of rows){const state=advanced.get(row.user_id)!;delete state.borrowedTracks;statements.push(db().prepare('UPDATE logistics_world_companies SET state=?,updated=? WHERE world_id=? AND user_id=?').bind(await encodeCompany(state),Date.now(),id,row.user_id));}
   const deadlines=[...advanced.values()].flatMap(s=>s.contracts.filter(c=>c.kind==='haulage'&&!c.cancelled&&c.endDay>=s.day&&c.delivered<(c.total||0)).map(c=>({id:c.id,deadline:c.endDay})));if(deadlines.length)statements.push(db().prepare("UPDATE logistics_container_offers SET deadline=(SELECT json_extract(value,'$.deadline') FROM json_each(?) WHERE json_extract(value,'$.id')=logistics_container_offers.id) WHERE world_id=? AND status='accepted' AND id IN (SELECT json_extract(value,'$.id') FROM json_each(?) WHERE json_extract(value,'$.deadline')>logistics_container_offers.deadline)").bind(JSON.stringify(deadlines),id,JSON.stringify(deadlines)));
   const completed=[...advanced.values()].flatMap(s=>s.contracts.filter(c=>c.kind==='haulage'&&c.delivered>=(c.total||Infinity)).map(c=>c.id));if(completed.length)statements.push(db().prepare("UPDATE logistics_container_offers SET status='completed' WHERE world_id=? AND status='accepted' AND id IN (SELECT value FROM json_each(?))").bind(id,JSON.stringify(completed)));statements.push(db().prepare("UPDATE logistics_container_offers SET status='expired' WHERE world_id=? AND status='accepted' AND deadline<?").bind(id,next));
+  if(seasonEnd!==null&&next>=seasonEnd-1e-9){try{const amap=await allianceMap(id),tags=new Map<string,string>();const tagRows=(await db().prepare('SELECT m.user_id,a.tag FROM logistics_alliance_members m JOIN logistics_alliances a ON a.id=m.alliance_id WHERE m.world_id=?').bind(id).all<{user_id:string;tag:string}>()).results;for(const t of tagRows)if(amap.has(t.user_id))tags.set(t.user_id,t.tag);statements.push(...await seasonFinalStatements(id,advanced,new Map(rows.map(r=>[r.user_id,r.name||''])),tags));}catch(e){console.error('season final',e);}}
   statements.push(db().prepare('UPDATE logistics_worlds SET day=?,last_tick=?,market=? WHERE id=?').bind(next,world.last_tick+(next-world.day)*worldTickMs(world),JSON.stringify(market),id));
   try{await commit(world,[],statements,rules.revision);}catch{continue;}
   await ensureContainerDay(id,next,rules);

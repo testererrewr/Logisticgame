@@ -1,7 +1,8 @@
 import {NextRequest,NextResponse} from 'next/server';
 import {env} from 'cloudflare:workers';
 import {currentUser} from '../online/route';
-import {ensureAllianceTables,invalidateAllianceCache} from '../../../../lib/logistics/alliance-server';
+import {ensureAllianceTables,invalidateAllianceCache,allianceOffers} from '../../../../lib/logistics/alliance-server';
+import {good} from '../../../../lib/logistics/engine';
 import {sameOrigin} from '../../../../lib/same-origin';
 
 const db=()=>env.DB!;
@@ -28,7 +29,10 @@ export async function GET(req:NextRequest){try{
   const members=(await db().prepare("SELECT m.user_id AS id,m.role,m.joined,COALESCE(NULLIF(c.name,''),us.name) AS name FROM logistics_alliance_members m JOIN users us ON us.id=m.user_id LEFT JOIN logistics_world_companies c ON c.world_id=m.world_id AND c.user_id=m.user_id WHERE m.alliance_id=? ORDER BY CASE m.role WHEN 'leader' THEN 0 WHEN 'officer' THEN 1 ELSE 2 END,name").bind(mine.alliance_id).all()).results;
   const posts=(await db().prepare("SELECT p.id,p.text,p.created,p.user_id,COALESCE(NULLIF(c.name,''),us.name) AS name FROM logistics_alliance_posts p JOIN users us ON us.id=p.user_id LEFT JOIN logistics_world_companies c ON c.world_id=? AND c.user_id=p.user_id WHERE p.alliance_id=? ORDER BY p.created DESC LIMIT 50").bind(world,mine.alliance_id).all()).results;
   const pending=(await db().prepare("SELECT i.user_id AS id,COALESCE(NULLIF(c.name,''),us.name) AS name FROM logistics_alliance_invites i JOIN users us ON us.id=i.user_id LEFT JOIN logistics_world_companies c ON c.world_id=? AND c.user_id=i.user_id WHERE i.alliance_id=?").bind(world,mine.alliance_id).all()).results;
-  detail={...a,role:mine.role,members,posts,pending};}
+  const day=(await db().prepare('SELECT day FROM logistics_worlds WHERE id=?').bind(world).first<{day:number}>())?.day||0;
+  const orders=(await db().prepare('SELECT id,good,destination_name AS title,quantity,delivered,reward,deadline_day AS deadline,status,contributions,created FROM logistics_alliance_orders WHERE alliance_id=? ORDER BY created DESC LIMIT 10').bind(mine.alliance_id).all<any>()).results.map(o=>({...o,goodName:good(o.good)?.name||o.good,contributions:JSON.parse(o.contributions||'{}')}));
+  const offers=orders.some(o=>o.status==='active')?[]:allianceOffers(mine.alliance_id,day,members.length).filter(f=>!orders.some(o=>o.id===mine.alliance_id+':'+f.key)).map(f=>({...f,goodName:good(f.good)?.name||f.good}));
+  detail={...a,role:mine.role,members,posts,pending,day,orders,offers};}
  const companies=(await db().prepare("SELECT c.user_id AS id,COALESCE(NULLIF(c.name,''),us.name) AS name,m.alliance_id AS allianceId FROM logistics_world_companies c JOIN users us ON us.id=c.user_id LEFT JOIN logistics_alliance_members m ON m.world_id=c.world_id AND m.user_id=c.user_id WHERE c.world_id=? ORDER BY name LIMIT 500").bind(world).all()).results;
  return reply({me:u.id,alliance:detail,alliances,invites,companies});
 }catch(e:any){return reply({error:e.message||'Allianzen nicht verfügbar.'},503);}}
@@ -70,8 +74,18 @@ export async function POST(req:NextRequest){try{
  }else if(action==='post'){
   if(!mine)throw Error('Du bist in keiner Allianz.');const text=String(body.text||'').trim();if(!text||text.length>1000)throw Error('Nachricht: 1–1000 Zeichen.');
   await db().prepare('INSERT INTO logistics_alliance_posts(id,alliance_id,user_id,text,created) VALUES(?,?,?,?,?)').bind(crypto.randomUUID(),mine.alliance_id,u.id,text,now).run();
+ }else if(action==='acceptOrder'){
+  if(!lead)throw Error('Nur Leitung und Offiziere nehmen Allianz-Aufträge an.');
+  if(await db().prepare("SELECT 1 FROM logistics_alliance_orders WHERE alliance_id=? AND status='active'").bind(mine!.alliance_id).first())throw Error('Es läuft bereits ein Allianz-Auftrag.');
+  const day=(await db().prepare('SELECT day FROM logistics_worlds WHERE id=?').bind(world).first<{day:number}>())?.day||0,n=await db().prepare('SELECT count(*) AS n FROM logistics_alliance_members WHERE alliance_id=?').bind(mine!.alliance_id).first<{n:number}>();
+  const offer=allianceOffers(mine!.alliance_id,day,n?.n||1).find(f=>f.key===String(body.key||''));if(!offer)throw Error('Angebot nicht mehr verfügbar.');
+  const title=`${offer.quantity.toLocaleString('de-DE')} EH ${good(offer.good).name}`;
+  await db().prepare("INSERT INTO logistics_alliance_orders(id,alliance_id,world_id,good,destination_id,destination_name,quantity,delivered,reward,deadline_day,status,created) VALUES(?,?,?,?,?,?,?,0,?,?,'active',?)").bind(mine!.alliance_id+':'+offer.key,mine!.alliance_id,world,offer.good,'',title,offer.quantity,offer.reward,day+offer.days,now).run();
+  await db().prepare('INSERT INTO logistics_alliance_posts(id,alliance_id,user_id,text,created) VALUES(?,?,?,?,?)').bind(crypto.randomUUID(),mine!.alliance_id,u.id,`📦 Allianz-Auftrag angenommen: ${title} in ${offer.days} Tagen an beliebige Kunden liefern.`,now).run();
+ }else if(action==='cancelOrder'){
+  if(mine?.role!=='leader')throw Error('Nur die Leitung kann abbrechen.');await db().prepare("UPDATE logistics_alliance_orders SET status='cancelled' WHERE alliance_id=? AND status='active'").bind(mine.alliance_id).run();
  }else if(action==='settings'){
-  if(mine?.role!=='leader')throw Error('Nur die Leitung ändert die Allianz.');await db().prepare('UPDATE logistics_alliances SET description=?,color=?,open=? WHERE id=?').bind(String(body.description||'').slice(0,500),/^#[0-9a-f]{6}$/i.test(body.color)?body.color:'#4a90c8',body.open?1:0,mine.alliance_id).run();
+  if(mine?.role!=='leader')throw Error('Nur die Leitung ändert die Allianz.');await db().prepare('UPDATE logistics_alliances SET description=?,color=?,open=?,share_storage=? WHERE id=?').bind(String(body.description||'').slice(0,500),/^#[0-9a-f]{6}$/i.test(body.color)?body.color:'#4a90c8',body.open?1:0,body.shareStorage===false?0:1,mine.alliance_id).run();invalidateAllianceCache();
  }else throw Error('Unbekannte Aktion.');
  invalidateAllianceCache();return reply({ok:true});
 }catch(e:any){return reply({error:e.message||'Aktion fehlgeschlagen.'},422);}}
