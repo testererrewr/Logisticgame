@@ -773,5 +773,234 @@
     },
     "fee": 120,
     "yield": 0.95
+  },
+  {
+    "id": "retail-softDrinks",
+    "name": "Erfrischungsgetränke herstellen",
+    "output": "softDrinks",
+    "inputs": {
+      "sugar": 0.15,
+      "water": 0.65,
+      "bottles": 0.2
+    },
+    "fee": 37,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-iceCream",
+    "name": "Speiseeis herstellen",
+    "output": "iceCream",
+    "inputs": {
+      "milk": 0.6,
+      "sugar": 0.3,
+      "packaging": 0.1
+    },
+    "fee": 52,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-frozenPizza",
+    "name": "Tiefkühlpizza herstellen",
+    "output": "frozenPizza",
+    "inputs": {
+      "flour": 0.4,
+      "cheese": 0.3,
+      "tomatoes": 0.2,
+      "packaging": 0.1
+    },
+    "fee": 63,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-sausages",
+    "name": "Wurstwaren herstellen",
+    "output": "sausages",
+    "inputs": {
+      "pork": 0.85,
+      "packaging": 0.15
+    },
+    "fee": 87,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-detergent",
+    "name": "Waschmittel herstellen",
+    "output": "detergent",
+    "inputs": {
+      "chemicals": 0.65,
+      "packaging": 0.35
+    },
+    "fee": 42,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-toiletPaper",
+    "name": "Hygienepapier herstellen",
+    "output": "toiletPaper",
+    "inputs": {
+      "paper": 0.9,
+      "packaging": 0.1
+    },
+    "fee": 26,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-diapers",
+    "name": "Windeln herstellen",
+    "output": "diapers",
+    "inputs": {
+      "cotton": 0.3,
+      "plasticGranules": 0.4,
+      "paper": 0.3
+    },
+    "fee": 75,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-televisions",
+    "name": "Fernseher herstellen",
+    "output": "televisions",
+    "inputs": {
+      "electronics": 0.6,
+      "glass": 0.2,
+      "plasticGranules": 0.2
+    },
+    "fee": 354,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-gameConsoles",
+    "name": "Spielkonsolen herstellen",
+    "output": "gameConsoles",
+    "inputs": {
+      "electronics": 0.7,
+      "plasticGranules": 0.3
+    },
+    "fee": 384,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-ledLamps",
+    "name": "LED-Leuchtmittel herstellen",
+    "output": "ledLamps",
+    "inputs": {
+      "electronics": 0.5,
+      "glass": 0.3,
+      "aluminium": 0.2
+    },
+    "fee": 90,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-insulation",
+    "name": "Dämmstoffe herstellen",
+    "output": "insulation",
+    "inputs": {
+      "plasticGranules": 0.6,
+      "chemicals": 0.4
+    },
+    "fee": 25,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-roofTiles",
+    "name": "Dachziegel herstellen",
+    "output": "roofTiles",
+    "inputs": {
+      "cement": 0.7,
+      "sand": 0.3
+    },
+    "fee": 16,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-steelPipes",
+    "name": "Stahlrohre herstellen",
+    "output": "steelPipes",
+    "inputs": {
+      "steel": 0.95,
+      "packaging": 0.05
+    },
+    "fee": 78,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-cables",
+    "name": "Kabel & Leitungen herstellen",
+    "output": "cables",
+    "inputs": {
+      "copper": 0.7,
+      "plasticGranules": 0.3
+    },
+    "fee": 126,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-bedding",
+    "name": "Bettwaren herstellen",
+    "output": "bedding",
+    "inputs": {
+      "textiles": 0.7,
+      "cotton": 0.3
+    },
+    "fee": 87,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-bags",
+    "name": "Taschen & Koffer herstellen",
+    "output": "bags",
+    "inputs": {
+      "textiles": 0.5,
+      "plasticGranules": 0.5
+    },
+    "fee": 108,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-woodPallets",
+    "name": "Holzpaletten herstellen",
+    "output": "woodPallets",
+    "inputs": {
+      "lumber": 0.95,
+      "steel": 0.05
+    },
+    "fee": 11,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-parquet",
+    "name": "Parkett herstellen",
+    "output": "parquet",
+    "inputs": {
+      "lumber": 0.9,
+      "chemicals": 0.1
+    },
+    "fee": 69,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-bicycles",
+    "name": "Fahrräder herstellen",
+    "output": "bicycles",
+    "inputs": {
+      "aluminium": 0.5,
+      "rubber": 0.2,
+      "steel": 0.3
+    },
+    "fee": 198,
+    "yield": 0.95
+  },
+  {
+    "id": "retail-eBikes",
+    "name": "E-Bikes herstellen",
+    "output": "eBikes",
+    "inputs": {
+      "aluminium": 0.4,
+      "batteries": 0.35,
+      "electronics": 0.25
+    },
+    "fee": 474,
+    "yield": 0.95
   }
 ]

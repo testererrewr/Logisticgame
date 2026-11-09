@@ -1121,21 +1121,19 @@
   "exactModelPhotoAvailable": false
  },
  "tsuneishi-kamsarmax": {
-  "path": "/logistics-vehicles/damen-cf3850.webp",
-  "alt": "Symbolbild – zeigt ein anderes Modell: Damen CF3850 – Referenzfoto der Combi-Freighter-Serie; nicht der konkrete CF5000.",
-  "caption": "Symbolbild (kein Foto dieses Modells verfügbar): Damen CF3850 – Referenzfoto der Combi-Freighter-Serie; nicht der konkrete CF5000.",
-  "depicted": "Baltic Fin 2023-09-16 JDohrn 1.jpg",
-  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Baltic_Fin_2023-09-16_JDohrn_1.jpg",
-  "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/5/56/Baltic_Fin_2023-09-16_JDohrn_1.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
-  "author": "Jens Dohrn",
+  "path": "/logistics-vehicles/tsuneishi-kamsarmax.jpg",
+  "alt": "Pacific Kindness (IMO 9583172) Liverpool 2020",
+  "caption": "Pacific Kindness (IMO 9583172) Liverpool 2020",
+  "depicted": "File:Pacific Kindness (IMO 9583172) Liverpool 2020.jpg",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pacific_Kindness_(IMO_9583172)_Liverpool_2020.jpg",
+  "originalUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4d/Pacific_Kindness_%28IMO_9583172%29_Liverpool_2020.jpg/960px-Pacific_Kindness_%28IMO_9583172%29_Liverpool_2020.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+  "author": "Niels Johannes",
   "attribution": "",
   "license": "CC BY-SA 4.0",
   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
-  "changes": "Auf maximal 640 × 420 px skaliert und als WebP gespeichert.",
-  "bytes": 61184,
-  "match": "symbol",
-  "relatedModelId": "damen-cf3850",
-  "exactModelPhotoAvailable": false
+  "changes": "Vorschaubild 640 px von Wikimedia Commons.",
+  "match": "search",
+  "exactModelPhotoAvailable": true
  },
  "hyundai-mipo-mr-tanker": {
   "path": "/logistics-vehicles/damen-cf3850.webp",

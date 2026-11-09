@@ -151,6 +151,28 @@ I['footwear']=P('M14 66 L18 46 L34 46 Q38 56 52 58 L78 62 Q84 64 82 72 L14 72 Z'
 I['smartphones']=R(32,14,32,68,BLK,6)+R(35,20,26,54,'#4a90c8',2)+C(48,77,2,MET)+R(44,16,8,2,MET,1)
 I['paint']=R(26,34,44,42,'#e9ecef',4,DK,2)+P('M26 34 L70 34 L70 46 Q64 52 58 46 Q52 56 46 46 Q38 52 26 44Z',BLU)+P('M30 34 Q48 18 66 34','none',DK,2.5)
 I['tools']=f'<g transform="rotate(-40 48 50)">'+R(44,20,8,50,BRN2,2,DK,1.5)+R(34,14,28,12,STEEL,2,DK,1.5)+'</g>'+f'<g transform="rotate(40 48 50)">'+R(45,30,6,48,'#c0392b',3)+P('M40 18 Q48 10 56 18 L52 30 L44 30Z',MET,DK,1.5)+'</g>'
+
+I['softDrinks']=bottle(34,'#e74c3c',50)+bottle(50,'#f39c12',46)+R(58,46,16,32,'#3498db',3,DK,1.5)+R(58,52,16,6,WHT)
+I['iceCream']=P('M36 50 L48 82 L60 50 Z','#e0b07a',DK,2)+C(42,44,10,'#f8c8dc',DK,1.5)+C(54,44,10,'#fff3c4',DK,1.5)+C(48,34,10,'#8d5a3b',DK,1.5)
+I['frozenPizza']=R(18,28,60,46,'#2f6fae',5,DK,2)+C(48,51,17,'#f2c14e',DK,1.5)+''.join(C(48+9*math.cos(a),51+9*math.sin(a),3.5,RED) for a in [i*math.pi/3 for i in range(6)])+R(18,28,60,8,'#9fd3ff',3)
+I['sausages']=''.join(f'<g transform="rotate(-20 48 {40+i*14})">'+R(20,34+i*14,56,11,'#b5523b',5.5,DK,1.5)+'</g>' for i in range(3))
+I['detergent']=R(26,26,44,50,'#3fb6a8',6,DK,2)+R(54,18,10,10,DK,2)+R(32,40,32,18,WHT,3)+C(42,49,4,'#9fd3ff')+C(52,47,3,'#9fd3ff')
+I['toiletPaper']=E(40,32,14,6,WHT,MET,1.5)+R(26,32,28,40,WHT)+L(26,32,26,72,MET,1.5)+L(54,32,54,72,MET,1.5)+E(40,72,14,6,'#e9edf0',MET,1.5)+E(40,32,5,2,MET)+P('M54 60 L74 64 L72 78 L54 72Z',WHT,MET,1.5)
+I['diapers']=P('M20 34 Q48 44 76 34 L72 56 Q60 76 48 76 Q36 76 24 56 Z',WHT,MET,2)+R(26,36,10,8,'#9fd3ff',2)+R(60,36,10,8,'#9fd3ff',2)+C(48,58,4,'#f8c8dc')
+I['televisions']=R(14,24,68,42,DK,4)+R(18,28,60,34,'#2f6fae',2)+P('M22 56 L40 40 L52 50 L62 42 L74 56Z','#5dade2')+R(42,66,12,8,MET)+R(32,74,32,4,MET,2)
+I['gameConsoles']=P('M20 44 Q20 32 34 32 L62 32 Q76 32 76 44 L80 64 Q82 74 72 72 L62 62 L34 62 L24 72 Q14 74 16 64 Z','#37474f',DK,2)+L(30,46,38,46,WHT,3)+L(34,42,34,50,WHT,3)+C(62,44,3,RED)+C(68,50,3,GRN)
+I['ledLamps']=P('M34 50 Q30 22 48 20 Q66 22 62 50 L58 60 L38 60 Z','#fff3c4',DK,2)+R(38,60,20,10,MET,2,DK,1.5)+R(41,70,14,6,STEEL,2)+L(48,34,48,50,ORG,2)
+I['insulation']=''.join(R(18,30+i*14,60,12,'#f6c96a' if i%2==0 else '#f2b84b',3,DK,1.5) for i in range(3))+''.join(P(f'M{22+j*10} {36+i*14} q3 -3 6 0','none','#c9922a',1.5) for i in range(3) for j in range(5))
+I['roofTiles']=''.join(P(f'M{16+c*22} {34+r*14} q11 -10 22 0 l0 12 q-11 -10 -22 0 z','#c0392b' if (r+c)%2 else '#d35445',DK,1.5) for r in range(3) for c in range(3))
+I['steelPipes']=''.join(R(16,28+i*12,60,10,STEEL,5,DK,1.5)+E(76,33+i*12,4,5,MET2,DK,1) for i in range(4))
+I['cables']=C(44,52,24,'#e67e22',DK,2)+C(44,52,16,'#d35400')+C(44,52,7,'#eef1ec',DK,1.5)+P('M68 52 Q82 52 82 66','none',DK,4)
+I['bedding']=R(16,40,64,30,'#8fb8de',6,DK,2)+R(20,30,24,16,WHT,6,DK,1.5)+P('M16 52 Q48 46 80 52','none','#5d8fbf',2)
+I['bags']=R(26,38,44,36,'#8d5a3b',6,DK,2)+P('M38 38 L38 28 Q48 20 58 28 L58 38','none',DK,3)+R(26,50,44,4,'#6b3f26')+R(44,48,8,8,YEL,1)
+I['woodPallets']=''.join(R(16,34+i*16,64,6,BRN2,1,DK,1) for i in range(3))+''.join(R(18+j*26,40+i*16,10,10,BRN,1,DK,1) for i in range(2) for j in range(3))
+I['parquet']=''.join(R(16+(r%2)*12+c*24,26+r*12,22,10,'#c58b52' if (r+c)%2 else '#a96f3c',1,DK,1) for r in range(4) for c in range(3) if 16+(r%2)*12+c*24<70)
+I['bicycles']=C(30,56,14,'none',DK,3)+C(66,56,14,'none',DK,3)+P('M30 56 L42 38 L58 38 L66 56 M42 38 L48 56 L58 38 M44 32 L52 32','none',RED,3)+P('M58 38 L62 30 L68 30','none',DK,2.5)
+I['eBikes']=C(30,58,14,'none',DK,3)+C(66,58,14,'none',DK,3)+P('M30 58 L42 40 L58 40 L66 58 M42 40 L48 58 L58 40','none','#2f6fae',3)+R(40,44,14,8,GRN,2,DK,1)+P('M47 45 L44 49 L47 49 L45 52 L50 47 L47 47Z',YEL)
+
 for k,v in I.items():
     open(os.path.join(OUT,k+'.svg'),'w').write(wrap(v))
 json.dump(sorted(I),open(os.path.join(OUT,'_list.json'),'w'))

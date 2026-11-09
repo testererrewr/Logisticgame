@@ -549,5 +549,165 @@
     "icon": "🔨",
     "purchase": 1800,
     "sale": 2700
+  },
+  {
+    "id": "softDrinks",
+    "name": "Erfrischungsgetränke",
+    "type": "general",
+    "icon": "🥤",
+    "purchase": 380,
+    "sale": 620
+  },
+  {
+    "id": "iceCream",
+    "name": "Speiseeis",
+    "type": "chilled",
+    "icon": "🍦",
+    "purchase": 520,
+    "sale": 860
+  },
+  {
+    "id": "frozenPizza",
+    "name": "Tiefkühlpizza",
+    "type": "chilled",
+    "icon": "🍕",
+    "purchase": 640,
+    "sale": 1050
+  },
+  {
+    "id": "sausages",
+    "name": "Wurstwaren",
+    "type": "chilled",
+    "icon": "🌭",
+    "purchase": 900,
+    "sale": 1450
+  },
+  {
+    "id": "detergent",
+    "name": "Waschmittel",
+    "type": "general",
+    "icon": "🧴",
+    "purchase": 420,
+    "sale": 700
+  },
+  {
+    "id": "toiletPaper",
+    "name": "Hygienepapier",
+    "type": "general",
+    "icon": "🧻",
+    "purchase": 260,
+    "sale": 430
+  },
+  {
+    "id": "diapers",
+    "name": "Windeln",
+    "type": "general",
+    "icon": "👶",
+    "purchase": 780,
+    "sale": 1250
+  },
+  {
+    "id": "televisions",
+    "name": "Fernseher",
+    "type": "container",
+    "icon": "📺",
+    "purchase": 3800,
+    "sale": 5900
+  },
+  {
+    "id": "gameConsoles",
+    "name": "Spielkonsolen",
+    "type": "container",
+    "icon": "🎮",
+    "purchase": 4200,
+    "sale": 6400
+  },
+  {
+    "id": "ledLamps",
+    "name": "LED-Leuchtmittel",
+    "type": "general",
+    "icon": "💡",
+    "purchase": 900,
+    "sale": 1500
+  },
+  {
+    "id": "insulation",
+    "name": "Dämmstoffe",
+    "type": "general",
+    "icon": "🧱",
+    "purchase": 240,
+    "sale": 410
+  },
+  {
+    "id": "roofTiles",
+    "name": "Dachziegel",
+    "type": "general",
+    "icon": "🏠",
+    "purchase": 150,
+    "sale": 260
+  },
+  {
+    "id": "steelPipes",
+    "name": "Stahlrohre",
+    "type": "heavy",
+    "icon": "🔩",
+    "purchase": 820,
+    "sale": 1300
+  },
+  {
+    "id": "cables",
+    "name": "Kabel & Leitungen",
+    "type": "general",
+    "icon": "🔌",
+    "purchase": 1300,
+    "sale": 2100
+  },
+  {
+    "id": "bedding",
+    "name": "Bettwaren",
+    "type": "general",
+    "icon": "🛏️",
+    "purchase": 900,
+    "sale": 1450
+  },
+  {
+    "id": "bags",
+    "name": "Taschen & Koffer",
+    "type": "general",
+    "icon": "👜",
+    "purchase": 1100,
+    "sale": 1800
+  },
+  {
+    "id": "woodPallets",
+    "name": "Holzpaletten",
+    "type": "general",
+    "icon": "🪵",
+    "purchase": 110,
+    "sale": 190
+  },
+  {
+    "id": "parquet",
+    "name": "Parkett",
+    "type": "general",
+    "icon": "🟫",
+    "purchase": 700,
+    "sale": 1150
+  },
+  {
+    "id": "bicycles",
+    "name": "Fahrräder",
+    "type": "general",
+    "icon": "🚲",
+    "purchase": 2100,
+    "sale": 3300
+  },
+  {
+    "id": "eBikes",
+    "name": "E-Bikes",
+    "type": "container",
+    "icon": "🚲",
+    "purchase": 5200,
+    "sale": 7900
   }
 ]

@@ -12,10 +12,10 @@ export interface Incident {id:string;vehicleId:string;day:number;level:DamageLev
 export interface ServiceJob {stage:'requested'|'toDepot'|'servicing';when:'now'|'afterShift';depotId?:string;untilDay?:number;resume?:{lineId?:string;returnLineId?:string;onReturnRoute?:boolean;nextStop:number}}
 
 const DAMAGES:Record<DamageLevel,{names:string[];options:BreakdownOption[];repair:number;towHours:number;mobileHours:number}>={
- minor:{names:['Reifenpanne','Elektrikstörung','Druckluftleck','Defekte Lichtanlage'],options:['tow','mobile','continue'],repair:480,towHours:3,mobileHours:1.5},
- medium:{names:['Bremsdefekt','Kühlsystem überhitzt','Turbolader-Störung','AdBlue-System defekt'],options:['tow','mobile'],repair:2300,towHours:8,mobileHours:2.5},
- major:{names:['Motorschaden','Getriebeschaden','Achsbruch'],options:['tow'],repair:9800,towHours:24,mobileHours:0},
- total:{names:['Unfall mit Totalschaden','Fahrzeugbrand'],options:[],repair:0,towHours:0,mobileHours:0},
+ minor:{names:['Reifenpanne','Elektrikstörung','Druckluftleck','Defekte Lichtanlage','Leichter Unfall (Blechschaden)'],options:['tow','mobile','continue'],repair:480,towHours:3,mobileHours:1.5},
+ medium:{names:['Bremsdefekt','Kühlsystem überhitzt','Turbolader-Störung','AdBlue-System defekt','Unfall mit Sachschaden'],options:['tow','mobile'],repair:2300,towHours:8,mobileHours:2.5},
+ major:{names:['Motorschaden','Getriebeschaden','Achsbruch','Schwerer Unfall'],options:['tow'],repair:9800,towHours:24,mobileHours:0},
+ total:{names:['Unfall mit Totalschaden','Fahrzeugbrand','Schwerer Unfall – Zugmaschine zerstört'],options:[],repair:0,towHours:0,mobileHours:0},
 };
 export const OPTION_NAMES:Record<BreakdownOption,string>={tow:'Abschleppen',mobile:'Mobile Pannenhilfe vor Ort',continue:'Weiterfahren bis Tagesende'};
 export const POLICY_NAMES:Record<BreakdownPolicy,string>={ask:'Jedes Mal fragen',tow:'Immer abschleppen',mobile:'Mobile Pannenhilfe vor Ort',continue:'Weiterfahren bis Tagesende'};
@@ -46,7 +46,7 @@ function createIncident(s:State,v:Vehicle,level:DamageLevel){
  if(d.options.includes('tow'))costs.tow=round2(towCost(v,km)+repair*1.1);
  if(d.options.includes('mobile'))costs.mobile=round2(mobileCost(v,km)+repair*.8);
  if(d.options.includes('continue'))costs.continue=round2(repair*.6);
- const incident:Incident={id:'inc-'+v.id+'-'+Math.floor(s.day*1440),vehicleId:v.id,day:s.day,level,title:(level==='total'?'Totalverlust: ':'Panne: ')+name,text:level==='total'?`${v.name||m.name} ist nicht mehr fahrbereit. Die Ladung ist gesichert. Wähle ein Ersatzfahrzeug, das Ladung und Linie übernimmt.`:`${v.name||m.name} steht mit ${name} ${point?'unterwegs':'am Standort'}. Nächstes Depot: ${depot?.name||'keines'} (${Math.round(km)} km).`,options:d.options,point,depotId:depot?.id,depotKm:round2(km),costs};
+ const accident=/Unfall/.test(name);const incident:Incident={id:'inc-'+v.id+'-'+Math.floor(s.day*1440),vehicleId:v.id,day:s.day,level,title:level==='total'?'Totalverlust: '+name:accident?name:'Panne: '+name,text:level==='total'?`${v.name||m.name} ist nicht mehr fahrbereit. Die Ladung ist gesichert. Wähle ein Ersatzfahrzeug, das Ladung und Linie übernimmt.`:`${v.name||m.name} steht mit ${name} ${point?'unterwegs':'am Standort'}. Nächstes Depot: ${depot?.name||'keines'} (${Math.round(km)} km).`,options:d.options,point,depotId:depot?.id,depotKm:round2(km),costs};
  (s.incidents??=[]).push(incident);if(s.incidents.length>200)s.incidents=s.incidents.filter(i=>!i.resolved||!i.seen).slice(-200);
  v.breakdown={incidentId:incident.id,level,stage:'waiting',since:s.day};v.restReason=incident.title;
  log(s,`${incident.title} · ${v.name||m.name}`,'warn');
@@ -71,18 +71,22 @@ export function resolveIncident(s:State,incidentId:string,choice:{option?:Breakd
  if(incident.level==='total'){
   if(!choice.replacementId)throw Error('Bei Totalverlust ein Ersatzfahrzeug wählen (oder „ohne Ersatz“).');
   const cargo=vehicleCargo(v),from=v.currentLeg?.fromId||v.locationId,target=s.sites.find(p=>p.id===from)||s.sites.find(p=>p.id===incident.depotId);
-  let replacement:Vehicle|undefined;
-  if(choice.replacementId==='buy'){const depot=s.sites.find(p=>p.id===incident.depotId)||s.sites.find(p=>p.id===v.homeDepotId);replacement=purchaseVehicle(s,m.id,v.trailerId,depot?.id,v.wagons,v.cooling);}
+  const semi=m.attachment==='semi'&&!!v.trailerId,unit=semi?(v.trailerUnit||{id:'tr-'+v.id,specId:v.trailerId!,odometerKm:v.odometerKm||0,transportedEh:v.transportedEh||0,purchasedAt:v.purchasedAt||Date.now()}):undefined;
+  let replacement:Vehicle|undefined,trailerNote='';
+  if(choice.replacementId==='buy'){const depot=s.sites.find(p=>p.id===incident.depotId)||s.sites.find(p=>p.id===v.homeDepotId);replacement=purchaseVehicle(s,m.id,semi?undefined:v.trailerId,depot?.id,v.wagons,v.cooling);}
   else if(choice.replacementId&&choice.replacementId!=='none'){replacement=s.vehicles.find(x=>x.id===choice.replacementId&&x.id!==v.id);if(!replacement||replacement.wrecked||replacement.breakdown||replacement.status!=='idle'||spec(replacement).mode!==m.mode)throw Error('Ein freies, fahrbereites Fahrzeug derselben Art wählen.');if(replacement.lineId||vehicleCargo(replacement).length)throw Error('Das Ersatzfahrzeug muss leer und ohne Linie sein.');}
   const recovery=charge(s,towCost(v,incident.depotKm)+250,'Pannen & Reparaturen');
   if(replacement){
    replacement.otherCargo=cargo.slice(1);replacement.cargo=cargo[0];
+   if(unit){const rs=spec(replacement);if(rs.attachment==='semi'&&!replacement.trailerId){const {locationId,...attached}=unit as typeof unit&{locationId?:string};void locationId;replacement.trailerId=unit.specId;replacement.trailerUnit=attached;replacement.trailerDetached=undefined;trailerNote=' · Auflieger unbeschädigt angehängt';}else if(incident.depotId){(s.trailers??=[]).push({...unit,locationId:incident.depotId});trailerNote=' · unbeschädigter Auflieger im Depot abgestellt';}}
    if(target)replacement.locationId=target.id;replacement.status='idle';replacement.lineId=v.lineId;replacement.returnLineId=v.returnLineId;replacement.onReturnRoute=v.onReturnRoute;replacement.nextStop=v.nextStop;replacement.containerOrderIds=v.containerOrderIds;
-   incident.resolved=`Ersatz: ${replacement.name||spec(replacement).name} übernimmt Ladung und Linie · Bergung ${recovery.toLocaleString('de-DE')} €`;
+   incident.resolved=`Ersatz: ${replacement.name||spec(replacement).name} übernimmt Ladung und Linie${trailerNote} · Bergung ${recovery.toLocaleString('de-DE')} €`;
   }else{
    const depot=s.sites.find(p=>p.id===incident.depotId);if(depot){s.inventory[depot.id]??={};for(const c of cargo){s.inventory[depot.id][c.good]=round2((s.inventory[depot.id][c.good]||0)+c.quantity);if(c.orderId){s.consignments??={};s.consignments[depot.id]??={};s.consignments[depot.id][c.orderId]=round2((s.consignments[depot.id][c.orderId]||0)+c.quantity);}}}
-   incident.resolved=`Ohne Ersatz · Ladung ins Depot ${depot?.name||''} geborgen · ${recovery.toLocaleString('de-DE')} €`;
+   if(unit&&depot)(s.trailers??=[]).push({...unit,locationId:depot.id});
+   incident.resolved=`Ohne Ersatz · Ladung${unit?' und unbeschädigter Auflieger':''} ins Depot ${depot?.name||''} geborgen · ${recovery.toLocaleString('de-DE')} €`;
   }
+  if(unit){v.trailerId=undefined;v.trailerUnit=undefined;v.trailerDetached=true;}
   v.cargo=undefined;v.otherCargo=[];v.wrecked=true;v.breakdown=undefined;v.lineId=undefined;v.returnLineId=undefined;v.onReturnRoute=false;v.pendingLineId=undefined;v.status='idle';v.currentLeg=undefined;v.currentStop=undefined;v.targetId=undefined;v.etaDay=undefined;v.departDay=undefined;v.service=undefined;v.restReason='Totalschaden – nur noch an den Händler verkaufbar';
   if(incident.depotId)v.locationId=incident.depotId;
   log(s,`${label}: ${incident.resolved}`,'warn');return incident;

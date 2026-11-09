@@ -5,13 +5,13 @@ export type ModeGroup='road'|'rail'|'ship'|'air';
 export const MODE_GROUPS:{id:ModeGroup;name:string}[]=[{id:'road',name:'LKW & Transporter'},{id:'rail',name:'Züge'},{id:'ship',name:'Schiffe'},{id:'air',name:'Flugzeuge'}];
 export const DEFAULT_START_CASH=5500000;
 export interface WorldRegion {kind:'world'|'continents'|'countries';values:string[]}
-export interface WorldSettings {startCash:number;modes:ModeGroup[];region:WorldRegion;maintenance:boolean}
+export interface WorldSettings {startCash:number;modes:ModeGroup[];region:WorldRegion;maintenance:boolean;fuel:boolean}
 type RegionData={continents:string[];countries:Record<string,{continents:string[];bbox:[number,number,number,number]}>};
 const data=regions as unknown as RegionData;
 export const CONTINENTS=data.continents;
 export const COUNTRY_NAMES=Object.keys(data.countries).sort((a,b)=>a.localeCompare(b,'de'));
 export const countriesOfContinent=(c:string)=>COUNTRY_NAMES.filter(n=>data.countries[n].continents.includes(c));
-export const DEFAULT_SETTINGS:WorldSettings={startCash:DEFAULT_START_CASH,modes:['road','rail','ship','air'],region:{kind:'world',values:[]},maintenance:true};
+export const DEFAULT_SETTINGS:WorldSettings={startCash:DEFAULT_START_CASH,modes:['road','rail','ship','air'],region:{kind:'world',values:[]},maintenance:true,fuel:true};
 
 export function modeGroup(mode:Mode|string):ModeGroup{return mode==='van'||mode==='truck'?'road':mode==='rail'?'rail':mode==='ship'?'ship':'air';}
 
@@ -24,7 +24,7 @@ export function parseSettings(raw:unknown):WorldSettings{
  const kind=['world','continents','countries'].includes(v.region?.kind)?v.region.kind:'world';
  const pool=kind==='continents'?CONTINENTS:COUNTRY_NAMES;
  const values=kind==='world'||!Array.isArray(v.region?.values)?[]:[...new Set(v.region.values.filter((x:unknown)=>typeof x==='string'&&pool.includes(x)))] as string[];
- return {startCash,modes:modes.length?modes:DEFAULT_SETTINGS.modes,region:kind!=='world'&&values.length?{kind,values}:{kind:'world',values:[]},maintenance:v.maintenance!==false};
+ return {startCash,modes:modes.length?modes:DEFAULT_SETTINGS.modes,region:kind!=='world'&&values.length?{kind,values}:{kind:'world',values:[]},maintenance:v.maintenance!==false,fuel:v.fuel!==false};
 }
 
 export function validateSettings(raw:unknown):WorldSettings{
@@ -46,4 +46,4 @@ export function regionBounds(s:WorldSettings):[number,number,number,number]|null
  return b;
 }
 export function regionLabel(s:WorldSettings){if(s.region.kind==='world')return 'Ganze Welt';const list=s.region.values;return (s.region.kind==='continents'?(list.length===1?'Kontinent: ':'Kontinente: '):(list.length===1?'Land: ':'Länder: '))+(list.length>6?list.slice(0,6).join(', ')+' … (+'+(list.length-6)+')':list.join(', '));}
-export function settingsSummary(s:WorldSettings){return {startCash:s.startCash,modes:s.modes,modeNames:MODE_GROUPS.filter(m=>s.modes.includes(m.id)).map(m=>m.name),region:s.region,regionLabel:regionLabel(s),bounds:regionBounds(s),maintenance:s.maintenance};}
+export function settingsSummary(s:WorldSettings){return {startCash:s.startCash,modes:s.modes,modeNames:MODE_GROUPS.filter(m=>s.modes.includes(m.id)).map(m=>m.name),region:s.region,regionLabel:regionLabel(s),bounds:regionBounds(s),maintenance:s.maintenance,fuel:s.fuel};}
