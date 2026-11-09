@@ -1,4 +1,5 @@
 import {sellVehicle,sellFleet,sellTrailers} from './vehicle-sales';
+import {requestService,cancelService,resolveIncident,ackIncidents,setBreakdownPolicy,type BreakdownOption,type BreakdownPolicy} from './maintenance';
 import type {UnloadPlanEntry} from './engine';
 import {requestManualDeparture} from './engine';
 import {queueTerminalTransfer} from './terminal-transfer';
@@ -10,6 +11,11 @@ export type OnlineAction=
  |{type:'sellVehicle';vehicleId:string}
  |{type:'sellFleet';vehicleIds:string[]}
  |{type:'assignDepot';vehicleIds:string[];depotId:string}
+ |{type:'requestService';vehicleIds:string[];when:'now'|'afterShift'}
+ |{type:'cancelService';vehicleIds:string[]}
+ |{type:'resolveIncident';incidentId:string;option?:BreakdownOption;replacementId?:string}
+ |{type:'ackIncidents';incidentIds:string[]}
+ |{type:'setBreakdownPolicy';policy:BreakdownPolicy}
  |{type:'buyTrailers';specId:string;depotId:string;count:number}
  |{type:'detachTrailer';vehicleId:string}
  |{type:'attachTrailer';vehicleId:string;trailerUnitId:string}
@@ -61,6 +67,11 @@ export function applyAction(state:State,command:OnlineAction,verifiedSites?:Site
  case 'manualGo':requestManualDeparture(s,command.vehicleId,command.goods,command.orderIds,command.sourceIds,command.unload);break;
  case 'sellFleet':sellFleet(s,command.vehicleIds);break;
  case 'assignDepot':assignDepot(s,command.vehicleIds,command.depotId);break;
+ case 'requestService':requestService(s,command.vehicleIds,command.when);break;
+ case 'cancelService':cancelService(s,command.vehicleIds);break;
+ case 'resolveIncident':resolveIncident(s,command.incidentId,{option:command.option,replacementId:command.replacementId});break;
+ case 'ackIncidents':ackIncidents(s,command.incidentIds);break;
+ case 'setBreakdownPolicy':setBreakdownPolicy(s,command.policy);break;
  case 'buyTrailers':purchaseTrailers(s,command.specId,command.depotId,command.count);break;
  case 'detachTrailer':detachTrailer(s,command.vehicleId);break;
  case 'attachTrailer':attachTrailer(s,command.vehicleId,command.trailerUnitId);break;

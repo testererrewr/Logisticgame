@@ -12,7 +12,7 @@ import {ensureContainerDay,acceptContainerOrder,factoryPartner,type ContainerOff
 import {registryByIds} from '../../../../lib/logistics/partner-registry';
 import {NextRequest,NextResponse} from 'next/server';
 import {env} from 'cloudflare:workers';
-import {parseSettings,settingsSummary,modeGroup,MODE_GROUPS} from '../../../../lib/logistics/world-settings';
+import {parseSettings,settingsSummary,modeGroup,buildingModeGroup,MODE_GROUPS} from '../../../../lib/logistics/world-settings';
 import {ensureWorldSettingsColumn,assertInRegion} from '../../../../lib/logistics/world-region-server';
 import {MAX_FLEET_VEHICLES,GOODS,VEHICLES,depotFor,profile,stock,normalizeFreightState,routePartners,mergeSites,stepSharedWorld,type Coords,type GoodId,type Site,type State,type Track} from '../../../../lib/logistics/engine.ts';
 import {applyAction,type OnlineAction,type OnlineCommand} from '../../../../lib/logistics/online-actions.ts';
@@ -80,6 +80,7 @@ async function settleWorldNow(id:string,budgetMs:number):Promise<World>{
   const rules=await readPartnerRules(),market={...newMarket(world.day),...JSON.parse(world.market||'{}')};
   const states=new Map(await Promise.all(rows.map(async r=>[r.user_id,applyStateRules(normalizeFreightState(await decodeCompany(r.state)),rules)] as [string,State])));
   const statements:D1PreparedStatement[]=[];
+  {const off=!parseSettings(world.settings).maintenance;for(const st of states.values())st.maintenanceOff=off;}
   for(const row of rows){const state=states.get(row.user_id)!;state.borrowedTracks=permissions.filter(p=>p.grantee_id===row.user_id).flatMap(p=>states.get(p.owner_id)?.tracks||[]);}
   if(attempt===0)for(const state of states.values())await prepareVehicleRoads(state);
   const advanced=stepSharedWorld(states,next,market);
@@ -115,7 +116,7 @@ async function snapshot(u:User,worldId:string,geo=''){
  ]);
  const world=results[0].results[0] as unknown as World,row=results[1].results[0] as unknown as Company;
  if(!row)throw Error('Bitte zuerst dieser Welt beitreten.');
- const rules=await readPartnerRules();const state=applyStateRules(normalizeFreightState(await decodeCompany(row.state)),rules);state.borrowedTracks=await borrowedTracks(worldId,u.id);
+ const rules=await readPartnerRules();const state=applyStateRules(normalizeFreightState(await decodeCompany(row.state)),rules);state.borrowedTracks=await borrowedTracks(worldId,u.id);state.maintenanceOff=!parseSettings(world.settings).maintenance;
  const geometrySig=geometrySignature(state),geometryOmitted=!!geo&&geo===geometrySig;if(geometryOmitted){delete state.roadRoutes;for(const l of state.lines)delete l.legs;}
  return {geometrySig,geometryOmitted,state,partnerRules:rules,market:{...newMarket(world.day),...JSON.parse(world.market||'{}')},companyName:row.name||state.companyName||u.name,revision:row.revision,user:u.name,userId:u.id,role:u.role,serverNow:Date.now(),world:{catchUpHours:Math.round(catchUpHours(world)*10)/10,catchUpSeconds:catchUpSeconds(world),revision:world.revision,id:world.id,name:world.name,day:world.day,timeScale:world.time_scale,simTime:world.created+(world.day-1)*86400000,status:world.status,tickMs:worldTickMs(world),settings:settingsSummary(parseSettings(world.settings))},companies:results[2].results,offers:results[3].results.map((raw:unknown)=>{const o=raw as Offer;return ({...o,quantity:Number(o.quantity)*(o.quantity_unit==='EH'?1:10)});}),permissions:results[4].results};
 }
@@ -164,6 +165,8 @@ async function enforceWorldRules(cmd:OnlineCommand,state:State,cfg:ReturnType<ty
  const c:any=cmd;
  if(c.type==='buy'||c.type==='buyFleet'){const m=VEHICLES.find(v=>v.id===c.modelId);if(m&&!cfg.modes.includes(modeGroup(m.mode)))throw Error((MODE_GROUPS.find(g=>g.id===modeGroup(m.mode))?.name||'Diese Fahrzeugart')+' sind in dieser Welt nicht erlaubt.');}
  if(c.type==='line'&&c.mode&&!cfg.modes.includes(modeGroup(c.mode)))throw Error('Diese Verkehrsart ist in dieser Welt nicht erlaubt.');
+ if(c.type==='build'){const g=buildingModeGroup(c.kind);if(g&&!cfg.modes.includes(g))throw Error('Dieses Gebäude gehört zu einer Verkehrsart, die in dieser Welt nicht erlaubt ist.');}
+ if((c.type==='track'||c.type==='trackPlan')&&!cfg.modes.includes('rail'))throw Error('Züge sind in dieser Welt nicht erlaubt – keine Gleise.');
  if(cfg.region.kind==='world')return;
  const pts:{lat:number;lon:number;name?:string}[]=[];
  if(c.type==='build'&&Array.isArray(c.point))pts.push({lat:c.point[0],lon:c.point[1]});
@@ -196,7 +199,7 @@ export async function POST(req:NextRequest){try{
  if(row.last_action===body.requestId)return reply({...await snapshot(u,id),duplicate:true});
  if(row.revision!==body.revision)return reply({...await snapshot(u,id),error:'Die Welt wurde inzwischen aktualisiert. Bitte erneut versuchen.'},409);
  const rules=await readPartnerRules();const now=Date.now(),state=applyStateRules(normalizeFreightState(await decodeCompany(row.state)),rules);
- await enforceWorldRules(cmd as OnlineCommand,state,parseSettings(world.settings),id);
+ state.maintenanceOff=!parseSettings(world.settings).maintenance;await enforceWorldRules(cmd as OnlineCommand,state,parseSettings(world.settings),id);
  const update=async(r:Company,s:State)=>db().prepare('UPDATE logistics_world_companies SET state=?,revision=revision+1,last_action=?,updated=? WHERE world_id=? AND user_id=?').bind(await encodeCompany(s),body.requestId,now,id,r.user_id);
  const statements:D1PreparedStatement[]=[];let checked=[row];
  if(cmd.type==='offerUsedVehicle'){

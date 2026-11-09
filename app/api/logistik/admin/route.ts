@@ -31,6 +31,12 @@ export async function POST(req:NextRequest){try{
   const scale=body.timeScale===undefined?1:Number(body.timeScale);if(!Number.isFinite(scale)||scale<.1||scale>1440)throw Error('Zeitfaktor: 0,1–1440.');
   const settings=validateSettings(body.settings||{});await ensureWorldSettingsColumn();
   const id=crypto.randomUUID();await db().prepare("INSERT INTO logistics_worlds(id,name,description,owner_id,day,last_tick,tick_ms,time_scale,status,created,settings) VALUES(?,?,?,?,1,?,?,?,'draft',?,?)").bind(id,name,String(body.description||'Gemeinsame Online-Welt').slice(0,300),u.id,now,86400000/scale,scale,now,JSON.stringify(settings)).run();result={worldId:id};
+ }else if(body.action==='deleteWorld'){
+  const id=String(body.worldId||''),w=await db().prepare('SELECT id,name FROM logistics_worlds WHERE id=?').bind(id).first<{id:string;name:string}>();if(!w)throw Error('Welt nicht gefunden.');
+  if(String(body.confirmName||'').trim()!==w.name)throw Error('Zum Löschen den Weltnamen exakt eingeben.');
+  const like=(prefix:string)=>prefix+id+':%';
+  await db().batch([db().prepare('DELETE FROM logistics_world_companies WHERE world_id=?').bind(id),db().prepare('DELETE FROM logistics_world_offers WHERE world_id=?').bind(id),db().prepare('DELETE FROM logistics_world_permissions WHERE world_id=?').bind(id),db().prepare('DELETE FROM logistics_container_offers WHERE world_id=?').bind(id),db().prepare('DELETE FROM logistics_runtime WHERE id LIKE ? OR id LIKE ? OR id LIKE ?').bind(like('used-vehicle-v20:'),like('container-day-v16:'),like('container-quantity-v14:')),db().prepare('DELETE FROM logistics_worlds WHERE id=?').bind(id)]);
+  result={deleted:id};
  }else if(body.action==='worldSettings'){
   const id=String(body.worldId||''),name=String(body.name||'').trim(),scale=Number(body.timeScale),status=String(body.status||'running');
   if(name.length<3||name.length>60||!Number.isFinite(scale)||scale<.1||scale>1440||!['draft','running','paused','stopped'].includes(status))throw Error('Ungültige Welteinstellungen.');
