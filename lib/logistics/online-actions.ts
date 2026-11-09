@@ -5,7 +5,7 @@ import {requestManualDeparture} from './engine';
 import {queueTerminalTransfer} from './terminal-transfer';
 import {addTrackPlan,setVehicleContainerOrders,MAX_FLEET_VEHICLES} from './engine.ts';
 import {railRoute} from './routing.ts';
-import {purchaseTrailers,detachTrailer,attachTrailer,demolishBuilding,assignDepot,setReturnLine,updateLineStops,assignFleet,updateLine,renameVehicle,type Line} from './engine.ts';
+import {buyoutLease,returnLease,purchaseTrailers,detachTrailer,attachTrailer,demolishBuilding,assignDepot,setReturnLine,updateLineStops,assignFleet,updateLine,renameVehicle,type Line} from './engine.ts';
 import {newState,mergeSites,signSupply,signProcess,signSale,signHaulage,build,addTrack,purchaseVehicle,purchaseFleet,warehouseUpgrade,renameBuilding,cancelContract,configureTrailer,configureTrain,createLine,assignVehicle,cancelLine,stepDay,checkIntegrity, type State,type Site,type Coords,type BuildingKind,type GoodId,type VehicleModelId,type WagonSet,type Mode,type Stop,type RouteLeg} from './engine.ts';
 export type OnlineAction=
  |{type:'sellVehicle';vehicleId:string}
@@ -34,7 +34,9 @@ export type OnlineAction=
  |{type:'buy';modelId:VehicleModelId;trailerId?:string}
  |{type:'cancelContract';contractId:string}
  |{type:'renameBuilding';siteId:string;name:string}
- |{type:'buyFleet';cooling?:boolean;modelId:VehicleModelId;trailerId?:string;depotId:string;count:number;wagons?:WagonSet[]}
+ |{type:'buyoutLease';vehicleId:string}
+ |{type:'returnLease';vehicleId:string}
+ |{type:'buyFleet';lease?:boolean;cooling?:boolean;modelId:VehicleModelId;trailerId?:string;depotId:string;count:number;wagons?:WagonSet[]}
  |{type:'upgradeWarehouse';siteId:string;confirmed:boolean}
  |{type:'trailer';vehicleId:string;trailerId:string}
  |{type:'wagons';vehicleId:string;wagons:WagonSet[]}
@@ -67,6 +69,8 @@ export function applyAction(state:State,command:OnlineAction,verifiedSites?:Site
  case 'manualGo':requestManualDeparture(s,command.vehicleId,command.goods,command.orderIds,command.sourceIds,command.unload);break;
  case 'sellFleet':sellFleet(s,command.vehicleIds);break;
  case 'assignDepot':assignDepot(s,command.vehicleIds,command.depotId);break;
+ case 'buyoutLease':buyoutLease(s,command.vehicleId);break;
+ case 'returnLease':returnLease(s,command.vehicleId);break;
  case 'requestService':requestService(s,command.vehicleIds,command.when);break;
  case 'cancelService':cancelService(s,command.vehicleIds);break;
  case 'resolveIncident':resolveIncident(s,command.incidentId,{option:command.option,replacementId:command.replacementId});break;

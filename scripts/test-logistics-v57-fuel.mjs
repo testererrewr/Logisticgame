@@ -10,3 +10,6 @@ const cat=Object.values(on.finance.days).reduce((n,d)=>n+(d.expenseCategories['T
 assert.equal(off.vehicles[0].fuelCost,undefined,'ohne Treibstoffkosten in Welten mit ausgeschaltetem Treibstoff');
 assert.ok(energyPrice('diesel',1)>1&&energyPrice('diesel',1)<2.2);
 console.log('PASS v57 Treibstoff: Verbrauch je km nach Modell und Beladung, tägliche Energiepreise, Buchung unter Treibstoff & Energie, abschaltbar je Welt.');
+{const {purchaseFleet,buyoutLease,returnLease,stepTime:st,newState:ns,build:bd,LEASE_MONTHLY_RATE}=await import('../lib/logistics/engine.ts');const s=ns();s.cash=1e6;const d=bd(s,'depot',47,15);const before=s.cash;const [v]=purchaseFleet(s,{modelId:'truck',trailerId:'krone-profi',depotId:d.id,count:1,lease:true});
+ assert.ok(v.lease&&before-s.cash<v.lease.price*.05,'Leasing: nur erste Rate');let x=s;for(let i=0;i<40;i++)x=st(x,x.day+1,100000);const lv=x.vehicles[0];assert.ok(lv.lease.paid>v.lease.paid,'tägliche Leasingraten');
+const y=structuredClone(x);returnLease(y,lv.id);assert.equal(y.vehicles.length,0);buyoutLease(x,lv.id);assert.equal(x.vehicles[0].lease,undefined);console.log('PASS v57b Leasing: erste Rate, laufende Raten, Rückgabe und Ablöse.');}

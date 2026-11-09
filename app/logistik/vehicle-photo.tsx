@@ -2,6 +2,7 @@
 
 import {useEffect,useState} from 'react';
 import galleryData from '../../data/logistics-vehicle-gallery.json';
+import {useBranding} from './branding-store';
 
 type Photo={path:string;alt:string;caption:string;sourceUrl:string;author:string;license:string;licenseUrl:string;changes?:string;exactModelPhotoAvailable?:boolean};
 const gallery=galleryData as Record<string,Photo>;
@@ -11,6 +12,8 @@ export function preloadVehiclePhotos(){if(preloaded||typeof window==='undefined'
 export default function VehiclePhoto({id,credits=false}:{id:string;credits?:boolean}){
  const [failedPath,setFailedPath]=useState('');
  useEffect(()=>{preloadVehiclePhotos();},[]);
+ const brand=useBranding(),custom=brand?.images?.[id];
+ if(custom)return <figure className="log-vehicle-photo"><img src={custom} alt="Eigenes Fahrzeugbild" loading="lazy" decoding="async" width="640" height="400"/>{credits&&<figcaption>Eigenes Fahrzeugbild deiner Spedition</figcaption>}</figure>;
  const p=gallery[id];
  const available=Boolean(p?.path&&p.path!==failedPath);
  return <figure className="log-vehicle-photo">{available?<>

@@ -87,6 +87,7 @@ export function resolveIncident(s:State,incidentId:string,choice:{option?:Breakd
    incident.resolved=`Ohne Ersatz · Ladung${unit?' und unbeschädigter Auflieger':''} ins Depot ${depot?.name||''} geborgen · ${recovery.toLocaleString('de-DE')} €`;
   }
   if(unit){v.trailerId=undefined;v.trailerUnit=undefined;v.trailerDetached=true;}
+  if(v.lease){v.lease=undefined;incident.resolved+=' · Leasingvertrag durch Versicherung beendet';}
   v.cargo=undefined;v.otherCargo=[];v.wrecked=true;v.breakdown=undefined;v.lineId=undefined;v.returnLineId=undefined;v.onReturnRoute=false;v.pendingLineId=undefined;v.status='idle';v.currentLeg=undefined;v.currentStop=undefined;v.targetId=undefined;v.etaDay=undefined;v.departDay=undefined;v.service=undefined;v.restReason='Totalschaden – nur noch an den Händler verkaufbar';
   if(incident.depotId)v.locationId=incident.depotId;
   log(s,`${label}: ${incident.resolved}`,'warn');return incident;

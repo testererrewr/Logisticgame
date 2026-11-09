@@ -12,6 +12,7 @@ import {ensureContainerDay,acceptContainerOrder,factoryPartner,type ContainerOff
 import {registryByIds} from '../../../../lib/logistics/partner-registry';
 import {NextRequest,NextResponse} from 'next/server';
 import {env} from 'cloudflare:workers';
+import {allianceMap,allySites,allianceSitesFor} from '../../../../lib/logistics/alliance-server';
 import {parseSettings,settingsSummary,modeGroup,buildingModeGroup,MODE_GROUPS} from '../../../../lib/logistics/world-settings';
 import {ensureWorldSettingsColumn,assertInRegion} from '../../../../lib/logistics/world-region-server';
 import {MAX_FLEET_VEHICLES,GOODS,VEHICLES,depotFor,profile,stock,normalizeFreightState,routePartners,mergeSites,stepSharedWorld,type Coords,type GoodId,type Site,type State,type Track} from '../../../../lib/logistics/engine.ts';
@@ -82,6 +83,7 @@ async function settleWorldNow(id:string,budgetMs:number):Promise<World>{
   const statements:D1PreparedStatement[]=[];
   {const cfg=parseSettings(world.settings);for(const st of states.values()){st.maintenanceOff=!cfg.maintenance;st.fuelOff=!cfg.fuel;}}
   for(const row of rows){const state=states.get(row.user_id)!;state.borrowedTracks=permissions.filter(p=>p.grantee_id===row.user_id).flatMap(p=>states.get(p.owner_id)?.tracks||[]);}
+  {const amap=await allianceMap(id);for(const row of rows){const aid=amap.get(row.user_id);if(!aid)continue;const own=states.get(row.user_id)!;own.sites.push(...allySites(own,rows.filter(r=>r.user_id!==row.user_id&&amap.get(r.user_id)===aid).map(r=>({id:r.user_id,name:r.name||'Spedition',state:states.get(r.user_id)!}))));}}
   if(attempt===0)for(const state of states.values())await prepareVehicleRoads(state);
   const advanced=stepSharedWorld(states,next,market);
   for(const row of rows){const state=advanced.get(row.user_id)!;delete state.borrowedTracks;statements.push(db().prepare('UPDATE logistics_world_companies SET state=?,updated=? WHERE world_id=? AND user_id=?').bind(await encodeCompany(state),Date.now(),id,row.user_id));}
@@ -116,7 +118,7 @@ async function snapshot(u:User,worldId:string,geo=''){
  ]);
  const world=results[0].results[0] as unknown as World,row=results[1].results[0] as unknown as Company;
  if(!row)throw Error('Bitte zuerst dieser Welt beitreten.');
- const rules=await readPartnerRules();const state=applyStateRules(normalizeFreightState(await decodeCompany(row.state)),rules);state.borrowedTracks=await borrowedTracks(worldId,u.id);state.maintenanceOff=!parseSettings(world.settings).maintenance;state.fuelOff=!parseSettings(world.settings).fuel;
+ const rules=await readPartnerRules();const state=applyStateRules(normalizeFreightState(await decodeCompany(row.state)),rules);state.borrowedTracks=await borrowedTracks(worldId,u.id);state.sites.push(...await allianceSitesFor(worldId,u.id,state));state.maintenanceOff=!parseSettings(world.settings).maintenance;state.fuelOff=!parseSettings(world.settings).fuel;
  const geometrySig=geometrySignature(state),geometryOmitted=!!geo&&geo===geometrySig;if(geometryOmitted){delete state.roadRoutes;for(const l of state.lines)delete l.legs;}
  return {geometrySig,geometryOmitted,state,partnerRules:rules,market:{...newMarket(world.day),...JSON.parse(world.market||'{}')},companyName:row.name||state.companyName||u.name,revision:row.revision,user:u.name,userId:u.id,role:u.role,serverNow:Date.now(),world:{catchUpHours:Math.round(catchUpHours(world)*10)/10,catchUpSeconds:catchUpSeconds(world),revision:world.revision,id:world.id,name:world.name,day:world.day,timeScale:world.time_scale,simTime:world.created+(world.day-1)*86400000,status:world.status,tickMs:worldTickMs(world),settings:settingsSummary(parseSettings(world.settings))},companies:results[2].results,offers:results[3].results.map((raw:unknown)=>{const o=raw as Offer;return ({...o,quantity:Number(o.quantity)*(o.quantity_unit==='EH'?1:10)});}),permissions:results[4].results};
 }
@@ -199,7 +201,7 @@ export async function POST(req:NextRequest){try{
  if(row.last_action===body.requestId)return reply({...await snapshot(u,id),duplicate:true});
  if(row.revision!==body.revision)return reply({...await snapshot(u,id),error:'Die Welt wurde inzwischen aktualisiert. Bitte erneut versuchen.'},409);
  const rules=await readPartnerRules();const now=Date.now(),state=applyStateRules(normalizeFreightState(await decodeCompany(row.state)),rules);
- state.maintenanceOff=!parseSettings(world.settings).maintenance;state.fuelOff=!parseSettings(world.settings).fuel;await enforceWorldRules(cmd as OnlineCommand,state,parseSettings(world.settings),id);
+ state.maintenanceOff=!parseSettings(world.settings).maintenance;state.fuelOff=!parseSettings(world.settings).fuel;state.sites.push(...await allianceSitesFor(id,u.id,state));await enforceWorldRules(cmd as OnlineCommand,state,parseSettings(world.settings),id);
  const update=async(r:Company,s:State)=>db().prepare('UPDATE logistics_world_companies SET state=?,revision=revision+1,last_action=?,updated=? WHERE world_id=? AND user_id=?').bind(await encodeCompany(s),body.requestId,now,id,r.user_id);
  const statements:D1PreparedStatement[]=[];let checked=[row];
  if(cmd.type==='offerUsedVehicle'){

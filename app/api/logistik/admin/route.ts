@@ -1,4 +1,6 @@
 import {sameOrigin} from '../../../../lib/same-origin';
+import {ensureAllianceTables} from '../../../../lib/logistics/alliance-server';
+import {ensureBrandingTables,setEntitlement} from '../../../../lib/logistics/branding-server';
 import {validateSettings,parseSettings,settingsSummary} from '../../../../lib/logistics/world-settings';
 import {ensureWorldSettingsColumn} from '../../../../lib/logistics/world-region-server';
 import {readWorldImport,worldImportStatus,setWorldImportEnabled,continueWorldImport,retryWorldImport} from '../../../../lib/logistics/world-import';
@@ -17,7 +19,7 @@ export async function GET(req:NextRequest){try{
   db().prepare("SELECT * FROM logistics_runtime WHERE id='simulation'"),
   db().prepare('SELECT * FROM logistics_loaded_areas ORDER BY loaded DESC LIMIT 40'),
   db().prepare('SELECT count(*) AS n FROM logistics_partner_registry'),
- ]);return reply({worldImport:worldImportStatus(await readWorldImport()),worlds:worlds.results.map((w:any)=>({...w,settings:settingsSummary(parseSettings(w.settings))})),users:users.results,runtime:runtime.results[0]||null,areas:areas.results,partnerCount:(partners.results[0] as any)?.n||0,role:u.role});
+ ]);return reply({worldImport:worldImportStatus(await readWorldImport()),entitlements:await (async()=>{await ensureBrandingTables();return (await db().prepare('SELECT user_id,feature FROM logistics_entitlements').all()).results;})(),worlds:worlds.results.map((w:any)=>({...w,settings:settingsSummary(parseSettings(w.settings))})),users:users.results,runtime:runtime.results[0]||null,areas:areas.results,partnerCount:(partners.results[0] as any)?.n||0,role:u.role});
  }catch(e:any){return reply({error:e.message},422);}}
 export async function POST(req:NextRequest){try{
  const raw=await req.text();if(raw.length>50000)return reply({error:'Anfrage zu groß.'},413);
@@ -31,10 +33,14 @@ export async function POST(req:NextRequest){try{
   const scale=body.timeScale===undefined?1:Number(body.timeScale);if(!Number.isFinite(scale)||scale<.1||scale>1440)throw Error('Zeitfaktor: 0,1–1440.');
   const settings=validateSettings(body.settings||{});await ensureWorldSettingsColumn();
   const id=crypto.randomUUID();await db().prepare("INSERT INTO logistics_worlds(id,name,description,owner_id,day,last_tick,tick_ms,time_scale,status,created,settings) VALUES(?,?,?,?,1,?,?,?,'draft',?,?)").bind(id,name,String(body.description||'Gemeinsame Online-Welt').slice(0,300),u.id,now,86400000/scale,scale,now,JSON.stringify(settings)).run();result={worldId:id};
+ }else if(body.action==='entitlement'){
+  await setEntitlement(String(body.userId||''),String(body.feature||''),!!body.enabled,u.id);
  }else if(body.action==='deleteWorld'){
   const id=String(body.worldId||''),w=await db().prepare('SELECT id,name FROM logistics_worlds WHERE id=?').bind(id).first<{id:string;name:string}>();if(!w)throw Error('Welt nicht gefunden.');
   if(String(body.confirmName||'').trim()!==w.name)throw Error('Zum Löschen den Weltnamen exakt eingeben.');
   const like=(prefix:string)=>prefix+id+':%';
+  await ensureAllianceTables();await ensureBrandingTables();
+  await db().batch([db().prepare('DELETE FROM logistics_alliance_posts WHERE alliance_id IN (SELECT id FROM logistics_alliances WHERE world_id=?)').bind(id),db().prepare('DELETE FROM logistics_alliance_invites WHERE alliance_id IN (SELECT id FROM logistics_alliances WHERE world_id=?)').bind(id),db().prepare('DELETE FROM logistics_alliance_members WHERE world_id=?').bind(id),db().prepare('DELETE FROM logistics_alliances WHERE world_id=?').bind(id),db().prepare('DELETE FROM logistics_branding WHERE world_id=?').bind(id),db().prepare('DELETE FROM logistics_vehicle_images WHERE world_id=?').bind(id)]);
   await db().batch([db().prepare('DELETE FROM logistics_world_companies WHERE world_id=?').bind(id),db().prepare('DELETE FROM logistics_world_offers WHERE world_id=?').bind(id),db().prepare('DELETE FROM logistics_world_permissions WHERE world_id=?').bind(id),db().prepare('DELETE FROM logistics_container_offers WHERE world_id=?').bind(id),db().prepare('DELETE FROM logistics_runtime WHERE id LIKE ? OR id LIKE ? OR id LIKE ?').bind(like('used-vehicle-v20:'),like('container-day-v16:'),like('container-quantity-v14:')),db().prepare('DELETE FROM logistics_worlds WHERE id=?').bind(id)]);
   result={deleted:id};
  }else if(body.action==='worldSettings'){

@@ -4,8 +4,10 @@ import {currentUser} from '../online/route';
 import {decodeCompany} from '../../../../lib/logistics/company-codec';
 import {BUILDINGS,type State} from '../../../../lib/logistics/engine';
 import {dealerValue} from '../../../../lib/logistics/vehicle-sales';
+import {ensureAllianceTables} from '../../../../lib/logistics/alliance-server';
+import {ensureBrandingTables} from '../../../../lib/logistics/branding-server';
 
-interface Row {id:string;name:string;value:number;cash:number;revenue7:number;revenue30:number;profit30:number;vehicles:number;transported:number;buildings:number;lines:number;orders:number}
+interface Row {logo?:string;color?:string;tag?:string;id:string;name:string;value:number;cash:number;revenue7:number;revenue30:number;profit30:number;vehicles:number;transported:number;buildings:number;lines:number;orders:number}
 const cache=new Map<string,{at:number;rows:Row[]}>();
 function sumDays(s:State,days:number,key:'income'|'expenses'){const book=s.finance;if(!book)return 0;const today=Math.floor(s.day);let n=0;for(const [d,row] of Object.entries(book.days))if(Number(d)>today-days)n+=row[key]||0;return n;}
 function rowFor(id:string,name:string,s:State):Row{
@@ -23,6 +25,8 @@ export async function GET(req:NextRequest){try{
  if(!hit||Date.now()-hit.at>5*60000){
   const rows:Row[]=[];
   for(let after='';;){const batch=(await env.DB!.prepare("SELECT c.user_id,COALESCE(NULLIF(c.name,''),us.name) AS name,c.state FROM logistics_world_companies c JOIN users us ON us.id=c.user_id WHERE c.world_id=? AND c.user_id>? ORDER BY c.user_id LIMIT 10").bind(world,after).all<{user_id:string;name:string;state:string}>()).results;for(const b of batch){try{rows.push(rowFor(b.user_id,b.name,await decodeCompany(b.state)));}catch{}}if(batch.length<10)break;after=batch[batch.length-1].user_id;}
+  try{await ensureAllianceTables();const tags=(await env.DB!.prepare('SELECT m.user_id,a.tag FROM logistics_alliance_members m JOIN logistics_alliances a ON a.id=m.alliance_id WHERE m.world_id=?').bind(world).all<{user_id:string;tag:string}>()).results;const map=new Map(tags.map(t=>[t.user_id,t.tag]));for(const r of rows)r.tag=map.get(r.id);}catch{}
+  try{await ensureBrandingTables();const br=(await env.DB!.prepare('SELECT user_id,primary_color,logo IS NOT NULL AS has_logo,updated FROM logistics_branding WHERE world_id=?').bind(world).all<{user_id:string;primary_color:string;has_logo:number;updated:number}>()).results;const bm=new Map(br.map(b=>[b.user_id,b]));for(const r of rows){const b=bm.get(r.id);if(b){r.color=b.primary_color;if(b.has_logo)r.logo=`/api/logistik/branding/image?world=${encodeURIComponent(world)}&user=${r.id}&kind=logo&v=${b.updated}`;}}}catch{}
   hit={at:Date.now(),rows};cache.set(world,hit);if(cache.size>50)cache.delete(cache.keys().next().value!);
  }
  return NextResponse.json({updated:hit.at,me:u.id,rows:hit.rows},{headers:{'Cache-Control':'no-store'}});
