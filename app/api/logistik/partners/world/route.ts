@@ -1,3 +1,4 @@
+import {logError} from '../../../../../lib/logistics/error-log';
 import {NextRequest,NextResponse} from 'next/server';
 import {env} from 'cloudflare:workers';
 import {seedRegistry} from '../../../../../lib/logistics/partner-registry';
@@ -35,4 +36,4 @@ export async function GET(req:NextRequest){try{await seedRegistry();const p=req.
   for(let after='';;){const rows=(await env.DB!.prepare('SELECT id,payload FROM logistics_partner_registry WHERE lat BETWEEN ? AND ? AND (?=1 OR lon BETWEEN ? AND ?) AND kind IN (SELECT value FROM json_each(?))'+like+' AND id>? ORDER BY id LIMIT 500').bind(lat-dy,lat+dy,dx>=180?1:0,lon-dx,lon+dx,JSON.stringify(kinds),...words.flatMap(w=>{const cap=w.charAt(0).toLocaleUpperCase('de')+w.slice(1);return ['%'+w+'%','%'+w+'%','%'+cap+'%','%'+cap+'%'];}),after).all<{id:string;payload:string}>()).results;for(const row of rows){const site=applyPartnerRule(JSON.parse(row.payload),rules);if(!kinds.includes(site.kind)||served.has(site.id)||!matchesMapSite(site,query,good))continue;add(site,site);}if(rows.length<500)break;after=rows[rows.length-1].id;}
  }
  const clustered=zoom<8||count>3000;return NextResponse.json({sites:clustered?[]:sites,clusters:clustered?[...groups].map(([id,g])=>({id,lat:g.lat/g.count,lon:g.lon/g.count,count:g.count,kind:g.count===1?g.site.kind:g.kind,name:g.count===1?g.site.name:undefined})):[],global,matched:count},{headers:{'Cache-Control':'no-store'}});
- }catch(e:any){return NextResponse.json({error:e.message},{status:503});}}
+ }catch(e:any){await logError('api:partners/world',e,{url:req.url});return NextResponse.json({error:e.message},{status:503});}}

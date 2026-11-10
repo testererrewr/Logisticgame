@@ -1,3 +1,4 @@
+import {logError} from '../../../../lib/logistics/error-log';
 import {kmBetween,GOODS} from '../../../../lib/logistics/engine';
 import {worldSettings} from '../../../../lib/logistics/world-region-server';
 import {allowedCountries} from '../../../../lib/logistics/world-settings';
@@ -37,4 +38,4 @@ export async function GET(req:NextRequest){try{
   env.DB!.prepare("SELECT DISTINCT destination_city AS name FROM logistics_container_offers WHERE world_id=? AND day=? AND status='open' AND destination_city<>'' AND (?='' OR destination_country=?) ORDER BY name LIMIT 500").bind(worldId,day,destinationCountry,destinationCountry)
  ]);const names=(i:number)=>lists[i].results.map((r:any)=>r.name).filter((n:string)=>i>1||!regionAllowed||regionAllowed.has(n));facets={sourceCountries:names(0),destinationCountries:names(1),sourceCities:names(2),destinationCities:names(3)};}
  return NextResponse.json({day:Math.floor(world.day),offers:rows.filter(r=>lookup.has(r.source_id)&&lookup.has(r.destination_id)).map(r=>({...r,km:Math.round(kmBetween([r.sourceLat,r.sourceLon],[r.destinationLat,r.destinationLon])*10)/10,sourceName:lookup.get(r.source_id)!.name,destinationName:lookup.get(r.destination_id)!.name,mine:r.accepted_by===u.id})),sites:partners,totalOffers:total?.n||0,offset,hasMore:offset+rows.length<(total?.n||0),facets},{headers:{'Cache-Control':'no-store'}});
- }catch(e:any){return NextResponse.json({error:e.message},{status:422});}}
+ }catch(e:any){await logError('api:containers',e,{url:req.url});return NextResponse.json({error:e.message},{status:422});}}

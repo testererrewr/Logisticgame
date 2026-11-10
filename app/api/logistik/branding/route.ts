@@ -1,3 +1,4 @@
+import {logError} from '../../../../lib/logistics/error-log';
 import {NextRequest,NextResponse} from 'next/server';
 import {env} from 'cloudflare:workers';
 import {currentUser} from '../online/route';
@@ -15,7 +16,7 @@ export async function GET(req:NextRequest){try{
  const images=(await db().prepare('SELECT model_id,updated FROM logistics_vehicle_images WHERE world_id=? AND user_id=?').bind(world,u.id).all<{model_id:string;updated:number}>()).results;
  const ent=(await db().prepare('SELECT feature FROM logistics_entitlements WHERE user_id=?').bind(u.id).all<{feature:string}>()).results.map(r=>r.feature);
  return reply({me:u.id,primary:b?.primary_color||'#2f6fae',secondary:b?.secondary_color||'#f2c14e',logo:b?.has_logo?`/api/logistik/branding/image?world=${encodeURIComponent(world)}&user=${u.id}&kind=logo&v=${b.updated}`:null,images:images.map(i=>({model:i.model_id,url:`/api/logistik/branding/image?world=${encodeURIComponent(world)}&user=${u.id}&kind=vehicle&model=${encodeURIComponent(i.model_id)}&v=${i.updated}`})),entitlements:ent,features:PREMIUM_FEATURES});
-}catch(e:any){return reply({error:e.message||'Firmenauftritt nicht verfügbar.'},503);}}
+}catch(e:any){await logError('api:branding',e,{url:req.url});return reply({error:e.message||'Firmenauftritt nicht verfügbar.'},503);}}
 export async function POST(req:NextRequest){try{
  const u=await currentUser(req);if(!u||u.status!=='active')return reply({error:'Bitte anmelden.'},401);
  if(!sameOrigin(req))return reply({error:'Ungültiger Ursprung.'},403);
@@ -30,4 +31,4 @@ export async function POST(req:NextRequest){try{
  else if(body.action==='removeVehicleImage')await db().prepare('DELETE FROM logistics_vehicle_images WHERE world_id=? AND user_id=? AND model_id=?').bind(world,u.id,String(body.model||'')).run();
  else throw Error('Unbekannte Aktion.');
  return reply({ok:true});
-}catch(e:any){return reply({error:e.message||'Speichern fehlgeschlagen.'},422);}}
+}catch(e:any){await logError('api:branding',e,{url:req.url});return reply({error:e.message||'Speichern fehlgeschlagen.'},422);}}

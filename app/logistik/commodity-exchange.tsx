@@ -17,7 +17,7 @@ export default function CommodityExchange({day}:{day:number}){
  const shown=rows.filter(r=>(type==='all'||r.g.type===type)&&r.g.name.toLocaleLowerCase('de').includes(query.trim().toLocaleLowerCase('de'))&&(trend==='all'||(trend==='up'?r.change>=0:r.change<0))&&(!minPrice||r.now>=Number(minPrice))&&(!minMargin||r.margin>=Number(minMargin))).sort((a,b)=>sort.key==='name'?a.g.name.localeCompare(b.g.name,'de')*sort.dir:(val(a)-val(b))*sort.dir);
  const winners=[...rows].sort((a,b)=>b.change-a.change).slice(0,3),losers=[...rows].sort((a,b)=>a.change-b.change).slice(0,3);
  return <section className="log-exchange-board">
-  <h1>Warenbörse · Spieltag {today}</h1>
+  <h1>Börse · Spieltag {today}</h1>
   <p className="log-help">Verkaufspreise an Endkunden ändern sich jeden Spieltag (simuliert, für alle Speditionen der Welt gleich). Bezahlt wird der Kurs am Tag der Lieferung. Einkaufspreise bei Lieferverträgen bleiben fest.</p>
   <h2>Energiepreise heute</h2><div className="log-energy-board">{energyTable(today).map(e=><div key={e.kind}><small>{e.name}</small><b>{e.now.toLocaleString('de-DE',{minimumFractionDigits:e.base<10?3:0,maximumFractionDigits:e.base<10?3:0})} {e.per}</b><span className={e.change>=0?'up':'down'}>{e.change>=0?'▲ +':'▼ '}{e.change.toFixed(1)} % zum Vortag</span><Spark values={e.history}/></div>)}</div>
   <div className="log-exchange-movers"><div><b>Gewinner heute</b>{winners.map(r=><span key={r.g.id} className="up">{r.g.name} +{r.change.toFixed(1)} %</span>)}</div><div><b>Verlierer heute</b>{losers.map(r=><span key={r.g.id} className="down">{r.g.name} {r.change.toFixed(1)} %</span>)}</div></div>

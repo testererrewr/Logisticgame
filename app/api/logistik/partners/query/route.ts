@@ -1,3 +1,4 @@
+import {logError} from '../../../../../lib/logistics/error-log';
 import {applyRules,readPartnerRules} from '../../../../../lib/logistics/partner-rules-store';
 import {NextRequest,NextResponse} from 'next/server';
 import {savePartners,seedRegistry} from '../../../../../lib/logistics/partner-registry';
@@ -19,4 +20,4 @@ export async function GET(req:NextRequest){try{
  await savePartners(sites);
  const payload={sites,source:'OpenStreetMap / Nominatim · Namenssuche'};await env.DB!.prepare('INSERT OR REPLACE INTO map_snapshots(id,payload,created) VALUES(?,?,?)').bind(key,JSON.stringify(payload),now).run();
  return NextResponse.json({...payload,sites:applyRules(sites,await readPartnerRules())},{headers:{'Cache-Control':'no-store'}});
- }catch(e:any){return NextResponse.json({error:e.message||'Betriebssuche fehlgeschlagen.'},{status:503});}}
+ }catch(e:any){await logError('api:partners/query',e,{url:req.url});return NextResponse.json({error:e.message||'Betriebssuche fehlgeschlagen.'},{status:503});}}

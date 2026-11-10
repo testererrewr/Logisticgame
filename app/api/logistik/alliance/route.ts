@@ -1,3 +1,4 @@
+import {logError} from '../../../../lib/logistics/error-log';
 import {NextRequest,NextResponse} from 'next/server';
 import {env} from 'cloudflare:workers';
 import {currentUser} from '../online/route';
@@ -35,7 +36,7 @@ export async function GET(req:NextRequest){try{
   detail={...a,role:mine.role,members,posts,pending,day,orders,offers};}
  const companies=(await db().prepare("SELECT c.user_id AS id,COALESCE(NULLIF(c.name,''),us.name) AS name,m.alliance_id AS allianceId FROM logistics_world_companies c JOIN users us ON us.id=c.user_id LEFT JOIN logistics_alliance_members m ON m.world_id=c.world_id AND m.user_id=c.user_id WHERE c.world_id=? ORDER BY name LIMIT 500").bind(world).all()).results;
  return reply({me:u.id,alliance:detail,alliances,invites,companies});
-}catch(e:any){return reply({error:e.message||'Allianzen nicht verfügbar.'},503);}}
+}catch(e:any){await logError('api:alliance',e,{url:req.url});return reply({error:e.message||'Allianzen nicht verfügbar.'},503);}}
 
 export async function POST(req:NextRequest){try{
  const u=await currentUser(req);if(!u||u.status!=='active')return reply({error:'Bitte anmelden.'},401);
@@ -88,4 +89,4 @@ export async function POST(req:NextRequest){try{
   if(mine?.role!=='leader')throw Error('Nur die Leitung ändert die Allianz.');await db().prepare('UPDATE logistics_alliances SET description=?,color=?,open=?,share_storage=? WHERE id=?').bind(String(body.description||'').slice(0,500),/^#[0-9a-f]{6}$/i.test(body.color)?body.color:'#4a90c8',body.open?1:0,body.shareStorage===false?0:1,mine.alliance_id).run();invalidateAllianceCache();
  }else throw Error('Unbekannte Aktion.');
  invalidateAllianceCache();return reply({ok:true});
-}catch(e:any){return reply({error:e.message||'Aktion fehlgeschlagen.'},422);}}
+}catch(e:any){await logError('api:alliance',e,{url:req.url});return reply({error:e.message||'Aktion fehlgeschlagen.'},422);}}

@@ -1,3 +1,4 @@
+import {logError} from '../../../../lib/logistics/error-log';
 import {sameOrigin} from '../../../../lib/same-origin';
 import {ensureAllianceTables} from '../../../../lib/logistics/alliance-server';
 import {ensureBrandingTables,setEntitlement} from '../../../../lib/logistics/branding-server';
@@ -20,7 +21,7 @@ export async function GET(req:NextRequest){try{
   db().prepare('SELECT * FROM logistics_loaded_areas ORDER BY loaded DESC LIMIT 40'),
   db().prepare('SELECT count(*) AS n FROM logistics_partner_registry'),
  ]);return reply({worldImport:worldImportStatus(await readWorldImport()),entitlements:await (async()=>{await ensureBrandingTables();return (await db().prepare('SELECT user_id,feature FROM logistics_entitlements').all()).results;})(),worlds:worlds.results.map((w:any)=>({...w,settings:settingsSummary(parseSettings(w.settings))})),users:users.results,runtime:runtime.results[0]||null,areas:areas.results,partnerCount:(partners.results[0] as any)?.n||0,role:u.role});
- }catch(e:any){return reply({error:e.message},422);}}
+ }catch(e:any){await logError('api:admin',e,{url:req.url});return reply({error:e.message},422);}}
 export async function POST(req:NextRequest){try{
  const raw=await req.text();if(raw.length>50000)return reply({error:'Anfrage zu groß.'},413);
  const u=await currentUser(req);if(!u||u.status!=='active'||!['owner','admin'].includes(u.role))return reply({error:'Nur für Administratoren.'},403);
@@ -60,4 +61,4 @@ export async function POST(req:NextRequest){try{
   const r=await loadPartnerArea(new NextRequest(query),true),data:any=await r.json();if(!r.ok)throw Error(data.error);result={count:data.sites.length,source:data.source};
  }else throw Error('Unbekannte Adminaktion.');
  await db().prepare('INSERT INTO admin_audit(id,actor,action,target,created) VALUES(?,?,?,?,?)').bind(crypto.randomUUID(),u.id,'logistics.'+body.action,String(body.worldId||body.userId||''),now).run();return reply(result);
- }catch(e:any){return reply({error:e.message||'Adminaktion fehlgeschlagen.'},422);}}
+ }catch(e:any){await logError('api:admin',e,{url:req.url});return reply({error:e.message||'Adminaktion fehlgeschlagen.'},422);}}
