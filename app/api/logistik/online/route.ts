@@ -5,7 +5,7 @@ import {readUsedVehicleOffer,readUsedVehicleOffers,saveUsedVehicleOffer} from '.
 import {harborKind,checkHarborPlacement} from '../../../../lib/logistics/harbor-placement';
 import {adjustCompanyCash} from '../../../../lib/logistics/admin-cash';
 import {continuePartnerImports} from '../../../../lib/logistics/partner-import';
-import {connectRoad,prepareVehicleRoads} from '../../../../lib/logistics/road-routing';
+import {connectRoad,prepareVehicleRoads,prefetchRoadChain} from '../../../../lib/logistics/road-routing';
 import {readPartnerRules,applyStateRules} from '../../../../lib/logistics/partner-rules-store';
 import {newMarket,resetMarket} from '../../../../lib/logistics/business-rules';
 import {ensureContainerDay,acceptContainerOrder,factoryPartner,type ContainerOffer} from '../../../../lib/logistics/container-market';
@@ -148,7 +148,8 @@ async function verifyRoads(command:OnlineAction,state:State):Promise<OnlineActio
  if(command.type==='assignFleet'){if(!Array.isArray(command.vehicleIds)||!command.vehicleIds.length||command.vehicleIds.length>MAX_FLEET_VEHICLES||command.vehicleIds.some(id=>typeof id!=='string'||!state.vehicles.some(v=>v.id===id))||new Set(command.vehicleIds).size!==command.vehicleIds.length)throw Error('Ungültige Fahrzeugauswahl.');for(const vehicleId of command.vehicleIds)await verifyRoads({type:'assign',vehicleId,lineId:command.lineId},state);return command;}
  if(command.type==='assign'){const v=state.vehicles.find(v=>v.id===command.vehicleId),l=state.lines.find(l=>l.id===command.lineId),a=state.sites.find(p=>p.id===v?.locationId),model=VEHICLES.find(m=>m.id===v?.modelId),b=l?state.sites.find(p=>p.id===l.stops[0]?.siteId):v&&depotFor(state,model!.mode,a);if(model&&['van','truck'].includes(model.mode)&&a&&b)await connectRoad(state,a,b);return command;}
  if(command.type!=='line'||!['van','truck'].includes(command.mode))return command;
- const stops=command.stops.filter(st=>st.siteId);if(stops.length<2)throw Error('Mindestens zwei Standorte als Stopps auswählen.');const legs=(await Promise.all(stops.map(async(st,i)=>{const from=state.sites.find(s=>s.id===st.siteId),to=state.sites.find(s=>s.id===stops[(i+1)%stops.length].siteId);if(!from||!to)throw Error('Linienstandort unbekannt.');return connectRoad(state,from,to);}))).filter((leg):leg is NonNullable<typeof leg>=>!!leg);
+ const stops=command.stops.filter(st=>st.siteId);if(stops.length<2)throw Error('Mindestens zwei Standorte als Stopps auswählen.');
+ await prefetchRoadChain(stops.map(st=>state.sites.find(p=>p.id===st.siteId)).filter((p):p is NonNullable<typeof p>=>!!p).map(p=>[p.lat,p.lon] as Coords)).catch(()=>0);const legs=(await Promise.all(stops.map(async(st,i)=>{const from=state.sites.find(s=>s.id===st.siteId),to=state.sites.find(s=>s.id===stops[(i+1)%stops.length].siteId);if(!from||!to)throw Error('Linienstandort unbekannt.');return connectRoad(state,from,to);}))).filter((leg):leg is NonNullable<typeof leg>=>!!leg);
  return {...command,stops,legs};
 }
 
@@ -217,11 +218,11 @@ export async function POST(req:NextRequest){const ctx:Record<string,unknown>={};
   stmts.push(...returnToMarket(id,(st.drivers||[]),'aufgelöst'));
   const prefix=usedVehicleKey(id,'');stmts.push(db().prepare("UPDATE logistics_runtime SET payload=json_set(payload,'$.sellerId',?,'$.sellerName',?) WHERE id>=? AND id<? AND json_extract(payload,'$.sellerId')=? AND json_extract(payload,'$.status')='open'").bind(seller,sellerName,prefix,prefix+'\uffff',u.id));
   const al=await db().prepare('SELECT alliance_id FROM logistics_alliance_members WHERE world_id=? AND user_id=?').bind(id,u.id).first<{alliance_id:string}>().catch(()=>null);
-  stmts.push(db().prepare('DELETE FROM logistics_world_permissions WHERE world_id=? AND (owner_id=? OR grantee_id=?)').bind(id,u.id,u.id),db().prepare("UPDATE logistics_world_offers SET status='withdrawn' WHERE world_id=? AND (sender_id=? OR receiver_id=?) AND status='open'").bind(id,u.id,u.id),db().prepare("UPDATE logistics_container_offers SET status='cancelled' WHERE world_id=? AND accepted_by=? AND status='accepted'").bind(id,u.id));
+  stmts.push(db().prepare('DELETE FROM logistics_world_permissions WHERE world_id=? AND (owner_id=? OR grantee_id=?)').bind(id,u.id,u.id),db().prepare("UPDATE logistics_world_offers SET status='withdrawn' WHERE world_id=? AND (sender_id=? OR receiver_id=?) AND status='open'").bind(id,u.id,u.id),db().prepare("UPDATE logistics_container_offers SET status='open',accepted_by=NULL WHERE world_id=? AND accepted_by=? AND status='accepted'").bind(id,u.id));
   if(al){stmts.push(db().prepare('DELETE FROM logistics_alliance_members WHERE world_id=? AND user_id=?').bind(id,u.id),db().prepare("UPDATE logistics_alliance_members SET role='leader' WHERE alliance_id=? AND user_id=(SELECT user_id FROM logistics_alliance_members WHERE alliance_id=? ORDER BY joined LIMIT 1) AND NOT EXISTS(SELECT 1 FROM logistics_alliance_members WHERE alliance_id=? AND role='leader')").bind(al.alliance_id,al.alliance_id,al.alliance_id),db().prepare('DELETE FROM logistics_alliances WHERE id=? AND NOT EXISTS(SELECT 1 FROM logistics_alliance_members WHERE alliance_id=?)').bind(al.alliance_id,al.alliance_id));}
   stmts.push(db().prepare('DELETE FROM logistics_world_companies WHERE world_id=? AND user_id=? AND revision=?').bind(id,u.id,row.revision),db().prepare('INSERT INTO admin_audit(id,actor,action,target,created) VALUES(?,?,?,?,?)').bind(crypto.randomUUID(),u.id,'dissolve-company',id+':'+name,now));
   await refreshDriverMarket(id,world.day).catch(()=>{});await db().batch(stmts);
-  return reply({dissolved:true,listedVehicles:listed,releasedDrivers:(st.drivers||[]).length});
+  return reply({dissolved:true,listedVehicles:listed,releasedDrivers:(st.drivers||[]).length,cancelledContracts:st.contracts.filter(c=>!c.cancelled&&c.endDay>=st.day).length});
  }
  if(row.last_action===body.requestId)return reply({...await snapshot(u,id),duplicate:true});
  if(row.revision!==body.revision)return reply({...await snapshot(u,id),error:'Die Welt wurde inzwischen aktualisiert. Bitte erneut versuchen.'},409);

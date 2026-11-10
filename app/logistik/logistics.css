@@ -209,3 +209,4 @@
 @media(max-width:700px){.log-personnel{padding:12px}}
 .log-danger-zone{border-color:#7a2a2a!important;margin:16px 28px}
 .log-crew-name{display:block}.log-warn-text{color:#f0b35a}
+.log-contract-costs{display:grid;gap:3px;padding:10px;border:1px solid #3b596c;border-radius:8px;background:#132331;margin:8px 0;font-size:12px}

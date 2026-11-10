@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {newState,build,addTrack,stepTime,stock,purchaseVehicle,createLine,assignVehicle,checkIntegrity} from '../lib/logistics/engine.ts';
+const s=newState();s.cash=1e10;s.live=true;s.driversOff=true;
+const a=build(s,'railStation',47.0,15.44),b=build(s,'railStation',47.1,15.44);build(s,'railDepot',47.0,15.46);
+const lager=build(s,'warehouseXL',47.003,15.445);s.inventory[lager.id]={crudeOil:5000};
+addTrack(s,[a.lat,a.lon],[b.lat,b.lon]);addTrack(s,[47.0,15.46],[a.lat,a.lon]);
+const v=purchaseVehicle(s,'bulkRail',undefined,undefined,[{type:'tank',count:4}]);
+const l=createLine(s,{name:'Öl',mode:'rail',good:'all',duration:null,stops:[{siteId:a.id,action:'load',good:'all',quantity:1e9},{siteId:b.id,action:'unload',good:'all',quantity:1e9}]});
+assignVehicle(s,v.id,l.id);
+let x=s;for(let i=0;i<600&&!(stock(x,b.id,'crudeOil')>0);i++)x=stepTime(x,x.day+0.002);
+assert.ok(stock(x,b.id,'crudeOil')>0,'Zug lädt aus dem eigenen Lager neben dem Bahnhof: '+x.vehicles[0].restReason);assert.ok(stock(x,lager.id,'crudeOil')<5000);checkIntegrity(x);
+console.log('PASS v64 Züge laden aus eigenen Lagern neben dem Bahnhof (bis 750 m).');
