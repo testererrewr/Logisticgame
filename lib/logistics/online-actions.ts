@@ -4,6 +4,7 @@ import type {UnloadPlanEntry} from './engine';
 import {requestManualDeparture} from './engine';
 import {queueTerminalTransfer} from './terminal-transfer';
 import {assignDriver} from './drivers';
+import {extendContracts} from './engine';
 import {addTrackPlan,setVehicleContainerOrders,MAX_FLEET_VEHICLES} from './engine.ts';
 import {railRoute} from './routing.ts';
 import {buyoutLease,returnLease,purchaseTrailers,detachTrailer,attachTrailer,demolishBuilding,assignDepot,setReturnLine,updateLineStops,assignFleet,updateLine,renameVehicle,type Line} from './engine.ts';
@@ -34,6 +35,7 @@ export type OnlineAction=
  |{type:'track';from:Coords;to:Coords;confirmed?:boolean}
  |{type:'buy';modelId:VehicleModelId;trailerId?:string}
  |{type:'cancelContract';contractId:string}
+ |{type:'extendContracts';contractIds:string[];days?:number}
  |{type:'renameBuilding';siteId:string;name:string}
  |{type:'buyoutLease';vehicleId:string}
  |{type:'returnLease';vehicleId:string}
@@ -65,6 +67,7 @@ export type CooperationAction=
  |{type:'trackPermission';receiverId:string;enabled:boolean}
  |{type:'hireDriver';candidateId:string;vehicleId?:string}
  |{type:'fireDriver';driverId:string}
+ |{type:'hireDrivers';candidateIds:string[];assign?:boolean}
  |{type:'dissolveCompany';confirm:string};
 export type OnlineCommand=OnlineAction|CooperationAction;
 export function applyAction(state:State,command:OnlineAction,verifiedSites?:Site[]):State{
@@ -97,6 +100,7 @@ export function applyAction(state:State,command:OnlineAction,verifiedSites?:Site
  case 'track':addTrack(s,command.from,command.to);break;
  case 'buy':purchaseVehicle(s,command.modelId,command.trailerId);break;
  case 'cancelContract':cancelContract(s,command.contractId);break;
+ case 'extendContracts':extendContracts(s,command.contractIds,command.days??180);break;
  case 'renameBuilding':renameBuilding(s,command.siteId,command.name);break;
  case 'buyFleet':purchaseFleet(s,command);break;
  case 'upgradeWarehouse':warehouseUpgrade(s,command.siteId,command.confirmed);break;

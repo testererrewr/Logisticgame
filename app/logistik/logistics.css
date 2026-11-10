@@ -225,3 +225,10 @@
 .log-vehicle-dialog .log-vehicle-facts>div{background:#132331;border:1px solid #2e4355;border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:2px;border-bottom:1px solid #2e4355}
 .log-vehicle-dialog .log-vehicle-facts dt{font-size:11px;color:#8fa6b8}.log-vehicle-dialog .log-vehicle-facts dd{margin:0;text-align:left;font-weight:600}
 .log-business-type{display:block;color:#bcd3e0;font-size:12px}
+.log-vehicle-dialog .log-vehicle-cargo{order:5;background:#132331;border:1px solid #2e4355;border-radius:8px;padding:8px 12px}.log-vehicle-cargo h3{margin:0 0 6px}
+.log-bulk-hire{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.log-bulk-hire label{display:flex;gap:6px;align-items:center}.log-bulk-hire input[type=number]{width:80px}.log-bulk-hire small{flex-basis:100%;color:#9fb3c2}
+.log-inbox-button{position:relative;font-size:18px;background:transparent;border:1px solid #33495a;border-radius:8px;padding:4px 10px;cursor:pointer}
+.log-inbox-button.alert{border-color:#d7a23c}
+.log-inbox-badge{position:absolute;top:-6px;right:-6px;background:#d0574f;color:#fff;font-size:10px;font-weight:800;border-radius:9px;padding:1px 5px}
+.log-inbox-urgent td{background:rgba(208,87,79,.12)}
+.log-header-actions .log-inbox-button{display:inline-flex!important;align-items:center}

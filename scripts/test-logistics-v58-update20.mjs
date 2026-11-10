@@ -18,8 +18,8 @@ import {parseSettings,validateSettings,seasonEndDay} from '../lib/logistics/worl
  assert.equal(suggestStopAction(s,well.id),'load','reiner Produzent → Laden');signSupply(s,well.id,'crudeOil',10);assert.equal(suggestStopAction(s,well.id),'load','Liefervertrag → Laden');
  const shop={id:'shop',kind:'supermarket',name:'Markt',lat:47.02,lon:15,tags:{}};s.sites.push(shop);assert.equal(suggestStopAction(s,shop.id),'unload','Endkunde → Entladen');}
 // Leasing wöchentlich
-{assert.ok(Math.abs(LEASE_WEEKLY_RATE-.024*7/30)<1e-4);const s=newState();s.cash=1e7;const d=build(s,'depot',47,15);const before=s.cash;const [v]=purchaseFleet(s,{modelId:'truck',trailerId:'krone-profi',depotId:d.id,count:1,lease:true});
- assert.ok(Math.abs(before-s.cash-v.lease.daily*7)<1,'erste Wochenrate');}
+{assert.ok(Math.abs(LEASE_WEEKLY_RATE-.03*7/30)<1e-4);const s=newState();s.cash=1e7;const d=build(s,'depot',47,15);const before=s.cash;const [v]=purchaseFleet(s,{modelId:'truck',trailerId:'krone-profi',depotId:d.id,count:1,lease:true});
+ assert.ok(Math.abs(before-s.cash-(v.lease.daily*7+v.lease.price*.15))<1,'Anzahlung 15 % + erste Wochenrate');}
 // Raffinerie-Kapazität, Liefer-Statistik, Saison
 {const r=BUILDINGS.find(b=>b.id==='refinery');const site={id:'raf',kind:'refinery',name:'R',lat:47,lon:15,tags:{}};assert.ok(profile(site).capacity>=400*3*.5,'Raffinerie mit mehr Kapazität');
  const s=newState();countDelivery(s,'diesel',12.5);countDelivery(s,'diesel',7.5);assert.equal(s.deliveryStats.diesel,20);
