@@ -40,9 +40,9 @@ export type OnlineAction=
  |{type:'upgradeWarehouse';siteId:string;confirmed:boolean}
  |{type:'trailer';vehicleId:string;trailerId:string}
  |{type:'wagons';vehicleId:string;wagons:WagonSet[]}
- |{type:'line';manualDeparture?:boolean;name:string;mode:Mode;good:GoodId;stops:Stop[];duration:number|null;legs?:RouteLeg[];tripsPerDay?:number|null;tripLimit?:number|null;stopWhenDemandMet?:boolean;stopWhenSourcesEmpty?:boolean}
+ |{type:'line';departure?:import('./engine').DepartureRule;manualDeparture?:boolean;name:string;mode:Mode;good:GoodId;stops:Stop[];duration:number|null;legs?:RouteLeg[];tripsPerDay?:number|null;tripLimit?:number|null;stopWhenDemandMet?:boolean;stopWhenSourcesEmpty?:boolean}
  |{type:'updateLineStops';manualDeparture?:boolean;lineId:string;stops:Stop[];legs?:RouteLeg[]}
- |{type:'updateLine';lineId:string;settings:Pick<Line,'manualDeparture'|'name'|'tripsPerDay'|'tripLimit'|'stopWhenDemandMet'|'stopWhenSourcesEmpty'> & {duration?:number|null}}
+ |{type:'updateLine';lineId:string;settings:Pick<Line,'departure'|'manualDeparture'|'name'|'tripsPerDay'|'tripLimit'|'stopWhenDemandMet'|'stopWhenSourcesEmpty'> & {duration?:number|null}}
  |{type:'renameVehicle';vehicleId:string;name:string}
  |{type:'setContainerOrders';vehicleId:string;orderIds:string[]|null}
  |{type:'setReturnLine';vehicleId:string;lineId:string}

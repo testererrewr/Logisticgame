@@ -443,11 +443,11 @@
  },
  "concordia-damen-cds110": {
   "fuel": 0.45,
-  "energy": "diesel"
+  "energy": "schweröl"
  },
  "concordia-damen-parsifal": {
   "fuel": 0.5,
-  "energy": "diesel"
+  "energy": "schweröl"
  },
  "meyer-neptun-inland": {
   "fuel": 0.42,
