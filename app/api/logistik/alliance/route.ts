@@ -4,6 +4,7 @@ import {env} from 'cloudflare:workers';
 import {currentUser} from '../online/route';
 import {ensureAllianceTables,invalidateAllianceCache,allianceOffers} from '../../../../lib/logistics/alliance-server';
 import {good} from '../../../../lib/logistics/engine';
+import {isPremium,validImage} from '../../../../lib/logistics/branding-server';
 import {sameOrigin} from '../../../../lib/same-origin';
 
 const db=()=>env.DB!;
@@ -19,6 +20,7 @@ async function shareTracks(world:string,allianceId:string,user:string,enabled:bo
 }
 
 export async function GET(req:NextRequest){try{
+ const logoId=req.nextUrl.searchParams.get('logo');if(logoId){await ensureAllianceTables();const row=await db().prepare('SELECT logo FROM logistics_alliances WHERE id=?').bind(logoId.slice(0,100)).first<{logo:string|null}>();const m=row?.logo?.match(/^data:(image\/(?:png|jpeg|webp));base64,(.+)$/);if(!m)return new Response('Nicht gefunden',{status:404});return new Response(Uint8Array.from(atob(m[2]),c=>c.charCodeAt(0)),{headers:{'Content-Type':m[1],'Cache-Control':'public, max-age=3600','X-Content-Type-Options':'nosniff'}});}
  const u=await currentUser(req);if(!u||u.status!=='active')return reply({error:'Bitte anmelden.'},401);
  const world=(req.nextUrl.searchParams.get('world')||'').slice(0,100);if(!await inWorld(world,u.id))return reply({error:'Bitte der Welt beitreten.'},403);
  await ensureAllianceTables();
@@ -33,7 +35,7 @@ export async function GET(req:NextRequest){try{
   const day=(await db().prepare('SELECT day FROM logistics_worlds WHERE id=?').bind(world).first<{day:number}>())?.day||0;
   const orders=(await db().prepare('SELECT id,good,destination_name AS title,quantity,delivered,reward,deadline_day AS deadline,status,contributions,created FROM logistics_alliance_orders WHERE alliance_id=? ORDER BY created DESC LIMIT 10').bind(mine.alliance_id).all<any>()).results.map(o=>({...o,goodName:good(o.good)?.name||o.good,contributions:JSON.parse(o.contributions||'{}')}));
   const offers=orders.some(o=>o.status==='active')?[]:allianceOffers(mine.alliance_id,day,members.length).filter(f=>!orders.some(o=>o.id===mine.alliance_id+':'+f.key)).map(f=>({...f,goodName:good(f.good)?.name||f.good}));
-  detail={...a,role:mine.role,members,posts,pending,day,orders,offers};}
+  const {logo:_logo,...plain}=a as any;detail={...plain,logo:_logo?`/api/logistik/alliance?logo=${mine.alliance_id}&v=${(a as any).logo_updated||0}`:null,premium:await isPremium(u.id),role:mine.role,members,posts,pending,day,orders,offers};}
  const companies=(await db().prepare("SELECT c.user_id AS id,COALESCE(NULLIF(c.name,''),us.name) AS name,m.alliance_id AS allianceId FROM logistics_world_companies c JOIN users us ON us.id=c.user_id LEFT JOIN logistics_alliance_members m ON m.world_id=c.world_id AND m.user_id=c.user_id WHERE c.world_id=? ORDER BY name LIMIT 500").bind(world).all()).results;
  return reply({me:u.id,alliance:detail,alliances,invites,companies});
 }catch(e:any){await logError('api:alliance',e,{url:req.url});return reply({error:e.message||'Allianzen nicht verfügbar.'},503);}}
@@ -85,8 +87,10 @@ export async function POST(req:NextRequest){try{
   await db().prepare('INSERT INTO logistics_alliance_posts(id,alliance_id,user_id,text,created) VALUES(?,?,?,?,?)').bind(crypto.randomUUID(),mine!.alliance_id,u.id,`📦 Allianz-Auftrag angenommen: ${title} in ${offer.days} Tagen an beliebige Kunden liefern.`,now).run();
  }else if(action==='cancelOrder'){
   if(mine?.role!=='leader')throw Error('Nur die Leitung kann abbrechen.');await db().prepare("UPDATE logistics_alliance_orders SET status='cancelled' WHERE alliance_id=? AND status='active'").bind(mine.alliance_id).run();
+ }else if(action==='logo'||action==='removeLogo'){
+  if(mine?.role!=='leader')throw Error('Nur die Leitung ändert die Allianz.');if(action==='logo'&&!await isPremium(u.id))throw Error('Allianzlogo und -farben sind eine Premium-Funktion.');await db().prepare('UPDATE logistics_alliances SET logo=?,logo_updated=? WHERE id=?').bind(action==='logo'?validImage(body.image,120000):null,now,mine.alliance_id).run();
  }else if(action==='settings'){
-  if(mine?.role!=='leader')throw Error('Nur die Leitung ändert die Allianz.');await db().prepare('UPDATE logistics_alliances SET description=?,color=?,open=?,share_storage=? WHERE id=?').bind(String(body.description||'').slice(0,500),/^#[0-9a-f]{6}$/i.test(body.color)?body.color:'#4a90c8',body.open?1:0,body.shareStorage===false?0:1,mine.alliance_id).run();invalidateAllianceCache();
+  if(mine?.role!=='leader')throw Error('Nur die Leitung ändert die Allianz.');const cur=await db().prepare('SELECT color FROM logistics_alliances WHERE id=?').bind(mine.alliance_id).first<{color:string}>();const wanted=/^#[0-9a-f]{6}$/i.test(body.color)?body.color:cur?.color||'#4a90c8';if(wanted!==cur?.color&&!await isPremium(u.id))throw Error('Allianzlogo und -farben sind eine Premium-Funktion.');await db().prepare('UPDATE logistics_alliances SET description=?,color=?,open=?,share_storage=? WHERE id=?').bind(String(body.description||'').slice(0,500),wanted,body.open?1:0,body.shareStorage===false?0:1,mine.alliance_id).run();invalidateAllianceCache();
  }else throw Error('Unbekannte Aktion.');
  invalidateAllianceCache();return reply({ok:true});
 }catch(e:any){await logError('api:alliance',e,{url:req.url});return reply({error:e.message||'Aktion fehlgeschlagen.'},422);}}

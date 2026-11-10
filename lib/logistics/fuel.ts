@@ -1,5 +1,6 @@
 import {VEHICLES,vehicleCargo,cargoCapacity,priceIndex,type State,type Vehicle,type GoodId} from './engine';
 import {recordFinance} from './finance';
+import {fuelFactor} from './drivers';
 
 export type EnergyKind='diesel'|'strom'|'kerosin'|'schweröl';
 export const ENERGY:Record<EnergyKind,{name:string;unit:string;base:number;per:string}>={
@@ -22,7 +23,7 @@ export function chargeFuel(s:State,v:Vehicle){
  const odo=v.odometerKm||0;if(v.fuelBilledKm===undefined||v.fuelBilledKm>odo){v.fuelBilledKm=odo;return;}
  const km=odo-v.fuelBilledKm;if(km<.5)return;v.fuelBilledKm=odo;
  if(s.fuelOff)return;const kind=energyOf(v);if(!kind)return;
- const amount=km/100*consumptionPer100(v),cost=round2(amount*energyPrice(kind,s.day));if(cost<=0)return;
+ const amount=km/100*consumptionPer100(v)*fuelFactor(s,v),cost=round2(amount*energyPrice(kind,s.day));if(cost<=0)return;
  recordFinance(s,cost,false,'Treibstoff & Energie');s.cash-=cost;s.spent+=cost;
  v.fuelUsed=round2((v.fuelUsed||0)+amount);v.fuelCost=round2((v.fuelCost||0)+cost);
 }

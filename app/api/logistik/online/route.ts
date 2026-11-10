@@ -15,6 +15,11 @@ import {env} from 'cloudflare:workers';
 import {allianceMap,allySites,allianceSitesFor,settleAllianceOrders} from '../../../../lib/logistics/alliance-server';
 import {seasonFinalStatements} from '../../../../lib/logistics/season-server';
 import {logError} from '../../../../lib/logistics/error-log';
+import {hireDriver,fireDriver,autoCrew,driversActive} from '../../../../lib/logistics/drivers';
+import {newState as newCompanyState} from '../../../../lib/logistics/engine';
+import {readCandidate,takeCandidate,returnToMarket,freshCandidate,refreshDriverMarket} from '../../../../lib/logistics/driver-market';
+import {isPremium} from '../../../../lib/logistics/branding-server';
+import {usedVehicleKey} from '../../../../lib/logistics/used-vehicle-store';
 import {seasonEndDay} from '../../../../lib/logistics/world-settings';
 import {parseSettings,settingsSummary,modeGroup,buildingModeGroup,MODE_GROUPS} from '../../../../lib/logistics/world-settings';
 import {ensureWorldSettingsColumn,assertInRegion} from '../../../../lib/logistics/world-region-server';
@@ -85,7 +90,7 @@ async function settleWorldNow(id:string,budgetMs:number):Promise<World>{
   const rules=await readPartnerRules(),market={...newMarket(world.day),...JSON.parse(world.market||'{}')};
   const states=new Map(await Promise.all(rows.map(async r=>[r.user_id,applyStateRules(normalizeFreightState(await decodeCompany(r.state)),rules)] as [string,State])));
   const statements:D1PreparedStatement[]=[];
-  {const cfg=parseSettings(world.settings);for(const st of states.values()){st.maintenanceOff=!cfg.maintenance;st.fuelOff=!cfg.fuel;}}
+  {const cfg=parseSettings(world.settings);for(const st of states.values()){st.maintenanceOff=!cfg.maintenance;st.fuelOff=!cfg.fuel;st.driversOff=!cfg.drivers;}}
   for(const row of rows){const state=states.get(row.user_id)!;state.borrowedTracks=permissions.filter(p=>p.grantee_id===row.user_id).flatMap(p=>states.get(p.owner_id)?.tracks||[]);}
   {const amap=await allianceMap(id);for(const row of rows){const aid=amap.get(row.user_id);if(!aid)continue;const own=states.get(row.user_id)!;own.sites.push(...allySites(own,rows.filter(r=>r.user_id!==row.user_id&&amap.get(r.user_id)===aid).map(r=>({id:r.user_id,name:r.name||'Spedition',state:states.get(r.user_id)!})),amap.storage.get(aid)!==false));}}
   if(attempt===0)for(const state of states.values())await prepareVehicleRoads(state);
@@ -124,7 +129,7 @@ async function snapshot(u:User,worldId:string,geo=''){
  ]);
  const world=results[0].results[0] as unknown as World,row=results[1].results[0] as unknown as Company;
  if(!row)throw Error('Bitte zuerst dieser Welt beitreten.');
- const rules=await readPartnerRules();const state=applyStateRules(normalizeFreightState(await decodeCompany(row.state)),rules);state.borrowedTracks=await borrowedTracks(worldId,u.id);state.sites.push(...await allianceSitesFor(worldId,u.id,state));state.maintenanceOff=!parseSettings(world.settings).maintenance;state.fuelOff=!parseSettings(world.settings).fuel;
+ const rules=await readPartnerRules();const state=applyStateRules(normalizeFreightState(await decodeCompany(row.state)),rules);state.borrowedTracks=await borrowedTracks(worldId,u.id);state.sites.push(...await allianceSitesFor(worldId,u.id,state));state.maintenanceOff=!parseSettings(world.settings).maintenance;state.fuelOff=!parseSettings(world.settings).fuel;state.driversOff=!parseSettings(world.settings).drivers;
  const geometrySig=geometrySignature(state),geometryOmitted=!!geo&&geo===geometrySig;if(geometryOmitted){delete state.roadRoutes;for(const l of state.lines)delete l.legs;}
  return {geometrySig,geometryOmitted,state,partnerRules:rules,market:{...newMarket(world.day),...JSON.parse(world.market||'{}')},companyName:row.name||state.companyName||u.name,revision:row.revision,user:u.name,userId:u.id,role:u.role,serverNow:Date.now(),world:{catchUpHours:Math.round(catchUpHours(world)*10)/10,catchUpSeconds:catchUpSeconds(world),revision:world.revision,id:world.id,name:world.name,day:world.day,timeScale:world.time_scale,simTime:world.created+(world.day-1)*86400000,status:world.status,tickMs:worldTickMs(world),settings:settingsSummary(parseSettings(world.settings))},companies:results[2].results,offers:results[3].results.map((raw:unknown)=>{const o=raw as Offer;return ({...o,quantity:Number(o.quantity)*(o.quantity_unit==='EH'?1:10)});}),permissions:results[4].results};
 }
@@ -204,10 +209,24 @@ export async function POST(req:NextRequest){const ctx:Record<string,unknown>={};
  if(cmd.type==='tick')return reply({error:'Die gemeinsame Weltzeit läuft automatisch. Spieler können sie nicht vorspulen.'},403);
  if(!Number.isSafeInteger(body.revision)||!/^[-a-zA-Z0-9_]{16,90}$/.test(body.requestId))return reply({error:'Ungültige Revision oder Anfrage-ID.'},400);
  const row=await readCompany(id,u.id);if(!row)throw Error('Bitte der Welt beitreten.');
+ if(cmd.type==='dissolveCompany'){
+  // Auflösung: Fahrzeuge → Gebrauchtmarkt (Insolvenzmasse), Personal → Personalmarkt, Spedition wird gelöscht
+  const name=(row.name||u.name||'').trim();if(String(cmd.confirm||'').trim()!==name||!name)throw Error('Zur Bestätigung den Firmennamen exakt eingeben.');
+  const st=await decodeCompany(row.state),now=Date.now(),seller='liquidation:'+u.id,sellerName='Insolvenzmasse '+name,stmts:D1PreparedStatement[]=[];let listed=0;
+  for(const v of st.vehicles){if(v.wrecked||v.lease)continue;let price=1;try{price=Math.max(1,Math.round(dealerValue(v)*1.1));}catch{}const offer={id:'liq'+crypto.randomUUID().replace(/-/g,''),worldId:id,sellerId:seller,sellerName,price,created:now,vehicle:structuredClone(v),status:'open' as const};stmts.push(saveUsedVehicleOffer(offer));listed++;}
+  stmts.push(...returnToMarket(id,(st.drivers||[]),'aufgelöst'));
+  const prefix=usedVehicleKey(id,'');stmts.push(db().prepare("UPDATE logistics_runtime SET payload=json_set(payload,'$.sellerId',?,'$.sellerName',?) WHERE id>=? AND id<? AND json_extract(payload,'$.sellerId')=? AND json_extract(payload,'$.status')='open'").bind(seller,sellerName,prefix,prefix+'\uffff',u.id));
+  const al=await db().prepare('SELECT alliance_id FROM logistics_alliance_members WHERE world_id=? AND user_id=?').bind(id,u.id).first<{alliance_id:string}>().catch(()=>null);
+  stmts.push(db().prepare('DELETE FROM logistics_world_permissions WHERE world_id=? AND (owner_id=? OR grantee_id=?)').bind(id,u.id,u.id),db().prepare("UPDATE logistics_world_offers SET status='withdrawn' WHERE world_id=? AND (sender_id=? OR receiver_id=?) AND status='open'").bind(id,u.id,u.id),db().prepare("UPDATE logistics_container_offers SET status='cancelled' WHERE world_id=? AND accepted_by=? AND status='accepted'").bind(id,u.id));
+  if(al){stmts.push(db().prepare('DELETE FROM logistics_alliance_members WHERE world_id=? AND user_id=?').bind(id,u.id),db().prepare("UPDATE logistics_alliance_members SET role='leader' WHERE alliance_id=? AND user_id=(SELECT user_id FROM logistics_alliance_members WHERE alliance_id=? ORDER BY joined LIMIT 1) AND NOT EXISTS(SELECT 1 FROM logistics_alliance_members WHERE alliance_id=? AND role='leader')").bind(al.alliance_id,al.alliance_id,al.alliance_id),db().prepare('DELETE FROM logistics_alliances WHERE id=? AND NOT EXISTS(SELECT 1 FROM logistics_alliance_members WHERE alliance_id=?)').bind(al.alliance_id,al.alliance_id));}
+  stmts.push(db().prepare('DELETE FROM logistics_world_companies WHERE world_id=? AND user_id=? AND revision=?').bind(id,u.id,row.revision),db().prepare('INSERT INTO admin_audit(id,actor,action,target,created) VALUES(?,?,?,?,?)').bind(crypto.randomUUID(),u.id,'dissolve-company',id+':'+name,now));
+  await refreshDriverMarket(id,world.day).catch(()=>{});await db().batch(stmts);
+  return reply({dissolved:true,listedVehicles:listed,releasedDrivers:(st.drivers||[]).length});
+ }
  if(row.last_action===body.requestId)return reply({...await snapshot(u,id),duplicate:true});
  if(row.revision!==body.revision)return reply({...await snapshot(u,id),error:'Die Welt wurde inzwischen aktualisiert. Bitte erneut versuchen.'},409);
  const rules=await readPartnerRules();const now=Date.now(),state=applyStateRules(normalizeFreightState(await decodeCompany(row.state)),rules);
- state.maintenanceOff=!parseSettings(world.settings).maintenance;state.fuelOff=!parseSettings(world.settings).fuel;state.sites.push(...await allianceSitesFor(id,u.id,state));await enforceWorldRules(cmd as OnlineCommand,state,parseSettings(world.settings),id);
+ state.maintenanceOff=!parseSettings(world.settings).maintenance;state.fuelOff=!parseSettings(world.settings).fuel;state.driversOff=!parseSettings(world.settings).drivers;state.sites.push(...await allianceSitesFor(id,u.id,state));await enforceWorldRules(cmd as OnlineCommand,state,parseSettings(world.settings),id);
  const update=async(r:Company,s:State)=>db().prepare('UPDATE logistics_world_companies SET state=?,revision=revision+1,last_action=?,updated=? WHERE world_id=? AND user_id=?').bind(await encodeCompany(s),body.requestId,now,id,r.user_id);
  const statements:D1PreparedStatement[]=[];let checked=[row];
  if(cmd.type==='offerUsedVehicle'){
@@ -220,7 +239,7 @@ export async function POST(req:NextRequest){const ctx:Record<string,unknown>={};
   const made=ids.map((vid,i)=>{const v=state.vehicles.find(x=>x.id===vid);if(!v)throw Error('Eigenes Fahrzeug auswählen.');return makeUsedOffer(state,vid,Math.max(1,Math.round(dealerValue(v)*(1+pct/100))),id,u.id,row.name||u.name,body.requestId+'-'+i);});
   statements.push(await update(row,state),...made.map(saveUsedVehicleOffer));
  }else if(cmd.type==='buyUsedVehicle'){
-  const offer=await readUsedVehicleOffer(id,cmd.offerId);if(offer.status!=='open'||offer.sellerId===u.id)throw Error('Dieses Angebot ist nicht mehr verfügbar.');{const cfg=parseSettings(world.settings),m=VEHICLES.find(v=>v.id===offer.vehicle.modelId);if(m&&!cfg.modes.includes(modeGroup(m.mode)))throw Error('Diese Fahrzeugart ist in dieser Welt nicht erlaubt.');}const seller=await readCompany(id,offer.sellerId);if(!seller)throw Error('Anbietende Spedition nicht gefunden.');const sellerState=applyStateRules(normalizeFreightState(await decodeCompany(seller.state)),rules);buyUsedVehicle(state,sellerState,offer,id,u.id,cmd.depotId);checked=[row,seller];statements.push(await update(row,state),await update(seller,sellerState),saveUsedVehicleOffer(offer));
+  const offer=await readUsedVehicleOffer(id,cmd.offerId);if(offer.status!=='open'||offer.sellerId===u.id)throw Error('Dieses Angebot ist nicht mehr verfügbar.');{const cfg=parseSettings(world.settings),m=VEHICLES.find(v=>v.id===offer.vehicle.modelId);if(m&&!cfg.modes.includes(modeGroup(m.mode)))throw Error('Diese Fahrzeugart ist in dieser Welt nicht erlaubt.');}if(offer.sellerId.startsWith('liquidation:')){const nobody=newCompanyState();const bought=buyUsedVehicle(state,nobody,offer,id,u.id,cmd.depotId);if(driversActive(state)&&await isPremium(u.id))autoCrew(state,bought,role=>freshCandidate(role));statements.push(await update(row,state),saveUsedVehicleOffer(offer));}else{const seller=await readCompany(id,offer.sellerId);if(!seller)throw Error('Anbietende Spedition nicht gefunden.');const sellerState=applyStateRules(normalizeFreightState(await decodeCompany(seller.state)),rules);const bought=buyUsedVehicle(state,sellerState,offer,id,u.id,cmd.depotId);if(driversActive(state)&&await isPremium(u.id))autoCrew(state,bought,role=>freshCandidate(role));checked=[row,seller];statements.push(await update(row,state),await update(seller,sellerState),saveUsedVehicleOffer(offer));}
  }else if(cmd.type==='withdrawUsedVehicle'){
   const offer=await readUsedVehicleOffer(id,cmd.offerId);withdrawUsedVehicle(state,offer,id,u.id,cmd.depotId);statements.push(await update(row,state),saveUsedVehicleOffer(offer));
  }else if(cmd.type==='acceptContainer'){
@@ -228,6 +247,10 @@ export async function POST(req:NextRequest){const ctx:Record<string,unknown>={};
   const sites=await registryByIds([offer.source_id,offer.destination_id]);mergeSites(state,sites);const source=sites.find(p=>p.id===offer.source_id);if(!source||offer.slot>=(factoryPartner(source)?5:1))throw Error('Auftrag nicht mehr für diesen Betrieb freigegeben.');
   const occupied=await db().prepare("SELECT count(*) AS n FROM logistics_container_offers WHERE world_id=? AND source_id=? AND status='accepted' AND deadline>?").bind(id,offer.source_id,state.day).first<{n:number}>();if((occupied?.n||0)>=(factoryPartner(source)?5:1))throw Error('Alle Containerplätze dieses Betriebs sind bereits vergeben.');
   acceptContainerOrder(state,offer);statements.push(await update(row,state),db().prepare("UPDATE logistics_container_offers SET accepted_by=?,status='accepted' WHERE id=? AND world_id=? AND accepted_by IS NULL AND status='open'").bind(u.id,offer.id,id));
+ }else if(cmd.type==='hireDriver'){
+  if(!driversActive(state))throw Error('In dieser Welt ist das Fahrersystem ausgeschaltet.');const cand=await readCandidate(id,cmd.candidateId);hireDriver(state,cand,cmd.vehicleId||undefined);delete state.borrowedTracks;statements.push(...takeCandidate(id,cand.id,u.id),await update(row,state));
+ }else if(cmd.type==='fireDriver'){
+  const back=fireDriver(state,cmd.driverId);delete state.borrowedTracks;statements.push(await update(row,state),...returnToMarket(id,[back],'gekündigt'));
  }else if(cmd.type==='tradeOffer'){
   await otherCompany(id,u.id,cmd.receiverId);if(!GOODS.some(g=>g.id===cmd.good&&g.id!=='containers')||!numericAmount(cmd.quantity,10000)||!Number.isSafeInteger(cmd.price)||cmd.price<0||cmd.price>2000000000)throw Error('Ungültiges Handelsangebot.');
   if(!tradeTerminal(state,cmd.siteId)||stock(state,cmd.siteId,cmd.good)<cmd.quantity)throw Error('Nicht genug Ware am eigenen Übergabeterminal.');
@@ -247,7 +270,8 @@ export async function POST(req:NextRequest){const ctx:Record<string,unknown>={};
   const action=cmd as OnlineAction;if(action.type==='sale'||action.type==='haulage')throw Error('Abnehmer werden über offene Tagesbedarfe beliefert; Containeraufträge werden aus der Tagesbörse angenommen.');const siteIds=action.type==='supply'||action.type==='process'?[action.siteId]:action.type==='line'||action.type==='updateLineStops'?action.stops.map(st=>st.siteId):[];if(siteIds.length){const refreshed=await registryByIds(siteIds),lookup=new Map(refreshed.map(p=>[p.id,p]));state.sites=state.sites.map(p=>!p.owned&&!p.cooperative&&lookup.has(p.id)?lookup.get(p.id)!:p);mergeSites(state,refreshed);}if((action.type==='build'||action.type==='track'||action.type==='trackPlan')&&action.confirmed!==true)throw Error('Bau muss vor der Buchung bestätigt werden.');if(action.type==='build'&&harborKind(action.kind)){const shore=await checkHarborPlacement(action.point,action.kind,action.rotation||0);if(!shore.valid)throw Error(shore.error);}const verified=await verifySites(action);state.borrowedTracks=await borrowedTracks(id,u.id);
   if(action.type==='line'){const allowed=new Set(routePartners(state,action.good==='all'?undefined:action.good).map(p=>p.id));if(action.stops.some(st=>!allowed.has(st.siteId)))throw Error('Lieferanten brauchen einen Vertrag; Endabnehmer müssen dieses Gut nachfragen.');}
   const routed=await verifyRoads(action,state);if(action.type==='supply'||action.type==='process')await validateSharedCapacity(action,state,await readCompanies(id),u.id);
-  const updated=applyAction(state,routed,verified);if(action.type==='cancelContract')statements.push(db().prepare("UPDATE logistics_container_offers SET status='cancelled' WHERE id=? AND world_id=? AND accepted_by=? AND status='accepted'").bind(action.contractId,id,u.id));delete updated.borrowedTracks;statements.push(await update(row,updated));
+  const before=new Set(state.vehicles.map(v=>v.id)),updated=applyAction(state,routed,verified);
+  if((action.type==='buy'||action.type==='buyFleet')&&driversActive(updated)&&await isPremium(u.id)){let n=0;for(const v of updated.vehicles)if(!before.has(v.id))n+=autoCrew(updated,v,role=>freshCandidate(role));if(n)updated.events.unshift({day:updated.day,text:`Premium: ${n} Fahrer automatisch eingestellt und zugewiesen.`,type:'good'});}if(action.type==='cancelContract')statements.push(db().prepare("UPDATE logistics_container_offers SET status='cancelled' WHERE id=? AND world_id=? AND accepted_by=? AND status='accepted'").bind(action.contractId,id,u.id));delete updated.borrowedTracks;statements.push(await update(row,updated));
  }
  try{await commit(world,checked,statements,rules.revision);}catch{return reply({...await snapshot(u,id),error:'Eine andere Aktion hat die Welt aktualisiert. Bitte erneut versuchen.'},409);}
  return reply(await snapshot(u,id));

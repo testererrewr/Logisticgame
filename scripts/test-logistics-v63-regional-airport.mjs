@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {newState,build,purchaseVehicle,createLine,assignVehicle,isRegionalAircraft,VEHICLES,vehicleDepotCompatible} from '../lib/logistics/engine.ts';
+const s=newState();s.cash=1e10;s.driversOff=true;
+const big=build(s,'airport',47.07,15.44),reg=build(s,'regionalAirport',48.2,16.37);
+const atr=VEHICLES.find(m=>m.id==='atr-72-600f'),b737=VEHICLES.find(m=>m.id==='boeing-737-800bcf');
+assert.ok(isRegionalAircraft(atr)&&isRegionalAircraft(VEHICLES.find(m=>m.id==='cessna-408-skycourier-freighter'))&&!isRegionalAircraft(b737));
+assert.ok(vehicleDepotCompatible('regionalAirport',atr)&&!vehicleDepotCompatible('regionalAirport',b737));
+const small=purchaseVehicle(s,'atr-72-600f'),large=purchaseVehicle(s,'boeing-737-800bcf');
+const l=createLine(s,{name:'Regio',mode:'air',good:'all',duration:null,stops:[{siteId:big.id,action:'load',good:'all',quantity:1e9},{siteId:reg.id,action:'unload',good:'all',quantity:1e9}]});
+assignVehicle(s,small.id,l.id);assert.equal(s.vehicles.find(v=>v.id===small.id).lineId,l.id,'kleine Maschine darf den Regionalflughafen anfliegen');
+assert.throws(()=>assignVehicle(s,large.id,l.id),/nur kleine Maschinen/,'große Maschine nicht');
+console.log('PASS v63 Regionalflughafen: nur kleine Maschinen (ATR, Embraer, Cessna), große werden abgewiesen.');

@@ -3,6 +3,7 @@ import {requestService,cancelService,resolveIncident,ackIncidents,setBreakdownPo
 import type {UnloadPlanEntry} from './engine';
 import {requestManualDeparture} from './engine';
 import {queueTerminalTransfer} from './terminal-transfer';
+import {assignDriver} from './drivers';
 import {addTrackPlan,setVehicleContainerOrders,MAX_FLEET_VEHICLES} from './engine.ts';
 import {railRoute} from './routing.ts';
 import {buyoutLease,returnLease,purchaseTrailers,detachTrailer,attachTrailer,demolishBuilding,assignDepot,setReturnLine,updateLineStops,assignFleet,updateLine,renameVehicle,type Line} from './engine.ts';
@@ -47,6 +48,7 @@ export type OnlineAction=
  |{type:'setContainerOrders';vehicleId:string;orderIds:string[]|null}
  |{type:'setReturnLine';vehicleId:string;lineId:string}
  |{type:'assign';vehicleId:string;lineId:string}
+ |{type:'assignDriver';driverId:string;vehicleId:string|null}
  |{type:'assignFleet';vehicleIds:string[];lineId:string}
  |{type:'cancel';lineId:string}
  |{type:'tick';days:number};
@@ -60,7 +62,10 @@ export type CooperationAction=
  |{type:'acceptTrade';offerId:string}
  |{type:'rejectTrade';offerId:string}
  |{type:'withdrawTrade';offerId:string}
- |{type:'trackPermission';receiverId:string;enabled:boolean};
+ |{type:'trackPermission';receiverId:string;enabled:boolean}
+ |{type:'hireDriver';candidateId:string;vehicleId?:string}
+ |{type:'fireDriver';driverId:string}
+ |{type:'dissolveCompany';confirm:string};
 export type OnlineCommand=OnlineAction|CooperationAction;
 export function applyAction(state:State,command:OnlineAction,verifiedSites?:Site[]):State{
  const s=structuredClone(state);
@@ -105,6 +110,7 @@ export function applyAction(state:State,command:OnlineAction,verifiedSites?:Site
  case 'setReturnLine':setReturnLine(s,command.vehicleId,command.lineId);break;
  case 'assignFleet':assignFleet(s,command.vehicleIds,command.lineId);break;
  case 'assign':assignVehicle(s,command.vehicleId,command.lineId);break;
+ case 'assignDriver':assignDriver(s,command.driverId,command.vehicleId);break;
  case 'cancel':cancelLine(s,command.lineId);break;
  case 'tick':if(!Number.isInteger(command.days)||command.days<1||command.days>4)throw Error('Maximal vier Tage pro Schritt.');
   for(const line of s.lines.filter(l=>l.active&&l.mode==='rail')){

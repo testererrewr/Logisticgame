@@ -10,10 +10,10 @@ export function ensureAllianceTables(){return ready??=(async()=>{await db().batc
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_alliance_invites(alliance_id TEXT NOT NULL,user_id TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(alliance_id,user_id))'),
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_alliance_posts(id TEXT PRIMARY KEY,alliance_id TEXT NOT NULL,user_id TEXT NOT NULL,text TEXT NOT NULL,created INTEGER NOT NULL)'),
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_alliance_orders(id TEXT PRIMARY KEY,alliance_id TEXT NOT NULL,world_id TEXT NOT NULL,good TEXT NOT NULL,destination_id TEXT NOT NULL,destination_name TEXT NOT NULL,quantity REAL NOT NULL,delivered REAL NOT NULL DEFAULT 0,reward REAL NOT NULL,deadline_day REAL NOT NULL,status TEXT NOT NULL,created INTEGER NOT NULL,baselines TEXT NOT NULL DEFAULT \'{}\',contributions TEXT NOT NULL DEFAULT \'{}\')'),
-]);const cols=(await db().prepare('PRAGMA table_info(logistics_alliances)').all<{name:string}>()).results;if(!cols.some(c=>c.name==='share_storage'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN share_storage INTEGER NOT NULL DEFAULT 1').run().catch(()=>{});})().catch(e=>{ready=undefined;throw e;});}
+]);const cols=(await db().prepare('PRAGMA table_info(logistics_alliances)').all<{name:string}>()).results;if(!cols.some(c=>c.name==='share_storage'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN share_storage INTEGER NOT NULL DEFAULT 1').run().catch(()=>{});if(!cols.some(c=>c.name==='logo'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN logo TEXT').run().catch(()=>{});if(!cols.some(c=>c.name==='logo_updated'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN logo_updated INTEGER').run().catch(()=>{});})().catch(e=>{ready=undefined;throw e;});}
 
 export const STORAGE_KINDS=['warehouse','warehouseSmall','warehouseMedium','warehouseXL','hub'];
-export const SHARED_KINDS=['railStation','railDepot','port','inlandPort','shipDepot','airport','airDepot','depot',...STORAGE_KINDS];
+export const SHARED_KINDS=['railStation','railDepot','port','inlandPort','shipDepot','airport','regionalAirport','airDepot','depot',...STORAGE_KINDS];
 /** Partner terminals of allied companies as cooperative sites (separate stock per company, like trade partners). */
 export function allySites(own:State,partners:{id:string;name:string;state:State}[],shareStorage=true):Site[]{
  const known=new Set(own.sites.map(p=>p.id)),out:Site[]=[];

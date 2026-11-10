@@ -1,0 +1,12 @@
+'use client';
+import {useState} from 'react';
+
+/** Spedition auflösen: Fahrzeuge gehen als Insolvenzmasse auf den Gebrauchtmarkt, das Personal auf den Personalmarkt. */
+export default function DissolveCompany({worldId,name,onDone}:{worldId:string;name:string;onDone:()=>void}){
+ const [open,setOpen]=useState(false),[confirm,setConfirm]=useState(''),[busy,setBusy]=useState(false),[msg,setMsg]=useState('');
+ const run=async()=>{setBusy(true);setMsg('');try{const r=await fetch('/api/logistik/online',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({worldId,quantityUnit:'EH',marketVersion:4,revision:0,requestId:crypto.randomUUID(),command:{type:'dissolveCompany',confirm}})}),d:any=await r.json().catch(()=>({error:'Keine Antwort.'}));if(!r.ok||!d.dissolved)throw Error(d.error||'Auflösung fehlgeschlagen.');alert(`Spedition aufgelöst. ${d.listedVehicles} Fahrzeuge stehen auf dem Gebrauchtmarkt, ${d.releasedDrivers} Mitarbeitende auf dem Personalmarkt. Du kannst in dieser Welt neu gründen.`);onDone();}catch(e:any){setMsg(e.message);}finally{setBusy(false);}};
+ return <section className="log-trailer-box log-danger-zone"><h3>Spedition auflösen</h3>
+  {!open?<><p className="log-help">Beendet deine Spedition in dieser Welt endgültig. Alle eigenen Fahrzeuge kommen als „Insolvenzmasse“ auf den Gebrauchtmarkt, dein gesamtes Personal mit seiner Erfahrung auf den Personalmarkt. Gebäude, Verträge, Linien und Geld verfallen; Leasingfahrzeuge gehen an den Leasinggeber zurück.</p><button className="log-danger" onClick={()=>setOpen(true)}>Spedition auflösen …</button></>
+  :<><p><b>Wirklich auflösen?</b> Das kann nicht rückgängig gemacht werden.</p><label>Zur Bestätigung den Firmennamen „{name}“ eingeben<input value={confirm} onChange={e=>setConfirm(e.target.value)}/></label>{msg&&<p role="alert" className="log-lobby-error">{msg}</p>}<div className="log-trailer-toolbar"><button className="log-danger" disabled={busy||confirm.trim()!==name.trim()} onClick={()=>void run()}>Endgültig auflösen</button><button className="log-secondary" onClick={()=>{setOpen(false);setConfirm('');}}>Abbrechen</button></div></>}
+ </section>;
+}

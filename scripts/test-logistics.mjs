@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {newState,profile,signSupply,signProcess,signSale,signHaulage,build,addTrack,purchaseVehicle,createLine,assignVehicle,configureTrain,wagonCapacity,stepDay,stock,checkIntegrity,good} from '../lib/logistics/engine.ts';
 const mk=(id,name,kind,x)=>({id:`osm:node:${id}`,name,kind,lat:47.07,lon:15.44+x,osmUrl:`https://www.openstreetmap.org/node/${id}`});
 const farm=mk(1,'Testhof','farm',0),mill=mk(2,'Testmühle','mill',.01),bakery=mk(3,'Testbäckerei','bakery',.02),shop=mk(4,'Testmarkt','supermarket',.03),another=mk(5,'Testlager','warehouse',.08);
-let s=newState();s.sites.push(farm,mill,bakery,shop,another);
+let s=newState();s.driversOff=true;s.sites.push(farm,mill,bakery,shop,another);
 const supplyCap=profile(farm).production.wheat;
 assert.throws(()=>signSupply(s,farm.id,'wheat',supplyCap+1),/verfügbar/);
 signSupply(s,farm.id,'wheat',Math.min(10,supplyCap));

@@ -2,7 +2,7 @@ import {tileAt,tileCenter} from '../geography';
 import {mapBounds,pointCell,cellPoint} from '../real-map';
 import type {BuildingKind,Coords} from './engine';
 export interface BuildGrid {tile:string;cell:number;width:number;height:number;rotation:number}
-export const FOOTPRINTS:Record<BuildingKind,[number,number]>={depot:[2,1],railDepot:[3,2],railStation:[6,1],shipDepot:[5,3],inlandPort:[6,3],port:[8,4],airport:[12,5],airDepot:[4,3],hub:[4,3],warehouse:[5,3],warehouseSmall:[2,2],warehouseMedium:[3,3],warehouseXL:[8,5]};
+export const FOOTPRINTS:Record<BuildingKind,[number,number]>={depot:[2,1],railDepot:[3,2],railStation:[6,1],shipDepot:[5,3],inlandPort:[6,3],port:[8,4],airport:[12,5],regionalAirport:[7,3],airDepot:[4,3],hub:[4,3],warehouse:[5,3],warehouseSmall:[2,2],warehouseMedium:[3,3],warehouseXL:[8,5]};
 export function snapBuildPoint(point:Coords):Coords{const center=tileCenter(tileAt(point))!,bounds={...mapBounds(...center)};const map={...bounds} as any;const cell=pointCell(map,point);return cell<0?point:cellPoint(map,cell);}
 export function placement(point:Coords,kind:BuildingKind,rotation=0){
  const tile=tileAt(point),center=tileCenter(tile)!,map={...mapBounds(...center)} as any,cell=pointCell(map,point);let [width,height]=FOOTPRINTS[kind];if(rotation%180===90)[width,height]=[height,width];

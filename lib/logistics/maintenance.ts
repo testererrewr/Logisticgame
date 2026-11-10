@@ -1,6 +1,7 @@
 import {VEHICLES,kmBetween,hash,log,vehicleCargo,depotFor,startReturn,legPoint,purchaseVehicle,type State,type Vehicle,type Coords,type Site} from './engine';
 import {recordFinance} from './finance';
 import {dealerValue} from './vehicle-sales';
+import {breakdownFactor} from './drivers';
 
 export const SERVICE_INTERVAL_KM=15000;
 export const SERVICE_WARN_KM=14000;
@@ -149,7 +150,7 @@ export function maintenanceStep(s:State,v:Vehicle,dt:number):boolean{
   v.riskCheckedKm=v.odometerKm||0;
   const since=kmSinceService(v),rate=since<=SERVICE_INTERVAL_KM?.0035:since<=SERVICE_INTERVAL_KM+2000?.01:.025;
   const limp=v.limping?(0.015*km/100):0;
-  const p=1-Math.pow(1-rate,km/1000)+limp;
+  const p=(1-Math.pow(1-rate,km/1000))*breakdownFactor(s,v)+limp;
   const r=rand(v.id+':risk:'+Math.floor(v.odometerKm||0));
   if(r<p){
    const roll=rand(v.id+':level:'+Math.floor(v.odometerKm||0)),overdue=since>SERVICE_INTERVAL_KM+2000;
