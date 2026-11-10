@@ -9,7 +9,6 @@ const gallery=galleryData as Record<string,Photo>;
 let preloaded=false;
 export function preloadVehiclePhotos(){if(preloaded||typeof window==='undefined')return;preloaded=true;const run=()=>{for(const p of Object.values(gallery))if(p?.path){const img=new Image();img.decoding='async';img.src=p.path;}};const idle=(window as unknown as {requestIdleCallback?:(cb:()=>void,o?:{timeout:number})=>void}).requestIdleCallback;if(idle)idle(run,{timeout:3000});else setTimeout(run,1000);}
 
-/** owner+world: Bild einer anderen Spedition (z. B. Gebrauchtmarkt). Fällt bei 404 auf das Standardfoto zurück. */
 export default function VehiclePhoto({id,credits=false,owner,world}:{id:string;credits?:boolean;owner?:string;world?:string}){
  const [failedPath,setFailedPath]=useState(''),[foreignFailed,setForeignFailed]=useState(false);
  useEffect(()=>{preloadVehiclePhotos();},[]);

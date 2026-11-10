@@ -1,5 +1,3 @@
-// Ordnet vorhandene Betriebe im Register nach den aktuellen Regeln neu ein (z. B. Molkereien, Schlachthöfe, Fahrzeugindustrie, Forst).
-// Eingabe (stdin): Zeilen "id<0x1f>payload" aus sqlite3; Ausgabe: SQL-Updates.
 import {createInterface} from 'node:readline';
 import {identifyPartner} from '../lib/logistics/engine.ts';
 const q=s=>"'"+String(s).replace(/\u0000/g,'').replace(/'/g,"''")+"'";

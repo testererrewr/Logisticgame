@@ -5,11 +5,45 @@ import {kindIcon,VEHICLES,type Coords,type Line,type Site,type Track,type Vehicl
 import {gridBounds,placement,gridOverlaps,type BuildGrid} from '../../lib/logistics/build-grid';
 import {tileAt,tileCenter} from '../../lib/geography';
 import {mapBounds} from '../../lib/real-map';
+import {weatherAt,weatherSlot,WEATHER} from '../../lib/logistics/weather';
+import {useProjects} from './seasonal-store';
 const htmlText=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]||c));
 export default function LogisticsMap({brand=null,region=null,sites,selected,visible,lines,vehicles,tracks,borrowedTracks,buildMode,trackStart,flyTo,onSelect,onPosition,onGroundClick,day,pendingGrid,layoutKey,previewError,pendingTrack,routeStops,routeEligible,showOwned=false,alwaysVisible=[],onVehicle,highlighted=[],hiddenSiteIds=[],clusters=[],onCluster}:{
  brand?:{primary:string;secondary:string}|null;region?:{rings:number[][][];bounds:[number,number,number,number]}|null;hiddenSiteIds?:string[];highlighted?:string[];clusters?:{id:string;lat:number;lon:number;count:number;kind:string}[];onCluster?:(p:Coords)=>void;onVehicle?:(id:string)=>void;alwaysVisible?:string[];showOwned?:boolean;previewError?:boolean;pendingTrack?:Coords[];routeStops?:string[];routeEligible?:string[];pendingGrid?:BuildGrid|null;layoutKey?:string;day:number;sites:Site[];selected:string;visible:string[];lines:Line[];vehicles:Vehicle[];tracks:Track[];borrowedTracks:Track[];buildMode:string;trackStart:Coords|null;flyTo:{point:Coords;zoom:number;key:number}|null;onSelect:(id:string)=>void;onPosition:(p:Coords,zoom:number)=>void;onGroundClick:(p:Coords)=>void;
 }){
- const [mapReady,setMapReady]=useState(false),[mapEpoch,setMapEpoch]=useState(0);const maskLayer=useRef<any>(null);
+ const [mapReady,setMapReady]=useState(false),[mapEpoch,setMapEpoch]=useState(0);
+ const weatherLayer=useRef<any>(null),weatherControl=useRef<any>(null),[showWeather,setShowWeather]=useState(()=>{try{return localStorage.getItem('log-weather')!=='0';}catch{return true;}}),slot=weatherSlot(day);
+ useEffect(()=>{const L=LRef.current,map=mapRef.current;if(!mapReady||!L||!map)return;
+  if(!weatherControl.current||weatherControl.current._map!==map){const C=L.Control.extend({onAdd(){const b=L.DomUtil.create('button','log-weather-toggle');b.type='button';b.title='Wetter ein-/ausblenden';L.DomEvent.disableClickPropagation(b);b.onclick=()=>setShowWeather(v=>{const n=!v;try{localStorage.setItem('log-weather',n?'1':'0');}catch{}window.dispatchEvent(new CustomEvent('log-display-change'));return n;});return b;}});weatherControl.current=new C({position:'topright'}).addTo(map);}
+  const btn=weatherControl.current.getContainer?.();if(btn)btn.textContent=showWeather?'⛅ Wetter an':'⛅ Wetter aus';
+  weatherLayer.current?.remove();weatherLayer.current=null;if(!showWeather)return;
+  if(!map.getPane('log-weather')){const pane=map.createPane('log-weather');pane.style.zIndex='350';pane.style.pointerEvents='none';}
+  const layer=L.layerGroup().addTo(map);weatherLayer.current=layer;const hours=(c:any)=>Math.max(0,Math.round((c.until-day)*24));
+  for(const c of weatherAt(day)){const w=WEATHER[c.kind as keyof typeof WEATHER];for(const shift of [-360,0,360]){const center=[c.lat,c.lon+shift];
+   L.circle(center,{radius:c.radiusKm*1000,pane:'log-weather',interactive:false,stroke:true,weight:1,color:w.color,opacity:.45,fillColor:w.color,fillOpacity:.08+.05*c.strength}).addTo(layer);
+   L.marker(center,{interactive:true,keyboard:false,icon:L.divIcon({className:'log-weather-icon',html:'<span>'+w.icon+'</span>',iconSize:[28,28],iconAnchor:[14,14]})}).addTo(layer).bindTooltip(htmlText(w.name+' · Stärke '+c.strength+'/3 · noch ca. '+hours(c)+' Std.<br>'+w.text),{direction:'top'});}}
+  return()=>{weatherLayer.current?.remove();weatherLayer.current=null;};},[mapReady,mapEpoch,slot,showWeather]);
+ const animLayer=useRef<any>(null);
+ useEffect(()=>{const L=LRef.current,map=mapRef.current;if(!mapReady||!L||!map)return;if(typeof window!=='undefined'&&window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+  const own=sites.filter(p=>p.owned&&['port','inlandPort','shipDepot','airport','regionalAirport','airDepot'].includes(p.kind));if(!own.length)return;
+  const draw=()=>{animLayer.current?.remove();animLayer.current=null;if(map.getZoom()<12)return;const b=map.getBounds(),vis=own.filter(p=>b.contains([p.lat,p.lon])).slice(0,20);if(!vis.length)return;const g=L.layerGroup().addTo(map);
+   for(const p of vis){const air=['airport','regionalAirport','airDepot'].includes(p.kind);L.marker([p.lat,p.lon],{interactive:false,keyboard:false,icon:L.divIcon({className:'log-anim-marker',html:air?'<span class="log-anim-plane">✈️</span>':'<span class="log-anim-crane">🏗️</span>',iconSize:[40,40],iconAnchor:air?[-6,34]:[-4,30]})}).addTo(g);}
+   animLayer.current=g;};
+  draw();map.on('zoomend moveend',draw);return()=>{map.off('zoomend moveend',draw);animLayer.current?.remove();animLayer.current=null;};},[mapReady,mapEpoch,sites]);
+ const projects=useProjects(),projectLayer=useRef<any>(null);
+ useEffect(()=>{const L=LRef.current,map=mapRef.current;projectLayer.current?.remove();projectLayer.current=null;if(!mapReady||!L||!map)return;const list=projects.filter((p:any)=>p.kind!=='holiday'&&(p.status==='active'||p.status==='done'));if(!list.length)return;const g=L.layerGroup().addTo(map);
+  for(const p of list){const done=p.status==='done',color=p.kind==='rescue'?'#ef4444':'#d4af37';if(!done)L.circle([p.lat,p.lon],{radius:p.radiusKm*1000,interactive:false,color,weight:1,dashArray:'6 6',fillOpacity:.04}).addTo(g);
+   L.marker([p.lat,p.lon],{icon:L.divIcon({className:'log-project-marker',html:'<span>'+(p.kind==='rescue'?'🆘':done?'🏛️':'🏗️')+'</span>',iconSize:[34,34],iconAnchor:[17,17]})}).addTo(g).bindTooltip(htmlText(p.name)+'<br>'+(done?'Fertiggestellt'+(p.top?.length?' · Dank an '+htmlText(p.top.map((t:any)=>t.name).join(', ')):''):'Lieferradius '+p.radiusKm+' km · Details in der Auftragsbörse'),{direction:'top'});}
+  projectLayer.current=g;return()=>{g.remove();};},[mapReady,mapEpoch,projects]);
+ const [dayNight,setDayNight]=useState(()=>{try{return localStorage.getItem('log-daynight')!=='0';}catch{return true;}}),nightLayer=useRef<any>(null),nightStep=Math.floor(day*96);
+ useEffect(()=>{const on=()=>{try{setDayNight(localStorage.getItem('log-daynight')!=='0');setShowWeather(localStorage.getItem('log-weather')!=='0');}catch{}};window.addEventListener('log-display-change',on);return()=>window.removeEventListener('log-display-change',on);},[]);
+ useEffect(()=>{const L=LRef.current,map=mapRef.current;nightLayer.current?.remove();nightLayer.current=null;if(!mapReady||!L||!map||!dayNight)return;
+  if(!map.getPane('log-night')){const pane=map.createPane('log-night');pane.style.zIndex='340';pane.style.pointerEvents='none';}
+  const rad=Math.PI/180,doy=((Math.floor(day)%360)+360)%360*365/360,dec=-23.44*Math.cos(2*Math.PI/365*(doy+10)),hour=(day-Math.floor(day))*24,sunLon=-(hour-12)*15,tanD=Math.tan((Math.abs(dec)<.1?.1:dec)*rad);
+  const line:number[][]=[];for(let lon=-180;lon<=180;lon+=2){const lat=Math.atan(-Math.cos((lon-sunLon)*rad)/tanD)/rad;line.push([lat,lon]);}
+  const pole=dec>0?-90:90,ring=[...line,[pole,180],[pole,-180]],group=L.layerGroup().addTo(map);
+  for(const shift of [-360,0,360])L.polygon(ring.map(([a,b])=>[a,b+shift]),{pane:'log-night',interactive:false,stroke:false,fillColor:'#020617',fillOpacity:.32}).addTo(group);
+  nightLayer.current=group;return()=>{group.remove();};},[mapReady,mapEpoch,dayNight,nightStep]);const maskLayer=useRef<any>(null);
  useEffect(()=>{const L=LRef.current,map=mapRef.current;if(!mapReady||!L||!map)return;if(maskLayer.current){maskLayer.current.remove();maskLayer.current=null;}map.setMaxBounds(null);if(!region?.rings?.length)return;if(!map.getPane('log-region'))map.createPane('log-region').style.zIndex='350';const world=[[-89.9,-720],[89.9,-720],[89.9,720],[-89.9,720]];maskLayer.current=L.polygon([world,...region.rings],{pane:'log-region',renderer:L.svg({pane:'log-region'}),fillRule:'evenodd',stroke:false,fillColor:'#4b5563',fillOpacity:.8,interactive:true,bubblingMouseEvents:false}).addTo(map);maskLayer.current.bindTooltip('Außerhalb der Spielregion dieser Welt',{sticky:true});if(region.bounds){const [s,w,n,e]=region.bounds,pad=Math.max(2,(n-s)*.25,(e-w)*.25);map.setMaxBounds([[Math.max(-85,s-pad),w-pad],[Math.min(85,n+pad),e+pad]]);}},[mapReady,region]);const gridLayer=useRef<any>(null),vehicleLayer=useRef<any>(null),hoverLayer=useRef<any>(null);
  const holder=useRef<HTMLDivElement>(null),mapRef=useRef<any>(null),LRef=useRef<any>(null),layers=useRef<any>(null),cb=useRef({onSelect,onPosition,onGroundClick,buildMode,sites,pendingGrid,trackStart});
  cb.current={onSelect,onPosition,onGroundClick,buildMode,sites,pendingGrid,trackStart};

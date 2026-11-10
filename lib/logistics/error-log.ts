@@ -1,6 +1,5 @@
 import {env} from 'cloudflare:workers';
 
-/** Persistentes Fehlerprotokoll (Server + Browser). Gleiche Fehler werden zusammengefasst (Zähler + letzter Kontext). */
 const db=()=>env.DB!;
 let ready:Promise<void>|undefined;
 export function ensureErrorLog(){return ready??=db().batch([
@@ -9,7 +8,7 @@ export function ensureErrorLog(){return ready??=db().batch([
 ]).then(()=>undefined).catch(e=>{ready=undefined;throw e;});}
 export type ErrorLevel='error'|'warn'|'info';
 const hash=(t:string)=>{let h=2166136261;for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(36);};
-/** Spielregel-Meldungen (normale Error mit deutschem Text) sind Warnungen, echte Programmfehler (TypeError, RangeError …) Fehler. */
+
 export function levelOf(e:unknown):ErrorLevel{if(!(e instanceof Error))return 'error';return e.name==='Error'?'warn':'error';}
 const clip=(s:unknown,n:number)=>String(s??'').slice(0,n);
 let writes=0,windowStart=0;

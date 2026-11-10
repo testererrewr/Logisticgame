@@ -1,0 +1,65 @@
+import {env} from 'cloudflare:workers';
+import {kmBetween,good,salePrice,credit,log,isSeasonal,type State,type GoodId} from './engine';
+import {containerTerms} from './container-terms';
+import {countryAt} from '../countries-server';
+import {stableHash} from './business-rules';
+import {ensureSocialTables,feedStatement} from './social-server';
+
+const db=()=>env.DB!;
+export type ProjectKind='landmark'|'rescue'|'holiday';
+export interface HolidayConfig {good:GoodId;srcName:string;srcLat:number;srcLon:number;dest:'world'|'country'|'radius';country?:string;destLat?:number;destLon?:number;destRadiusKm?:number;ordersPerPeriod:number;qtyMin:number;qtyMax:number;feeFactor:number}
+export interface Project {id:string;world_id:string;kind:ProjectKind;name:string;description:string;lat:number;lon:number;radius_km:number;needs:Record<string,number>;delivered:Record<string,number>;contributions:Record<string,{eh:number;paid:number;name:string}>;price_factor:number;bonus:number;start_day:number;end_day:number;visible:number;status:string;config:HolidayConfig|null;created:number}
+let ready:Promise<unknown>|undefined;
+export const ensureProjectTable=()=>ready??=db().prepare("CREATE TABLE IF NOT EXISTS logistics_world_projects(id TEXT PRIMARY KEY,world_id TEXT NOT NULL,kind TEXT NOT NULL,name TEXT NOT NULL,description TEXT NOT NULL DEFAULT '',lat REAL NOT NULL DEFAULT 0,lon REAL NOT NULL DEFAULT 0,radius_km REAL NOT NULL DEFAULT 100,needs TEXT NOT NULL DEFAULT '{}',delivered TEXT NOT NULL DEFAULT '{}',contributions TEXT NOT NULL DEFAULT '{}',price_factor REAL NOT NULL DEFAULT 1.2,bonus REAL NOT NULL DEFAULT 0,start_day REAL NOT NULL,end_day REAL NOT NULL,visible INTEGER NOT NULL DEFAULT 0,status TEXT NOT NULL DEFAULT 'active',config TEXT,created INTEGER NOT NULL)").run().catch(e=>{ready=undefined;throw e;});
+const parse=(r:any):Project=>({...r,needs:JSON.parse(r.needs||'{}'),delivered:JSON.parse(r.delivered||'{}'),contributions:JSON.parse(r.contributions||'{}'),config:r.config?JSON.parse(r.config):null});
+export async function listProjects(world:string,all=false){await ensureProjectTable();const rows=(await db().prepare(`SELECT * FROM logistics_world_projects WHERE world_id=? ${all?'':"AND visible=1 AND status IN ('active','completing','done')"} ORDER BY created DESC LIMIT 100`).bind(world).all()).results;return rows.map(parse);}
+export async function readProject(id:string){await ensureProjectTable();const r=await db().prepare('SELECT * FROM logistics_world_projects WHERE id=?').bind(id).first();return r?parse(r):null;}
+const num=(v:unknown,min:number,max:number,name:string)=>{const n=Number(v);if(!Number.isFinite(n)||n<min||n>max)throw Error(`${name}: ${min} bis ${max}.`);return n;};
+export function validateProject(body:any,day:number){const kind=String(body.kind) as ProjectKind;if(!['landmark','rescue','holiday'].includes(kind))throw Error('Art wählen.');
+ const name=String(body.name||'').trim().slice(0,80);if(name.length<3)throw Error('Name: mindestens 3 Zeichen.');
+ const start=body.startDay===''||body.startDay===undefined?Math.floor(day):num(body.startDay,0,1e6,'Start (Spieltag)'),end=num(body.endDay,start+.1,1e6,'Ende (Spieltag)');
+ const base={kind,name,description:String(body.description||'').slice(0,500),start_day:start,end_day:end,visible:body.visible?1:0};
+ if(kind==='holiday'){const g=String(body.good||'');if(!good(g as GoodId))throw Error('Fracht wählen.');const dest=['world','country','radius'].includes(body.dest)?body.dest:'world';
+  const cfg:HolidayConfig={good:g as GoodId,srcName:String(body.srcName||name).slice(0,80),srcLat:num(body.srcLat,-85,85,'Start-Breitengrad'),srcLon:num(body.srcLon,-180,180,'Start-Längengrad'),dest,country:dest==='country'?String(body.country||'').slice(0,60):undefined,destLat:dest==='radius'?num(body.destLat,-85,85,'Ziel-Breitengrad'):undefined,destLon:dest==='radius'?num(body.destLon,-180,180,'Ziel-Längengrad'):undefined,destRadiusKm:dest==='radius'?num(body.destRadiusKm,10,20000,'Zielradius'):undefined,ordersPerPeriod:Math.round(num(body.ordersPerPeriod??200,1,2000,'Aufträge je Ausschreibung')),qtyMin:Math.round(num(body.qtyMin??20,1,100000,'Menge min')),qtyMax:Math.round(num(body.qtyMax??400,1,100000,'Menge max')),feeFactor:num(body.feeFactor??1.5,.5,10,'Vergütungsfaktor')};
+  if(cfg.qtyMax<cfg.qtyMin)throw Error('Menge max < min.');if(dest==='country'&&!cfg.country)throw Error('Zielland angeben.');
+  return {...base,lat:cfg.srcLat,lon:cfg.srcLon,radius_km:0,needs:{},price_factor:1,bonus:0,config:cfg};}
+ const needs:Record<string,number>={};for(const [g,q] of Object.entries(body.needs||{})){if(!good(g as GoodId)||g==='containers')throw Error('Unbekanntes Gut: '+g);const n=Math.round(Number(q));if(n>0)needs[g]=Math.min(n,10000000);}
+ if(!Object.keys(needs).length)throw Error('Mindestens ein benötigtes Gut mit Menge angeben.');
+ return {...base,lat:num(body.lat,-85,85,'Breitengrad'),lon:num(body.lon,-180,180,'Längengrad'),radius_km:num(body.radiusKm??150,5,5000,'Lieferradius'),needs,price_factor:num(body.priceFactor??(kind==='rescue'?1.8:1.25),.1,10,'Preisfaktor'),bonus:num(body.bonus??0,0,1e10,'Bonus-Topf'),config:null};
+}
+export async function saveProject(world:string,data:ReturnType<typeof validateProject>,id?:string){await ensureProjectTable();const pid=id||crypto.randomUUID();
+ if(id)await db().prepare('UPDATE logistics_world_projects SET kind=?,name=?,description=?,lat=?,lon=?,radius_km=?,needs=?,price_factor=?,bonus=?,start_day=?,end_day=?,visible=?,config=? WHERE id=? AND world_id=?').bind(data.kind,data.name,data.description,data.lat,data.lon,data.radius_km,JSON.stringify(data.needs),data.price_factor,data.bonus,data.start_day,data.end_day,data.visible,data.config?JSON.stringify(data.config):null,id,world).run();
+ else await db().prepare("INSERT INTO logistics_world_projects(id,world_id,kind,name,description,lat,lon,radius_km,needs,price_factor,bonus,start_day,end_day,visible,status,config,created) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,'active',?,?)").bind(pid,world,data.kind,data.name,data.description,data.lat,data.lon,data.radius_km,JSON.stringify(data.needs),data.price_factor,data.bonus,data.start_day,data.end_day,data.visible,data.config?JSON.stringify(data.config):null,Date.now()).run();
+ return pid;}
+export const projectOpen=(p:Project,day:number)=>p.status==='active'&&p.visible===1&&day>=p.start_day&&day<=p.end_day;
+
+export function deliverToProject(s:State,p:Project,siteId:string,g:GoodId,qty:number,free:number){
+ if(!projectOpen(p,s.day)||p.kind==='holiday')throw Error('Dieses Weltprojekt nimmt gerade keine Lieferungen an.');
+ const site=s.sites.find(x=>x.id===siteId&&x.owned);if(!site)throw Error('Eigenen Standort wählen.');const km=kmBetween([site.lat,site.lon],[p.lat,p.lon]);if(km>p.radius_km)throw Error(`${site.name} liegt ${Math.round(km)} km entfernt – höchstens ${p.radius_km} km erlaubt.`);
+ const need=(p.needs[g]||0)-(p.delivered[g]||0);if(need<=0)throw Error('Dieses Gut wird nicht (mehr) benötigt.');const n=Math.round(Math.min(qty,free,need)*100)/100;if(!(n>0))throw Error('Keine freie Ware dieses Guts am Standort.');
+ s.inventory[siteId][g]=Math.round(((s.inventory[siteId][g]||0)-n)*100)/100;const pay=Math.round(n*salePrice(g,s.day)*p.price_factor*100)/100;credit(s,pay,'Weltprojekte');
+ log(s,`${p.kind==='rescue'?'🆘':'🏛️'} ${n.toLocaleString('de-DE')} EH ${good(g).name} an „${p.name}“ geliefert · +${pay.toLocaleString('de-DE',{style:'currency',currency:'EUR'})}`,'good');return {n,pay};}
+export function projectUpdate(p:Project,user:string,name:string,g:GoodId,n:number,pay:number){p.delivered[g]=Math.round(((p.delivered[g]||0)+n)*100)/100;const c=p.contributions[user]??={eh:0,paid:0,name};c.eh=Math.round((c.eh+n)*100)/100;c.paid=Math.round(c.paid+pay);c.name=name;
+ const complete=Object.entries(p.needs).every(([k,q])=>(p.delivered[k]||0)>=q-1e-6);if(complete)p.status='completing';
+ return db().prepare('UPDATE logistics_world_projects SET delivered=?,contributions=?,status=? WHERE id=?').bind(JSON.stringify(p.delivered),JSON.stringify(p.contributions),p.status,p.id);}
+
+export async function settleProjects(world:string,states:Map<string,State>,day:number){await ensureProjectTable();const out:D1PreparedStatement[]=[];
+ const rows=(await db().prepare("SELECT * FROM logistics_world_projects WHERE world_id=? AND (status='completing' OR (status='active' AND end_day<?))").bind(world,day).all()).results.map(parse);if(!rows.length)return out;await ensureSocialTables();
+ for(const p of rows){const total=Object.values(p.contributions).reduce((n,c)=>n+c.eh,0),top=Object.values(p.contributions).sort((a,b)=>b.eh-a.eh).slice(0,3).map(c=>c.name).join(', ');
+  if(p.status==='completing'){if(p.bonus>0&&total>0)for(const [u,c] of Object.entries(p.contributions)){const st=states.get(u);if(!st)continue;const share=Math.round(p.bonus*c.eh/total);if(share>0){credit(st,share,'Weltprojekte');log(st,`${p.kind==='rescue'?'🆘':'🏛️'} „${p.name}“ abgeschlossen – dein Anteil am Bonus: ${share.toLocaleString('de-DE')} €`,'good');}}
+   out.push(db().prepare("UPDATE logistics_world_projects SET status='done' WHERE id=?").bind(p.id),feedStatement(world,null,'project',p.kind==='rescue'?`🆘 Rettungsmission „${p.name}“ erfolgreich! Danke an ${top||'alle Helfer'}.`:`🏛️ Wahrzeichen „${p.name}“ fertiggestellt! Größte Lieferanten: ${top||'–'}.`,{important:true,day,id:'project-done:'+p.id}));}
+  else if(p.kind!=='holiday'){out.push(db().prepare("UPDATE logistics_world_projects SET status='expired' WHERE id=?").bind(p.id));if(p.visible)out.push(feedStatement(world,null,'project',`⌛ „${p.name}“ wurde nicht rechtzeitig fertig.`,{day,id:'project-exp:'+p.id}));}
+  else out.push(db().prepare("UPDATE logistics_world_projects SET status='done' WHERE id=?").bind(p.id));}
+ return out;}
+
+export async function ensureHolidayOrders(world:string,day:number,period:number,gen:number,sample:(seed:string,count:number,inside:((lat:number,lon:number)=>boolean)|null)=>Promise<{id:string;lat:number;lon:number;city?:string}[]>){
+ const list=(await listProjects(world)).filter(p=>p.kind==='holiday'&&projectOpen(p,day)&&p.config);
+ for(const p of list){const cfg=p.config!,key='holiday-orders:'+p.id+':'+period+':'+gen;if(await db().prepare('SELECT id FROM logistics_runtime WHERE id=?').bind(key).first())continue;
+  const src='event-src-'+p.id;await db().prepare('INSERT INTO logistics_partner_registry(id,kind,name,lat,lon,payload,loaded) VALUES(?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,lat=excluded.lat,lon=excluded.lon,payload=excluded.payload').bind(src,'warehouse',cfg.srcName,cfg.srcLat,cfg.srcLon,JSON.stringify({id:src,kind:'warehouse',name:cfg.srcName,lat:cfg.srcLat,lon:cfg.srcLon,tags:{name:cfg.srcName,event:'holiday'}}),Date.now()).run();
+  const inside=cfg.dest==='country'?(lat:number,lon:number)=>countryAt([lat,lon])===cfg.country:cfg.dest==='radius'?(lat:number,lon:number)=>kmBetween([lat,lon],[cfg.destLat!,cfg.destLon!])<=cfg.destRadiusKm!:null;
+  const dests=(await sample(key,cfg.ordersPerPeriod*2,inside)).filter(d=>d.id!==src).slice(0,cfg.ordersPerPeriod),srcCountry=countryAt([cfg.srcLat,cfg.srcLon]);
+  const offers=dests.map((d,i)=>{const id='hol:'+p.id.slice(0,8)+':'+period+':'+gen+':'+i,km=kmBetween([cfg.srcLat,cfg.srcLon],[d.lat,d.lon]),t=containerTerms(km),q=cfg.qtyMin+stableHash(id+'/q')%(cfg.qtyMax-cfg.qtyMin+1);return {id,world_id:world,day:period,source_id:src,destination_id:d.id,slot:i,source_country:srcCountry,destination_country:countryAt([d.lat,d.lon]),source_city:cfg.srcName,destination_city:d.city||'',distance_km:Math.round(km*10)/10,good:cfg.good,quantity:q,fee:Math.round(t.fee*cfg.feeFactor*100)/100,deadline:Math.min(p.end_day+3,period+5+t.days)};});
+  for(let i=0;i<offers.length;i+=300)await db().prepare(`INSERT OR IGNORE INTO logistics_container_offers(rush,good,id,world_id,day,source_id,destination_id,slot,source_country,destination_country,source_city,destination_city,distance_km,quantity,fee,deadline,status) SELECT 0,json_extract(value,'$.good'),json_extract(value,'$.id'),json_extract(value,'$.world_id'),json_extract(value,'$.day'),json_extract(value,'$.source_id'),json_extract(value,'$.destination_id'),json_extract(value,'$.slot'),json_extract(value,'$.source_country'),json_extract(value,'$.destination_country'),json_extract(value,'$.source_city'),json_extract(value,'$.destination_city'),json_extract(value,'$.distance_km'),json_extract(value,'$.quantity'),json_extract(value,'$.fee'),json_extract(value,'$.deadline'),'open' FROM json_each(?)`).bind(JSON.stringify(offers.slice(i,i+300))).run();
+  await db().prepare('INSERT OR IGNORE INTO logistics_runtime(id,updated,payload) VALUES(?,?,?)').bind(key,Date.now(),String(offers.length)).run();}
+}
+export const activeSeasonalGoods=(projects:Project[],day:number)=>[...new Set(projects.filter(p=>p.kind==='holiday'&&projectOpen(p,day)&&p.config&&isSeasonal(p.config.good)).map(p=>p.config!.good))];

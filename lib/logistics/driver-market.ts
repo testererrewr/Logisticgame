@@ -1,7 +1,6 @@
 import {env} from 'cloudflare:workers';
 import {CREW_ROLES,LEVEL_HOURS,driverName,type CrewRole,type Driver,type DriverCandidate} from './drivers';
 
-/** Gemeinsamer Personalmarkt je Welt: täglich neue Bewerber; gekündigte Fahrer und Personal aufgelöster Speditionen kommen mit ihrer Stufe zurück. */
 const db=()=>env.DB!;
 let ready:Promise<void>|undefined;
 export function ensureDriverMarket(){return ready??=db().batch([
@@ -12,8 +11,7 @@ export function ensureDriverMarket(){return ready??=db().batch([
 const PER_ROLE:Record<CrewRole,number>={van:10,truck:16,rail:8,ship:8,air:10};
 const DAY=86400000;
 export function mix(seed:string){let h=2166136261;for(const c of seed){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return ()=>{h^=h>>>15;h=Math.imul(h,2246822507);h^=h>>>13;h=Math.imul(h,3266489909);h^=h>>>16;return (h>>>0)/4294967296;};}
-/** Neue Bewerber sind immer Stufe 1. Höhere Stufen kommen nur von Speditionen (Kündigung, Auflösung) auf den Markt und bleiben dort.
- * Neue Bewerber einer Personalart werden alle 24 Stunden erneuert – oder sofort, sobald alle eingestellt wurden. */
+
 export async function refreshDriverMarket(world:string,day:number){await ensureDriverMarket();const now=Date.now(),key='driver-market-v2:'+world;
  const last=await db().prepare('SELECT payload FROM logistics_runtime WHERE id=?').bind(key).first<{payload:string}>(),stamp:Record<string,number>=last?JSON.parse(last.payload):{};
  const left=(await db().prepare("SELECT role,count(*) AS n FROM logistics_driver_market WHERE world_id=? AND source='neu' GROUP BY role").bind(world).all<{role:CrewRole;n:number}>()).results,count=new Map(left.map(r=>[r.role,r.n]));
@@ -27,8 +25,8 @@ export async function refreshDriverMarket(world:string,day:number){await ensureD
  ]);}
 export async function listDriverMarket(world:string){await ensureDriverMarket();return (await db().prepare('SELECT id,role,name,xp_hours,source,created,expires FROM logistics_driver_market WHERE world_id=? AND expires>? ORDER BY xp_hours DESC,created DESC LIMIT 600').bind(world,Date.now()).all<{id:string;role:CrewRole;name:string;xp_hours:number;source:string;created:number;expires:number}>()).results;}
 export async function readCandidate(world:string,id:string):Promise<DriverCandidate>{await ensureDriverMarket();const r=await db().prepare('SELECT id,role,name,xp_hours FROM logistics_driver_market WHERE world_id=? AND id=? AND expires>?').bind(world,String(id).slice(0,120),Date.now()).first<{id:string;role:CrewRole;name:string;xp_hours:number}>();if(!r)throw Error('Dieser Bewerber ist nicht mehr verfügbar.');if(!CREW_ROLES[r.role])throw Error('Unbekannte Personalart.');return {id:r.id,name:r.name,role:r.role,xpHours:r.xp_hours};}
-/** Einstellung: Bewerber verschwindet; doppelte Einstellung desselben Bewerbers lässt den ganzen Vorgang scheitern. */
+
 export function takeCandidate(world:string,id:string,user:string){return [db().prepare('INSERT INTO logistics_driver_taken(id,world_id,user_id,created) VALUES(?,?,?,?)').bind(id,world,user,Date.now()),db().prepare('DELETE FROM logistics_driver_market WHERE id=? AND world_id=?').bind(id,world)];}
-/** Gekündigte oder freigesetzte Fahrer zurück auf den Markt (neue Kennung, gleiche Erfahrung). */
+
 export function returnToMarket(world:string,drivers:(Driver|DriverCandidate)[],source:'gekündigt'|'aufgelöst'){const now=Date.now();return drivers.map(d=>db().prepare('INSERT OR REPLACE INTO logistics_driver_market(id,world_id,role,name,xp_hours,source,created,expires) VALUES(?,?,?,?,?,?,?,?)').bind('drv-r-'+crypto.randomUUID(),world,d.role,d.name,d.xpHours,source,now,now+3650*DAY));}
 export function freshCandidate(role:CrewRole):DriverCandidate{const id='drv-auto-'+crypto.randomUUID();return {id,name:driverName(id),role,xpHours:0};}

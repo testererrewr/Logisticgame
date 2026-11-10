@@ -35,7 +35,7 @@ export function validateSettings(raw:unknown):WorldSettings{
  if(v.seasonDays!==undefined&&v.seasonDays!==0&&(!Number.isFinite(v.seasonDays)||v.seasonDays<1||v.seasonDays>3650))throw Error('Saisonlänge: 1–3650 Tage oder 0 für endlos.');
  return parseSettings(v);
 }
-/** Worlds start on day 1; a season of N days ends on day 1+N. */
+
 export const seasonEndDay=(s:WorldSettings)=>s.seasonDays>0?1+s.seasonDays:null;
 
 export function allowedCountries(s:WorldSettings):Set<string>|null{

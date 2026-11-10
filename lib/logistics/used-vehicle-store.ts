@@ -2,5 +2,25 @@ import {env} from 'cloudflare:workers';
 import type {UsedVehicleOffer} from './vehicle-sales';
 export const usedVehicleKey=(world:string,id:string)=>'used-vehicle-v20:'+world+':'+id;
 export async function readUsedVehicleOffer(world:string,id:string){if(typeof id!=='string'||!/^[-a-zA-Z0-9_]{16,90}$/.test(id))throw Error('Ungültiges Fahrzeugangebot.');const row=await env.DB!.prepare('SELECT payload FROM logistics_runtime WHERE id=?').bind(usedVehicleKey(world,id)).first<{payload:string}>();if(!row)throw Error('Fahrzeugangebot nicht gefunden.');const offer=JSON.parse(row.payload) as UsedVehicleOffer;if(offer.worldId!==world)throw Error('Angebot gehört zu einer anderen Welt.');return offer;}
-export async function readUsedVehicleOffers(world:string){const prefix=usedVehicleKey(world,'');const rows=await env.DB!.prepare("SELECT payload FROM logistics_runtime WHERE id>=? AND id<? AND json_extract(payload,'$.status')='open' ORDER BY updated DESC LIMIT 500").bind(prefix,prefix+'\uffff').all<{payload:string}>();return rows.results.map(r=>JSON.parse(r.payload) as UsedVehicleOffer).filter(o=>o.worldId===world&&o.status==='open');}
+export async function readUsedVehicleOffers(world:string,day?:number){const prefix=usedVehicleKey(world,'');const rows=await env.DB!.prepare("SELECT payload FROM logistics_runtime WHERE id>=? AND id<? AND json_extract(payload,'$.status')='open' ORDER BY updated DESC LIMIT 500").bind(prefix,prefix+'\uffff').all<{payload:string}>();return rows.results.map(r=>JSON.parse(r.payload) as UsedVehicleOffer).filter(o=>o.worldId===world&&o.status==='open'&&(day===undefined||!o.expiresDay||o.expiresDay>day));}
 export const saveUsedVehicleOffer=(offer:UsedVehicleOffer)=>env.DB!.prepare('INSERT OR REPLACE INTO logistics_runtime(id,payload,updated) VALUES(?,?,?)').bind(usedVehicleKey(offer.worldId,offer.id),JSON.stringify(offer),Date.now());
+
+export async function ensureRareOffer(world:string,day:number,allowed:(mode:string)=>boolean){const {rareOfferFor}=await import('./rare-vehicles');for(const d of [Math.floor(day),Math.floor(day)-1]){const o=rareOfferFor(world,d,allowed);if(o&&o.expiresDay!>day)await env.DB!.prepare('INSERT OR IGNORE INTO logistics_runtime(id,payload,updated) VALUES(?,?,?)').bind(usedVehicleKey(world,o.id),JSON.stringify(o),Date.now()).run();}}
+
+let auctionReady:Promise<unknown>|undefined;
+export const ensureAuctionTable=()=>auctionReady??=env.DB!.prepare('CREATE TABLE IF NOT EXISTS logistics_auction_bids(offer_id TEXT NOT NULL,world_id TEXT NOT NULL,user_id TEXT NOT NULL,amount REAL NOT NULL,depot_id TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(offer_id,user_id))').run().catch(e=>{auctionReady=undefined;throw e;});
+export const isAuction=(o:UsedVehicleOffer)=>o.sellerId.startsWith('rare:');
+export const minBid=(start:number,top:number)=>top>0?Math.ceil((top+Math.max(1000,top*.02))/100)*100:start;
+export async function auctionInfo(world:string,user:string){await ensureAuctionTable();const rows=(await env.DB!.prepare('SELECT offer_id,user_id,amount FROM logistics_auction_bids WHERE world_id=?').bind(world).all<{offer_id:string;user_id:string;amount:number}>()).results;const out=new Map<string,{top:number;count:number;mine:number;leading:boolean}>();
+ for(const r of rows){const x=out.get(r.offer_id)||{top:0,count:0,mine:0,leading:false};x.count++;if(r.amount>x.top){x.top=r.amount;x.leading=r.user_id===user;}if(r.user_id===user)x.mine=r.amount;out.set(r.offer_id,x);}return out;}
+
+export async function settleAuctions(world:string,states:Map<string,import('./engine').State>,day:number){
+ const out:D1PreparedStatement[]=[];const ended=(await readUsedVehicleOffers(world)).filter(o=>isAuction(o)&&o.status==='open'&&(o.expiresDay||0)<=day);if(!ended.length)return out;
+ await ensureAuctionTable();const {buyUsedVehicle}=await import('./vehicle-sales'),{newState,log}=await import('./engine'),{ensureSocialTables,feedStatement}=await import('./social-server');
+ for(const o of ended){const bids=(await env.DB!.prepare('SELECT user_id,amount,depot_id FROM logistics_auction_bids WHERE offer_id=? ORDER BY amount DESC,created ASC').bind(o.id).all<{user_id:string;amount:number;depot_id:string}>()).results;let won:string|null=null;
+  for(const b of bids){const st=states.get(b.user_id);if(!st)continue;const offer={...o,price:b.amount};try{buyUsedVehicle(st,newState(),offer,world,b.user_id,b.depot_id);log(st,`🔨 Auktion gewonnen: ${o.vehicle.name} für ${b.amount.toLocaleString('de-DE')} € – steht im Depot bereit.`,'good');Object.assign(o,offer);won=b.user_id;break;}catch(e:any){log(st,`🔨 Auktion ${o.vehicle.name}: Höchstgebot konnte nicht bezahlt/zugestellt werden (${e.message}).`,'warn');}}
+  for(const b of bids)if(b.user_id!==won){const st=states.get(b.user_id);if(st)log(st,`🔨 Auktion ${o.vehicle.name} beendet – leider überboten.`,'info');}
+  if(!won)o.status='withdrawn';out.push(saveUsedVehicleOffer(o));
+  if(won){try{await ensureSocialTables();out.push(feedStatement(world,won,'special',`🔨 Seltenes Fahrzeug versteigert: ${o.vehicle.name} für ${o.price.toLocaleString('de-DE')} €.`,{day}));}catch{}}}
+ return out;
+}

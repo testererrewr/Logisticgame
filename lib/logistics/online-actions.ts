@@ -7,7 +7,7 @@ import {assignDriver} from './drivers';
 import {extendContracts} from './engine';
 import {addTrackPlan,setVehicleContainerOrders,MAX_FLEET_VEHICLES} from './engine.ts';
 import {railRoute} from './routing.ts';
-import {buyoutLease,returnLease,purchaseTrailers,detachTrailer,attachTrailer,demolishBuilding,assignDepot,setReturnLine,updateLineStops,assignFleet,updateLine,renameVehicle,type Line} from './engine.ts';
+import {discardStock,setPlate,buyoutLease,returnLease,purchaseTrailers,detachTrailer,attachTrailer,demolishBuilding,assignDepot,setReturnLine,updateLineStops,assignFleet,updateLine,renameVehicle,type Line} from './engine.ts';
 import {newState,mergeSites,signSupply,signProcess,signSale,signHaulage,build,addTrack,purchaseVehicle,purchaseFleet,warehouseUpgrade,renameBuilding,cancelContract,configureTrailer,configureTrain,createLine,assignVehicle,cancelLine,stepDay,checkIntegrity, type State,type Site,type Coords,type BuildingKind,type GoodId,type VehicleModelId,type WagonSet,type Mode,type Stop,type RouteLeg} from './engine.ts';
 export type OnlineAction=
  |{type:'sellVehicle';vehicleId:string}
@@ -47,6 +47,9 @@ export type OnlineAction=
  |{type:'updateLineStops';manualDeparture?:boolean;lineId:string;stops:Stop[];legs?:RouteLeg[]}
  |{type:'updateLine';lineId:string;settings:Pick<Line,'departure'|'manualDeparture'|'name'|'tripsPerDay'|'tripLimit'|'stopWhenDemandMet'|'stopWhenSourcesEmpty'> & {duration?:number|null}}
  |{type:'renameVehicle';vehicleId:string;name:string}
+ |{type:'showcaseVehicle';vehicleId:string;on:boolean}
+ |{type:'discardStock';siteId:string;good:GoodId;quantity:number}
+ |{type:'setPlate';vehicleId:string;plate:string}
  |{type:'setContainerOrders';vehicleId:string;orderIds:string[]|null}
  |{type:'setReturnLine';vehicleId:string;lineId:string}
  |{type:'assign';vehicleId:string;lineId:string}
@@ -68,7 +71,9 @@ export type CooperationAction=
  |{type:'hireDriver';candidateId:string;vehicleId?:string}
  |{type:'fireDriver';driverId:string}
  |{type:'hireDrivers';candidateIds:string[];assign?:boolean}
- |{type:'dissolveCompany';confirm:string};
+ |{type:'dissolveCompany';confirm:string}
+ |{type:'allianceDonate';amount:number;target?:'hq'|'treasury'}
+ |{type:'projectDeliver';projectId:string;siteId:string;good:GoodId;quantity:number};
 export type OnlineCommand=OnlineAction|CooperationAction;
 export function applyAction(state:State,command:OnlineAction,verifiedSites?:Site[]):State{
  const s=structuredClone(state);
@@ -110,6 +115,9 @@ export function applyAction(state:State,command:OnlineAction,verifiedSites?:Site
  case 'updateLineStops':updateLineStops(s,command.lineId,command.stops,command.legs,command.manualDeparture);break;
  case 'updateLine':updateLine(s,command.lineId,command.settings);break;
  case 'renameVehicle':renameVehicle(s,command.vehicleId,command.name);break;
+ case 'discardStock':discardStock(s,command.siteId,command.good,Number(command.quantity));break;
+ case 'setPlate':setPlate(s,command.vehicleId,String(command.plate||''));break;
+ case 'showcaseVehicle':{const v=s.vehicles.find(x=>x.id===command.vehicleId);if(!v||!v.rare)throw Error('Nur seltene Fahrzeuge und Erfolgs-Fahrzeuge können ausgestellt werden.');if(command.on&&s.vehicles.filter(x=>x.showcase).length>=6&&!v.showcase)throw Error('Höchstens 6 Fahrzeuge in der Vitrine.');v.showcase=!!command.on||undefined;break;}
  case 'setContainerOrders':setVehicleContainerOrders(s,command.vehicleId,command.orderIds===null?undefined:command.orderIds);break;
  case 'setReturnLine':setReturnLine(s,command.vehicleId,command.lineId);break;
  case 'assignFleet':assignFleet(s,command.vehicleIds,command.lineId);break;

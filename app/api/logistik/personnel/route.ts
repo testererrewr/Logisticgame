@@ -5,7 +5,7 @@ import {currentUser} from '../online/route';
 import {refreshDriverMarket,listDriverMarket} from '../../../../lib/logistics/driver-market';
 import {parseSettings} from '../../../../lib/logistics/world-settings';
 const reply=(d:unknown,status=200)=>NextResponse.json(d,{status,headers:{'Cache-Control':'no-store'}});
-/** Personalmarkt der Welt (Filter macht der Browser). */
+
 export async function GET(req:NextRequest){try{
  const u=await currentUser(req);if(!u||u.status!=='active')return reply({error:'Bitte anmelden.'},401);
  const world=(req.nextUrl.searchParams.get('world')||'').slice(0,100);

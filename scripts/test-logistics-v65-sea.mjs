@@ -5,7 +5,7 @@ const r=seaRoute([51.95,4.1],[31.35,121.6]);assert.ok(r&&r.km>17000&&r.km<22000,
 assert.ok(r.path.some(p=>Math.abs(p[0]-30)<2&&Math.abs(p[1]-32.5)<1.5),'führt durch den Suezkanal');
 assert.equal(seaRoute([48.2,16.37],[44.17,28.66]),null,'Binnenhafen Wien hat keinen Seeweg (Flüsse)');
 const k=seaRoute([44.17,28.66],[43.30,5.36]);assert.ok(k&&k.km>2800,'Schwarzes Meer über Bosporus erreichbar');
-// Schiff im Spiel folgt dem Seeweg
+
 const s=newState();s.cash=1e10;s.live=true;s.driversOff=true;
 const a=build(s,'port',44.17,28.68),b=build(s,'port',43.30,5.38);build(s,'shipDepot',44.16,28.67);
 s.inventory[a.id]={crudeOil:500};

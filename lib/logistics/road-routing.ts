@@ -16,8 +16,7 @@ async function cachedRoute(from:Coords,to:Coords):Promise<RouteLeg|undefined>{co
 function warmRoute(pair:string,from:Coords,to:Coords){const key=keyFor(from,to);if(warming.has(key))return;warming.add(key);waitUntil(roadRoute(from,to).then(()=>{failedPairs.delete(pair);failedMsg.delete(pair);},(e:any)=>{failedPairs.set(pair,Date.now()+120000);failedMsg.set(pair,String(e?.message||'Straßenroute nicht verfügbar.'));}).finally(()=>warming.delete(key)));}
 export async function connectRoad(s:State,a:Site,b:Site){if(a.id===b.id)return;const known=s.roadRoutes?.find(l=>l.geometryVersion===2&&l.fromId===a.id&&l.toId===b.id)||s.lines.flatMap(l=>l.legs||[]).find(l=>l.geometryVersion===2&&l.source==='osm-strassen'&&l.fromId===a.id&&l.toId===b.id);if(known)return known;const leg={...await roadRoute([a.lat,a.lon],[b.lat,b.lon]),fromId:a.id,toId:b.id};s.roadRoutes??=[];s.roadRoutes=s.roadRoutes.filter(r=>r.fromId!==a.id||r.toId!==b.id);s.roadRoutes.push(leg);for(const l of s.lines)if(l.legs)l.legs=l.legs.map(r=>r.fromId===a.id&&r.toId===b.id?leg:r);return leg;}
 export async function prepareVehicleRoads(s:State){const jobs:Promise<void>[]=[],freshPairs=new Set<string>();for(const v of s.vehicles){const model=VEHICLES.find(m=>m.id===v.modelId);if(!model||!['truck','van'].includes(model.mode))continue;if(v.status!=='idle'&&(v.currentLeg?.turnaround||v.currentLeg?.source==='osm-strassen'&&v.currentLeg.geometryVersion===2))continue;const a=s.sites.find(p=>p.id===v.locationId),line=s.lines.find(l=>l.id===(v.onReturnRoute?v.returnLineId:v.lineId)),id=v.status!=='idle'?v.targetId:line?.active?v.dailyRestTargetId||line.stops[v.nextStop]?.siteId:v.targetId||s.sites.find(p=>p.id===v.homeDepotId)?.id||depotFor(s,model.mode,a)?.id,b=s.sites.find(p=>p.id===id);if(!a||!b)continue;const key=a.id+'/'+b.id,known=a.id===b.id||s.roadRoutes?.some(r=>r.geometryVersion===2&&r.fromId===a.id&&r.toId===b.id)||s.lines.some(l=>l.legs?.some(r=>r.geometryVersion===2&&r.fromId===a.id&&r.toId===b.id));if(!known&&(failedPairs.get(key)||0)>Date.now()){const msg=failedMsg.get(key);if(msg){v.restReason=msg;v.waitingRoute=true;}continue;}if(!known&&!freshPairs.has(key)&&!(await cachedRoute([a.lat,a.lon],[b.lat,b.lon]))){warmRoute(key,[a.lat,a.lon],[b.lat,b.lon]);continue;}freshPairs.add(key);jobs.push((async()=>{try{const leg=await connectRoad(s,a,b);failedPairs.delete(key);if(leg&&v.status!=='idle'){const old=v.currentLeg;v.currentLeg=leg;if(!old){const progress=v.etaDay&&v.departDay!==undefined?Math.max(0,Math.min(1,(s.day-v.departDay)/(v.etaDay-v.departDay))):0;const days=vehicleTravelDays(v,leg.km,leg);v.departDay=s.day-progress*days;v.etaDay=s.day+(1-progress)*days;}}}catch(e:any){failedPairs.set(key,Date.now()+120000);v.restReason=e.message;v.waitingRoute=true;if(!v.currentLeg&&v.status!=='idle'){v.status='idle';v.etaDay=undefined;v.departDay=undefined;}}})());}await Promise.all(jobs);}
-/** Lange Linien: alle noch unbekannten Straßenabschnitte einer Stoppfolge mit EINER OSRM-Anfrage je bis zu 50 Stopps holen
- * (statt einer Anfrage pro Abschnitt mit Wartezeit dazwischen). Die Teilstrecken landen im selben Cache wie einzelne Routen. */
+
 export async function prefetchRoadChain(points:Coords[]){
  if(points.length<3)return 0;const seq=[...points,points[0]];const missing:number[]=[];
  for(let i=0;i<seq.length-1;i++){const a=seq[i],b=seq[i+1];if(a[0]===b[0]&&a[1]===b[1])continue;if(!await cachedRoute(a,b))missing.push(i);}
@@ -27,7 +26,7 @@ export async function prefetchRoadChain(points:Coords[]){
    const r=await fetch(`${base}/route/v1/driving/${chunk.map(p=>p[1]+','+p[0]).join(';')}?overview=full&steps=false&geometries=geojson`,{signal:AbortSignal.timeout(30000),headers:{Accept:'application/json','User-Agent':'WeltverbundLogistik/6.0'}});
    if(!r.ok)return;const data:any=await r.json(),route=data.routes?.[0];if(data.code!=='Ok'||!route?.legs||!Array.isArray(route.geometry?.coordinates))return;
    const raw:Coords[]=route.geometry.coordinates.map((p:number[])=>[p[1],p[0]]),wps:Coords[]=(data.waypoints||[]).map((w:any)=>[w.location[1],w.location[0]]);
-   // Geometrie an den Wegpunkten aufteilen (Suche vorwärts entlang der Linie)
+
    const cut:number[]=[0];let at=0;for(let k=1;k<wps.length-1;k++){let best=at,bd=Infinity;for(let i=at;i<raw.length;i++){const d=(raw[i][0]-wps[k][0])**2+(raw[i][1]-wps[k][1])**2;if(d<bd){bd=d;best=i;}if(d===0)break;}cut.push(best);at=best;}cut.push(raw.length-1);
    const stmts:D1PreparedStatement[]=[];
    for(let k=0;k<route.legs.length;k++){const from=chunk[k],to=chunk[k+1],leg=route.legs[k];if(!leg||from[0]===to[0]&&from[1]===to[1])continue;if(data.waypoints?.[k]?.distance>30000||data.waypoints?.[k+1]?.distance>30000)continue;const key=keyFor(from,to);if(memory.has(key))continue;
@@ -35,7 +34,7 @@ export async function prefetchRoadChain(points:Coords[]){
     const out:RouteLeg={durationHours:Number.isFinite(leg.duration)?leg.duration/3600:undefined,geometryVersion:2,fromId:'',toId:'',km:Math.round((leg.distance/1000+connector)*1000)/1000,path:[from,...path,to],source:'osm-strassen'};
     memory.set(key,out);if(env.DB)stmts.push(env.DB.prepare('INSERT OR REPLACE INTO map_snapshots(id,payload,created) VALUES(?,?,?)').bind(key,JSON.stringify(out),Date.now()));saved++;}
    if(stmts.length&&env.DB)await env.DB.batch(stmts);
-  });}catch{/* einzelne Abschnitte werden danach normal geladen */}
+  });}catch{}
  }
  return saved;
 }

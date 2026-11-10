@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {newState,build,purchaseVehicle,createLine,assignVehicle,stepTime,checkIntegrity} from '../lib/logistics/engine.ts';
 import {acceptContainerOrder} from '../lib/logistics/order-accept.ts';
-// Fahrzeug mit veralteter Container-Auswahl (alter, erledigter Auftrag) blieb ewig bei „Containerauftrag / Ziel auswählen“ stehen.
+
 const s=newState();s.live=true;s.cash=1e9;build(s,'depot',47.07,15.44);
 const src={id:'doc-1',kind:'doctors',name:'Dr. Grohmann',lat:47.071,lon:15.44,tags:{}},cafe={id:'cafe-1',kind:'cafe',name:'Café Ambra',lat:47.08,lon:15.44,tags:{}};s.sites.push(src,cafe);
 const road=(x,y)=>({fromId:x.id,toId:y.id,km:.5,path:[[x.lat,x.lon],[y.lat,y.lon]],source:'osm-strassen',geometryVersion:2});

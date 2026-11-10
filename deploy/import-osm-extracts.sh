@@ -33,6 +33,7 @@ if [[ $BG -eq 1 ]]; then
   exit 0
 fi
 
+exec 3>&1  # fd 3 = Konsole/Journal (Fortschritt), nicht ins Fehlerlog
 ts(){ date '+%Y-%m-%d %H:%M:%S'; }
 storage(){ # Speicherplatz des Servers und Größe der Spieldatenbank
   local dbf; dbf="$(find "$STATE_DIR" -name '*.sqlite' ! -name 'metadata.sqlite' 2>/dev/null | head -1)"
@@ -70,7 +71,7 @@ sql "CREATE TABLE IF NOT EXISTS logistics_partner_registry(id TEXT PRIMARY KEY,k
 if [[ "${args[0]}" == "neu-einordnen" ]]; then
   log "Ordne vorhandene Betriebe neu ein …"
   printf '.mode list\n.separator "\x1f"\nSELECT id,payload FROM logistics_partner_registry;\n' | sql > "$WORK/register.tmp" || { fail "Register konnte nicht gelesen werden"; exit 1; }
-  (cd "$APP" && node --no-warnings --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/reclassify-registry.mjs < "$WORK/register.tmp" 2> >(tee -a "$LOG" >&2)) | sql || fail "Neu-Einordnung fehlgeschlagen"
+  (cd "$APP" && node --no-warnings --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/reclassify-registry.mjs < "$WORK/register.tmp" 2> >(tee -a "$LOG" >&3)) | sql || fail "Neu-Einordnung fehlgeschlagen"
   rm -f "$WORK/register.tmp"
   log "$(storage)"; exit 0
 fi
@@ -114,7 +115,7 @@ while IFS=$'\t' read -r id url; do
   if ! osmium export "$flt" -f geojsonseq -a type,id --geometry-types=point,linestring,polygon -o "$geo" --overwrite 2>>"$WORK/osmium-export.log"; then fail "$id: osmium export fehlgeschlagen (Details: $WORK/osmium-export.log)"; rm -f "$flt" "$geo"; failed=$((failed+1)); continue; fi
   rm -f "$flt"
   before=$(sql "SELECT count(*) FROM logistics_partner_registry;" 2>/dev/null || echo 0)
-  if ! (cd "$APP" && node --no-warnings --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/osm-extract-import.mjs "$geo" "$id" 2> >(tee -a "$LOG" >&2) | sql) 2>>"$ERR"; then fail "$id: Datenbankimport fehlgeschlagen (Details in $ERR)"; rm -f "$geo"; failed=$((failed+1)); continue; fi
+  if ! (cd "$APP" && node --no-warnings --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/osm-extract-import.mjs "$geo" "$id" 2> >(tee -a "$LOG" >/dev/null) | sql) 2>>"$ERR"; then fail "$id: Datenbankimport fehlgeschlagen (Details in $ERR)"; rm -f "$geo"; failed=$((failed+1)); continue; fi
   after=$(sql "SELECT count(*) FROM logistics_partner_registry;" 2>/dev/null || echo 0)
   rm -f "$geo"; ok=$((ok+1))
   echo "$(ts) neu: $((after-before)) · Register gesamt: $after" > "$mark"

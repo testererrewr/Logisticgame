@@ -7,7 +7,6 @@ const reply=(d:unknown,status=200)=>NextResponse.json(d,{status,headers:{'Cache-
 const isAdmin=(u:{role:string;status:string}|null)=>!!u&&u.status==='active'&&['admin','owner'].includes(u.role);
 const perUser=new Map<string,{at:number;n:number}>();
 
-/** Browser meldet Fehler (window.onerror, unhandledrejection, React-Fehlergrenze). */
 export async function POST(req:NextRequest){try{
  const raw=await req.text();if(raw.length>20000)return reply({error:'Zu groß.'},413);
  if(!sameOrigin(req))return reply({error:'Ungültiger Ursprung.'},403);

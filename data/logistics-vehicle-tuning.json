@@ -442,15 +442,15 @@
   "energy": "kerosin"
  },
  "concordia-damen-cds110": {
-  "fuel": 0.45,
-  "energy": "schweröl"
+  "fuel": 531,
+  "energy": "diesel"
  },
  "concordia-damen-parsifal": {
-  "fuel": 0.5,
-  "energy": "schweröl"
+  "fuel": 590,
+  "energy": "diesel"
  },
  "meyer-neptun-inland": {
-  "fuel": 0.42,
+  "fuel": 472,
   "energy": "diesel"
  },
  "damen-cf7000-ice": {
@@ -470,8 +470,8 @@
   "energy": "schweröl"
  },
  "hyundai-mipo-1800teu": {
-  "fuel": 5.6,
-  "energy": "schweröl"
+  "fuel": 4.6,
+  "energy": "lng"
  },
  "oshima-ultramax": {
   "fuel": 4.4,
@@ -484,5 +484,41 @@
  "hyundai-mipo-mr-tanker": {
   "fuel": 4.8,
   "energy": "schweröl"
+ },
+ "cessna-208b-grand-caravan-cargo": {
+  "fuel": 45,
+  "energy": "kerosin"
+ },
+ "saab-340a-freighter": {
+  "fuel": 140,
+  "energy": "kerosin"
+ },
+ "atr-42-300f": {
+  "fuel": 160,
+  "energy": "kerosin"
+ },
+ "dhc-8-300-freighter": {
+  "fuel": 200,
+  "energy": "kerosin"
+ },
+ "boeing-757-200pcf": {
+  "fuel": 900,
+  "energy": "kerosin"
+ },
+ "boeing-777f": {
+  "fuel": 1850,
+  "energy": "kerosin"
+ },
+ "airbus-a350f": {
+  "fuel": 1700,
+  "energy": "kerosin"
+ },
+ "boeing-747-8f": {
+  "fuel": 2400,
+  "energy": "kerosin"
+ },
+ "antonov-an-124-100": {
+  "fuel": 3200,
+  "energy": "kerosin"
  }
 }

@@ -1,7 +1,6 @@
 'use client';
 import {Component,type ReactNode} from 'react';
 
-/** Sendet Browserfehler an das Server-Fehlerprotokoll (Admin → Fehlerprotokoll). */
 let installed=false,sent=0;const seen=new Set<string>();
 export function reportClientError(kind:string,error:unknown,extra:Record<string,unknown>={}){
  try{const e=error instanceof Error?error:new Error(typeof error==='string'?error:JSON.stringify(error));const key=kind+e.message;if(seen.has(key)||sent>=25)return;seen.add(key);sent++;

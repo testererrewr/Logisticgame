@@ -1,7 +1,5 @@
 #!/usr/bin/env node
-// Lädt für Fahrzeugmodelle ohne eigenes Foto ein frei lizenziertes Foto von Wikimedia Commons
-// (Vorschaubild 640 px) und trägt Urheber und Lizenz in data/logistics-vehicle-gallery.json ein.
-// Aufruf im Repository-Ordner: node scripts/fetch-vehicle-photos.mjs
+
 import {readFileSync,writeFileSync,existsSync,mkdirSync} from 'node:fs';
 import {join} from 'node:path';
 
@@ -12,7 +10,6 @@ const UA='WeltverbundLogistik/1.0 (vehicle photo import script)';
 const API='https://commons.wikimedia.org/w/api.php';
 const FREE=/^(CC0|CC BY|CC-BY|CC BY-SA|CC-BY-SA|Public domain|PD)/i;
 
-// Suchbegriffe je Modell (Commons-Dateisuche). Mehrere Begriffe werden der Reihe nach probiert.
 const SEARCH={
  'vossloh-dm20':['Vossloh DM 20 locomotive','Vossloh DM20'],
  'siemens-vectron-dual':['Vectron Dual Mode 248','Siemens Vectron DM 248'],

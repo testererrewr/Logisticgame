@@ -121,14 +121,12 @@ function startService(s:State,v:Vehicle){
 function beginServicing(s:State,v:Vehicle){const job=v.service!;job.stage='servicing';job.untilDay=s.day+SERVICE_HOURS/24;v.restReason='In Wartung';const paid=charge(s,serviceCost(v),'Wartung');log(s,`${v.name||spec(v).name}: Wartung begonnen · ${paid.toLocaleString('de-DE')} € · ${SERVICE_HOURS} Stunden`,'info');}
 function endServicing(s:State,v:Vehicle){const job=v.service!;v.lastServiceKm=v.odometerKm||0;v.riskCheckedKm=v.lastServiceKm;v.limping=undefined;v.service=undefined;v.restReason=undefined;if(job.resume?.lineId&&s.lines.some(l=>l.id===job.resume!.lineId&&l.active&&!l.deleted)){v.lineId=job.resume.lineId;v.returnLineId=job.resume.returnLineId;v.onReturnRoute=!!job.resume.onReturnRoute;v.nextStop=job.resume.nextStop;}log(s,`${v.name||spec(v).name}: Wartung abgeschlossen${v.lineId?' · zurück auf der Linie':''}.`,'good');}
 
-/** Shift end hook: called when a vehicle finishes its work for the day. */
 export function onShiftEnd(s:State,v:Vehicle){if(v.service?.stage==='requested'&&v.service.when==='afterShift'&&v.status==='idle')return startService(s,v);return false;}
-/** Dispatch hook: called before a vehicle leaves for the next stop. Returns true if the departure is replaced. */
+
 export function beforeDispatch(s:State,v:Vehicle){if(v.breakdown||v.wrecked)return true;if(v.service?.stage==='requested'&&v.service.when==='now'&&v.status==='idle')return startService(s,v);return false;}
-/** Called when a returning vehicle arrives at its depot. Returns true when cargo must stay aboard. */
+
 export function onDepotArrival(s:State,v:Vehicle){if(v.service?.stage==='toDepot'&&v.locationId===v.service.depotId){beginServicing(s,v);return true;}return !!v.service;}
 
-/** Per-slice hook at the top of the vehicle loop. Returns true when the vehicle must skip the rest of the simulation this slice. */
 export function maintenanceStep(s:State,v:Vehicle,dt:number):boolean{
  if(!isRoad(v))return false;
  ensureMaintenance(v);
@@ -144,7 +142,7 @@ export function maintenanceStep(s:State,v:Vehicle,dt:number):boolean{
  if(v.service?.stage==='toDepot'&&v.status==='idle'&&v.locationId===v.service.depotId){beginServicing(s,v);return true;}
  if(v.service?.stage==='requested'&&v.service.when==='now'&&v.status==='idle'&&!(v.handlingUntil&&v.handlingUntil>s.day)&&!v.manualReleased){if(startService(s,v))return true;}
  if(v.service?.stage==='requested'&&v.service.when==='afterShift'&&v.status==='idle'&&(!v.lineId||v.restUntil&&v.restUntil>s.day||v.waitingForCargo)){if(startService(s,v))return true;}
- // Breakdown risk for kilometres driven since the last check
+
  const km=(v.odometerKm||0)-(v.riskCheckedKm||0);
  if(km>=5&&s.live&&(v.status==='enroute'||v.status==='returning')){
   v.riskCheckedKm=v.odometerKm||0;

@@ -1,7 +1,7 @@
 import {BUILDINGS,type State} from './engine';
 import {dealerValue} from './vehicle-sales';
 
-export interface Row {premium?:boolean;tagColor?:string;allianceLogo?:string;logo?:string;color?:string;tag?:string;id:string;name:string;value:number;cash:number;revenue7:number;revenue30:number;profit30:number;vehicles:number;transported:number;buildings:number;lines:number;orders:number}
+export interface Row {legend?:string;premium?:boolean;tagColor?:string;allianceLogo?:string;logo?:string;color?:string;tag?:string;id:string;name:string;value:number;cash:number;revenue7:number;revenue30:number;profit30:number;vehicles:number;transported:number;buildings:number;lines:number;orders:number}
 export function sumDays(s:State,days:number,key:'income'|'expenses'){const book=s.finance;if(!book)return 0;const today=Math.floor(s.day);let n=0;for(const [d,row] of Object.entries(book.days))if(Number(d)>today-days)n+=row[key]||0;return n;}
 export function rowFor(id:string,name:string,s:State):Row{
  const vehicles=s.vehicles.filter(v=>!v.wrecked);

@@ -35,7 +35,7 @@ export async function POST(req:NextRequest){try{
  else if(body.action==='removeLogo')await upsert('logo=NULL',[]);
  else if(body.action==='badge'){if(!premium)throw Error('Das Abzeichen gehört zu Premium.');await upsert('show_badge=?',[body.show?1:0]);}
  else if(body.action==='vehicleImage'){if(!await hasEntitlement(u.id,'customVehicleImages'))throw Error('Eigene Fahrzeugbilder sind eine Premium-Funktion.');const model=String(body.model||'').slice(0,80);if(!VEHICLES.some(m=>m.id===model))throw Error('Fahrzeugmodell wählen.');const count=await db().prepare("SELECT count(*) AS n FROM logistics_vehicle_images WHERE world_id=? AND user_id=? AND status<>'declined' AND model_id<>?").bind(world,u.id,model).first<{n:number}>();if((count?.n||0)>=VEHICLES.length)throw Error('Für jedes Modell ist höchstens ein eigenes Bild möglich.');
-  // Neues Bild ist sofort für alle sichtbar und wartet auf die Freigabe durch einen Admin.
+
   await db().prepare("INSERT OR REPLACE INTO logistics_vehicle_images(world_id,user_id,model_id,image,updated,status,reviewed_by,reviewed_at,note) VALUES(?,?,?,?,?,'pending',NULL,NULL,NULL)").bind(world,u.id,model,validImage(body.image,200000),now).run();}
  else if(body.action==='removeVehicleImage')await db().prepare('DELETE FROM logistics_vehicle_images WHERE world_id=? AND user_id=? AND model_id=?').bind(world,u.id,String(body.model||'')).run();
  else throw Error('Unbekannte Aktion.');

@@ -4,7 +4,7 @@ import {VEHICLES} from '../../lib/logistics/engine';
 
 const STATUS:Record<string,string>={pending:'Wartet auf Freigabe',approved:'Freigegeben',declined:'Abgelehnt'};
 const key=(r:any)=>r.world_id+'|'+r.user_id+'|'+r.model_id;
-/** Admin: alle Änderungen an eigenen Fahrzeugbildern prüfen. Bilder sind schon vor der Freigabe sichtbar; Ablehnen entfernt sie beim Nutzer. */
+
 export default function ImageModerationPanel(){
  const [status,setStatus]=useState('pending'),[data,setData]=useState<{rows:any[];counts:any[]}|null>(null),[sel,setSel]=useState<string[]>([]),[note,setNote]=useState(''),[msg,setMsg]=useState(''),[busy,setBusy]=useState(false),[zoom,setZoom]=useState('');
  const load=useCallback(async()=>{try{const r=await fetch('/api/logistik/admin/images?status='+status,{cache:'no-store'}),d:any=await r.json();if(!r.ok)throw Error(d.error);setData(d);setSel([]);}catch(e:any){setMsg(e.message);}},[status]);
