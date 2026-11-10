@@ -210,3 +210,18 @@
 .log-danger-zone{border-color:#7a2a2a!important;margin:16px 28px}
 .log-crew-name{display:block}.log-warn-text{color:#f0b35a}
 .log-contract-costs{display:grid;gap:3px;padding:10px;border:1px solid #3b596c;border-radius:8px;background:#132331;margin:8px 0;font-size:12px}
+/* Fahrzeugdetails: Aktionen oben, Kennzahlen als Kacheln */
+.log-vehicle-dialog .log-owned-content{display:flex;flex-direction:column;gap:10px}
+.log-vehicle-dialog .log-owned-content>*{order:6}
+.log-vehicle-dialog .log-owned-content>small,.log-vehicle-dialog .log-owned-content>h2{order:1;margin:0}
+.log-vehicle-dialog .log-vehicle-rename{order:2}
+.log-vehicle-dialog .log-vehicle-actions{order:3}
+.log-vehicle-dialog .log-vehicle-facts{order:4}
+.log-vehicle-rename{display:flex;gap:6px}.log-vehicle-rename input{flex:1;min-width:0}
+.log-vehicle-actions{display:flex;flex-wrap:wrap;gap:6px;position:sticky;top:0;z-index:2;background:#1a2b3b;padding:6px 0;border-bottom:1px solid #2e4355}
+.log-vehicle-actions>button{flex:1 1 140px;min-height:40px}
+.log-vehicle-actions>label{flex:1 1 100%;display:flex;align-items:center;gap:8px;font-size:12px}.log-vehicle-actions>label select{flex:1}
+.log-vehicle-dialog .log-vehicle-facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px}
+.log-vehicle-dialog .log-vehicle-facts>div{background:#132331;border:1px solid #2e4355;border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:2px;border-bottom:1px solid #2e4355}
+.log-vehicle-dialog .log-vehicle-facts dt{font-size:11px;color:#8fa6b8}.log-vehicle-dialog .log-vehicle-facts dd{margin:0;text-align:left;font-weight:600}
+.log-business-type{display:block;color:#bcd3e0;font-size:12px}

@@ -6,7 +6,8 @@
 #   sudo bash /opt/logistik/app/deploy/import-osm-extracts.sh welt --hintergrund     # ganze Welt im Hintergrund
 #   sudo bash /opt/logistik/app/deploy/import-osm-extracts.sh austria germany        # nur bestimmte Länder
 #   sudo bash /opt/logistik/app/deploy/import-osm-extracts.sh liste                  # verfügbare Regionen
-#   sudo bash /opt/logistik/app/deploy/import-osm-extracts.sh status                 # Fortschritt / Fehler anzeigen
+#   sudo bash /opt/logistik/app/deploy/import-osm-extracts.sh status                 # Fortschritt, Fehler, Speicherplatz
+#   sudo bash /opt/logistik/app/deploy/import-osm-extracts.sh neu-einordnen          # vorhandene Betriebe nach aktuellen Regeln neu einordnen
 #   Optionen: --neu (fertige Regionen erneut laden) · --abschliessen (Overpass-Weltimport danach als fertig markieren)
 set -uo pipefail
 [[ $EUID -eq 0 ]] || { echo "Bitte mit sudo ausführen." >&2; exit 1; }
@@ -33,6 +34,13 @@ if [[ $BG -eq 1 ]]; then
 fi
 
 ts(){ date '+%Y-%m-%d %H:%M:%S'; }
+storage(){ # Speicherplatz des Servers und Größe der Spieldatenbank
+  local dbf; dbf="$(find "$STATE_DIR" -name '*.sqlite' ! -name 'metadata.sqlite' 2>/dev/null | head -1)"
+  df -h --output=size,used,avail,pcent "${WORK:-/}" | tail -1 | awk '{printf "Speicher: %s belegt von %s (%s) · frei %s", $2,$1,$4,$3}'
+  [[ -n "$dbf" ]] && printf ' · Spieldatenbank %s' "$(du -h "$dbf" | cut -f1)"
+  [[ -n "$dbf" && -f "$dbf-wal" ]] && printf ' (+ %s WAL)' "$(du -h "$dbf-wal" | cut -f1)"
+  echo
+}
 log(){ echo "[$(ts)] $*" | tee -a "$LOG"; }
 fail(){ echo "[$(ts)] FEHLER $*" | tee -a "$LOG" >> "$ERR"; }
 
@@ -40,6 +48,7 @@ if [[ "${args[0]}" == "status" ]]; then
   echo "Fertige Regionen: $(ls "$WORK/fertig" 2>/dev/null | wc -l)"
   [[ -f "$WORK/regionen.txt" ]] && echo "Geplante Regionen: $(wc -l < "$WORK/regionen.txt")"
   echo "Laufender Dienst: $(systemctl is-active logistik-osm-import 2>/dev/null || echo nein)"
+  storage
   DB="$(find "$STATE_DIR" -name '*.sqlite' ! -name 'metadata.sqlite' 2>/dev/null | head -1)"
   [[ -n "$DB" ]] && echo "Betriebe im Register: $(sqlite3 "$DB" 'SELECT count(*) FROM logistics_partner_registry' 2>/dev/null)"
   echo; echo "Letzte Meldungen:"; tail -n 15 "$LOG" 2>/dev/null
@@ -58,6 +67,13 @@ sql(){ runuser -u "$DB_USER" -- sqlite3 -bail -cmd ".timeout 60000" "$DB" "$@"; 
 sql "PRAGMA busy_timeout=60000; SELECT 1;" >/dev/null || { fail "Datenbank $DB nicht beschreibbar als $DB_USER"; exit 1; }
 sql "CREATE TABLE IF NOT EXISTS logistics_partner_registry(id TEXT PRIMARY KEY,kind TEXT NOT NULL,name TEXT NOT NULL,lat REAL NOT NULL,lon REAL NOT NULL,payload TEXT NOT NULL,loaded INTEGER NOT NULL);" 2>>"$ERR" || true
 
+if [[ "${args[0]}" == "neu-einordnen" ]]; then
+  log "Ordne vorhandene Betriebe neu ein …"
+  printf '.mode list\n.separator "\x1f"\nSELECT id,payload FROM logistics_partner_registry;\n' | sql > "$WORK/register.tmp" || { fail "Register konnte nicht gelesen werden"; exit 1; }
+  (cd "$APP" && node --no-warnings --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/reclassify-registry.mjs < "$WORK/register.tmp" 2> >(tee -a "$LOG" >&2)) | sql || fail "Neu-Einordnung fehlgeschlagen"
+  rm -f "$WORK/register.tmp"
+  log "$(storage)"; exit 0
+fi
 log "Lade Geofabrik-Regionsverzeichnis …"
 if ! wget -q --tries=5 --waitretry=20 -O "$WORK/index.json.tmp" https://download.geofabrik.de/index-v1-nogeom.json; then
   [[ -s "$WORK/index.json" ]] && log "Verzeichnis nicht erreichbar – verwende gespeicherte Kopie." || { fail "Geofabrik-Verzeichnis nicht erreichbar (Netzwerk/DNS prüfen: curl -I https://download.geofabrik.de)"; exit 1; }
@@ -73,7 +89,7 @@ sql "UPDATE logistics_runtime SET payload=json_set(payload,'\$.enabled',json('fa
 FILTER=(nwr/shop nwr/craft nwr/industrial nwr/forestry nwr/farm nwr/building=warehouse
   nwr/office=logistics,transport,forestry,forest_management
   nwr/amenity=restaurant,cafe,fast_food,pub,bar,hospital,clinic,pharmacy,doctors,dentist,veterinary,recycling,fuel,marketplace,social_facility,nursing_home
-  nwr/landuse=farmyard,quarry,industrial nwr/man_made=works,mineshaft,adit,petroleum_well)
+  nwr/landuse=farmyard,quarry,industrial,forest nwr/man_made=works,mineshaft,adit,petroleum_well)
 
 n=0; ok=0; failed=0; START=$(date +%s)
 while IFS=$'\t' read -r id url; do
@@ -104,9 +120,11 @@ while IFS=$'\t' read -r id url; do
   echo "$(ts) neu: $((after-before)) · Register gesamt: $after" > "$mark"
   elapsed=$(( $(date +%s)-START )); done_n=$(ls "$WORK/fertig" | wc -l)
   log "  fertig in $(( $(date +%s)-t0 )) s · +$((after-before)) neue Betriebe · Register: $after · Fortschritt $done_n/$TOTAL"
+  log "  $(storage)"
 done < "$WORK/regionen.txt"
 
 log "Durchlauf beendet: $ok Regionen importiert, $failed fehlgeschlagen, $(ls "$WORK/fertig" | wc -l)/$TOTAL insgesamt fertig."
+log "$(storage)"
 if [[ $failed -gt 0 ]]; then log "Fehlgeschlagene Regionen: einfach denselben Befehl erneut starten (fertige werden übersprungen). Details: $ERR"; fi
 
 if [[ $FINISH -eq 1 || ( "${args[0]}" == "welt" && $failed -eq 0 ) ]]; then

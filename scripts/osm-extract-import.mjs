@@ -6,7 +6,7 @@ import {createInterface} from 'node:readline';
 import {identifyPartner} from '../lib/logistics/engine.ts';
 const [file,region='OSM-Extrakt']=process.argv.slice(2);
 const AMENITY=new Set(['restaurant','cafe','fast_food','pub','bar','hospital','clinic','pharmacy','doctors','dentist','veterinary','recycling','fuel','marketplace','social_facility','nursing_home']);
-const OFFICE=new Set(['logistics','transport','forestry','forest_management']),MAN=new Set(['works','mineshaft','adit','petroleum_well']),LAND=new Set(['farmyard','quarry','industrial']);
+const OFFICE=new Set(['logistics','transport','forestry','forest_management']),MAN=new Set(['works','mineshaft','adit','petroleum_well']),LAND=new Set(['farmyard','quarry','industrial','forest']);
 /** Entspricht der Overpass-Abfrage in lib/logistics/partner-tiles.ts */
 export function matchesQuery(t){const named=!!t.name;return !!t.shop||!!t.craft||named&&!!t.industrial||named&&!!t.forestry||OFFICE.has(t.office)||AMENITY.has(t.amenity)||named&&LAND.has(t.landuse)||named&&MAN.has(t.man_made)||named&&t.building==='warehouse'||named&&!!t.farm;}
 function centroid(g){if(!g)return null;const ring=g.type==='Point'?[g.coordinates]:g.type==='LineString'?g.coordinates:g.type==='Polygon'?g.coordinates[0]:g.type==='MultiPolygon'?g.coordinates.reduce((best,p)=>p[0].length>best.length?p[0]:best,[]):g.type==='MultiLineString'?g.coordinates.flat():null;if(!ring?.length)return null;let x=0,y=0;const pts=ring.length>1&&ring[0][0]===ring.at(-1)[0]&&ring[0][1]===ring.at(-1)[1]?ring.slice(0,-1):ring;for(const [lon,lat] of pts){x+=lon;y+=lat;}return [y/pts.length,x/pts.length];}

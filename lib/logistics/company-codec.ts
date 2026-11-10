@@ -18,16 +18,40 @@ export function compactState(s:State,maxPoints:number){
 }
 async function gzip(text:string){const raw=new Uint8Array(await new Response(new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());
  let b64:string;if(typeof Buffer!=='undefined')b64=Buffer.from(raw).toString('base64');else{let binary='';for(let i=0;i<raw.length;i+=8192)binary+=String.fromCharCode(...raw.subarray(i,i+8192));b64=btoa(binary);}return PREFIX+b64;}
+/** Große Spielstände: gzip-Daten auf mehrere Zeilen verteilen (je ~1,8 MB, bis 32 Teile ≈ 57 MB),
+ * damit Straßengeometrie vollständig erhalten bleibt. Der Hauptwert verweist mit „gzc:<id>:<n>“ auf die Teile. */
+const CHUNK='gzc:',PART=1800000,MAX_PARTS=32;
+let chunkReady:Promise<unknown>|undefined,dbRef:D1Database|undefined;
+/** D1 erst bei Bedarf laden (Tests importieren den Codec ohne Worker-Umgebung). */
+async function D(){if(!dbRef){const m=await import('cloudflare:workers');dbRef=(m.env as {DB?:D1Database}).DB!;}return dbRef;}
+export const ensureChunkTable=()=>chunkTable();
+export const deleteChunks=async(world:string,user:string)=>(await D()).prepare('DELETE FROM logistics_company_chunks WHERE owner=?').bind(world+'|'+user);
+const chunkTable=()=>chunkReady??=D().then(db=>db.prepare('CREATE TABLE IF NOT EXISTS logistics_company_chunks(id TEXT NOT NULL,idx INTEGER NOT NULL,owner TEXT NOT NULL,data TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(id,idx))').run().then(()=>db.prepare('CREATE INDEX IF NOT EXISTS logistics_company_chunks_owner ON logistics_company_chunks(owner,created)').run())).catch(e=>{chunkReady=undefined;throw e;});
+function stripAlliance(state:State){return state.sites.some(p=>(p as {allianceShared?:boolean}).allianceShared)?{...state,sites:state.sites.filter(p=>!(p as {allianceShared?:boolean}).allianceShared)}:state;}
+/** Spielstand für eine Spedition kodieren; liefert den Wert für logistics_world_companies.state und ggf. Anweisungen für die Teil-Zeilen (im selben Batch ausführen). */
+export async function encodeCompanyParts(state:State,world:string,user:string):Promise<{value:string;statements:D1PreparedStatement[]}>{
+ const base=stripAlliance(state);let text=JSON.stringify(base);if(text.length<1500000)return {value:text,statements:[]};
+ let out=await gzip(text);if(out.length<=LIMIT)return {value:out,statements:[]};
+ let payload=out.slice(PREFIX.length);
+ if(payload.length>PART*MAX_PARTS){for(const max of [3000,1200,500]){const small=compactState(structuredClone(base) as State,max);text=JSON.stringify(small);out=await gzip(text);if(out.length<=LIMIT)return {value:out,statements:[]};payload=out.slice(PREFIX.length);if(payload.length<=PART*MAX_PARTS)break;}if(payload.length>PART*MAX_PARTS)throw Error('Spielstand zu groß zum Speichern.');}
+ await chunkTable();const db=await D();const owner=world+'|'+user,id=owner+'|'+crypto.randomUUID(),now=Date.now(),parts:string[]=[];for(let i=0;i<payload.length;i+=PART)parts.push(payload.slice(i,i+PART));
+ const statements=parts.map((data,idx)=>db.prepare('INSERT OR REPLACE INTO logistics_company_chunks(id,idx,owner,data,created) VALUES(?,?,?,?,?)').bind(id,idx,owner,data,now));
+ // alte Versionen aufräumen (die zuletzt gültige bleibt kurz erhalten, falls gerade jemand liest)
+ statements.unshift(db.prepare('DELETE FROM logistics_company_chunks WHERE owner=? AND created<?').bind(owner,now-60000));
+ return {value:CHUNK+id+':'+parts.length,statements};
+}
+/** Ohne Teil-Zeilen (Altaufrufe): verkleinert notfalls die Geometrie. */
 export async function encodeCompany(state:State):Promise<string>{
- const base=state.sites.some(p=>(p as {allianceShared?:boolean}).allianceShared)?{...state,sites:state.sites.filter(p=>!(p as {allianceShared?:boolean}).allianceShared)}:state;
- let text=JSON.stringify(base);if(text.length<1500000)return text;
+ const base=stripAlliance(state);let text=JSON.stringify(base);if(text.length<1500000)return text;
  let out=await gzip(text);if(out.length<=LIMIT)return out;
- // Zu groß: schrittweise Geometrie ausdünnen, bis es passt (statt die ganze Welt mit einem Fehler zu blockieren)
- for(const max of [3000,1200,500,200,80]){const small=compactState(structuredClone(base) as State,max);text=JSON.stringify(small);out=text.length<1500000?text:await gzip(text);if(out.length<=LIMIT){if(typeof console!=='undefined')console.warn(`[logistik] Spielstand verkleinert (Strecken max. ${max} Punkte): ${out.length} Zeichen`);return out;}}
+ for(const max of [3000,1200,500,200,80]){const small=compactState(structuredClone(base) as State,max);text=JSON.stringify(small);out=text.length<1500000?text:await gzip(text);if(out.length<=LIMIT)return out;}
  throw Error('Spielstand zu groß zum Speichern.');
 }
 export async function decodeCompany(value:string):Promise<State>{
- if(!value.startsWith(PREFIX))return JSON.parse(value) as State;
- const b64=value.slice(PREFIX.length),raw=typeof Buffer!=='undefined'?new Uint8Array(Buffer.from(b64,'base64')):Uint8Array.from(atob(b64),x=>x.charCodeAt(0));
+ let b64:string;
+ if(value.startsWith(CHUNK)){const [id,n]=[value.slice(CHUNK.length,value.lastIndexOf(':')),Number(value.slice(value.lastIndexOf(':')+1))];await chunkTable();const rows=(await (await D()).prepare('SELECT idx,data FROM logistics_company_chunks WHERE id=? ORDER BY idx').bind(id).all<{idx:number;data:string}>()).results;if(rows.length!==n)throw Error('Spielstand-Teile fehlen ('+rows.length+'/'+n+').');b64=rows.map(r=>r.data).join('');}
+ else if(!value.startsWith(PREFIX))return JSON.parse(value) as State;
+ else b64=value.slice(PREFIX.length);
+ const _unused=0;const raw=typeof Buffer!=='undefined'?new Uint8Array(Buffer.from(b64,'base64')):Uint8Array.from(atob(b64),x=>x.charCodeAt(0));
  return JSON.parse(await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('gzip'))).text()) as State;
 }

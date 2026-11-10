@@ -1,5 +1,5 @@
 import {sameOrigin} from '../../../../lib/same-origin';
-import {encodeCompany,decodeCompany} from '../../../../lib/logistics/company-codec';
+import {encodeCompanyParts,decodeCompany,ensureChunkTable,deleteChunks} from '../../../../lib/logistics/company-codec';
 import {makeUsedOffer,buyUsedVehicle,withdrawUsedVehicle,dealerValue} from '../../../../lib/logistics/vehicle-sales';
 import {readUsedVehicleOffer,readUsedVehicleOffers,saveUsedVehicleOffer} from '../../../../lib/logistics/used-vehicle-store';
 import {harborKind,checkHarborPlacement} from '../../../../lib/logistics/harbor-placement';
@@ -67,7 +67,7 @@ export async function adjustAdminCompanyCash(actor:User,body:{worldId:string;use
   const previous=await db().prepare('SELECT actor,action,target FROM admin_audit WHERE id=?').bind(auditId).first<{actor:string;action:string;target:string}>();if(previous){const detail=JSON.parse(previous.action);if(previous.actor!==actor.id||previous.target!==body.userId||detail.worldId!==body.worldId||detail.amount!==body.amount||detail.reason!==body.reason.trim())throw Error('Buchungskennung bereits anders verwendet.');return {...detail,duplicate:true};}
   const world=await settleWorld(body.worldId),row=await readCompany(body.worldId,body.userId);if(!row)throw Error('Spedition in dieser Welt nicht gefunden.');
   const state=normalizeFreightState(await decodeCompany(row.state)),result=adjustCompanyCash(state,body.amount,body.reason),detail={type:'logistics.companyCash',worldId:body.worldId,reason:body.reason.trim(),...result};
-  try{await commit(world,[row],[db().prepare('UPDATE logistics_world_companies SET state=?,revision=revision+1,updated=? WHERE world_id=? AND user_id=?').bind(await encodeCompany(state),Date.now(),body.worldId,body.userId),db().prepare('INSERT INTO admin_audit(id,actor,action,target,created) VALUES(?,?,?,?,?)').bind(auditId,actor.id,JSON.stringify(detail),body.userId,Date.now())]);return detail;}catch(e){if(attempt===5)throw e;}
+  const enc=await encodeCompanyParts(state,body.worldId,body.userId);try{await commit(world,[row],[...enc.statements,db().prepare('UPDATE logistics_world_companies SET state=?,revision=revision+1,updated=? WHERE world_id=? AND user_id=?').bind(enc.value,Date.now(),body.worldId,body.userId),db().prepare('INSERT INTO admin_audit(id,actor,action,target,created) VALUES(?,?,?,?,?)').bind(auditId,actor.id,JSON.stringify(detail),body.userId,Date.now())]);return detail;}catch(e){if(attempt===5)throw e;}
  }
  throw Error('Buchung bitte erneut versuchen.');
 }
@@ -96,7 +96,7 @@ async function settleWorldNow(id:string,budgetMs:number):Promise<World>{
   if(attempt===0)for(const state of states.values())await prepareVehicleRoads(state);
   const advanced=stepSharedWorld(states,next,market);
   try{statements.push(...await settleAllianceOrders(id,advanced,next));}catch(e){await logError('settle:alliance-orders',e,{world:id},'error');}
-  for(const row of rows){const state=advanced.get(row.user_id)!;delete state.borrowedTracks;statements.push(db().prepare('UPDATE logistics_world_companies SET state=?,updated=? WHERE world_id=? AND user_id=?').bind(await encodeCompany(state),Date.now(),id,row.user_id));}
+  for(const row of rows){const state=advanced.get(row.user_id)!;delete state.borrowedTracks;const enc=await encodeCompanyParts(state,id,row.user_id);statements.push(...enc.statements,db().prepare('UPDATE logistics_world_companies SET state=?,updated=? WHERE world_id=? AND user_id=?').bind(enc.value,Date.now(),id,row.user_id));}
   const deadlines=[...advanced.values()].flatMap(s=>s.contracts.filter(c=>c.kind==='haulage'&&!c.cancelled&&c.endDay>=s.day&&c.delivered<(c.total||0)).map(c=>({id:c.id,deadline:c.endDay})));if(deadlines.length)statements.push(db().prepare("UPDATE logistics_container_offers SET deadline=(SELECT json_extract(value,'$.deadline') FROM json_each(?) WHERE json_extract(value,'$.id')=logistics_container_offers.id) WHERE world_id=? AND status='accepted' AND id IN (SELECT json_extract(value,'$.id') FROM json_each(?) WHERE json_extract(value,'$.deadline')>logistics_container_offers.deadline)").bind(JSON.stringify(deadlines),id,JSON.stringify(deadlines)));
   const completed=[...advanced.values()].flatMap(s=>s.contracts.filter(c=>c.kind==='haulage'&&c.delivered>=(c.total||Infinity)).map(c=>c.id));if(completed.length)statements.push(db().prepare("UPDATE logistics_container_offers SET status='completed' WHERE world_id=? AND status='accepted' AND id IN (SELECT value FROM json_each(?))").bind(id,JSON.stringify(completed)));statements.push(db().prepare("UPDATE logistics_container_offers SET status='expired' WHERE world_id=? AND status='accepted' AND deadline<?").bind(id,next));
   if(seasonEnd!==null&&next>=seasonEnd-1e-9){try{const amap=await allianceMap(id),tags=new Map<string,string>();const tagRows=(await db().prepare('SELECT m.user_id,a.tag FROM logistics_alliance_members m JOIN logistics_alliances a ON a.id=m.alliance_id WHERE m.world_id=?').bind(id).all<{user_id:string;tag:string}>()).results;for(const t of tagRows)if(amap.has(t.user_id))tags.set(t.user_id,t.tag);statements.push(...await seasonFinalStatements(id,advanced,new Map(rows.map(r=>[r.user_id,r.name||''])),tags));}catch(e){await logError('settle:season-final',e,{world:id},'error');}}
@@ -221,14 +221,15 @@ export async function POST(req:NextRequest){const ctx:Record<string,unknown>={};
   stmts.push(db().prepare('DELETE FROM logistics_world_permissions WHERE world_id=? AND (owner_id=? OR grantee_id=?)').bind(id,u.id,u.id),db().prepare("UPDATE logistics_world_offers SET status='withdrawn' WHERE world_id=? AND (sender_id=? OR receiver_id=?) AND status='open'").bind(id,u.id,u.id),db().prepare("UPDATE logistics_container_offers SET status='open',accepted_by=NULL WHERE world_id=? AND accepted_by=? AND status='accepted'").bind(id,u.id));
   if(al){stmts.push(db().prepare('DELETE FROM logistics_alliance_members WHERE world_id=? AND user_id=?').bind(id,u.id),db().prepare("UPDATE logistics_alliance_members SET role='leader' WHERE alliance_id=? AND user_id=(SELECT user_id FROM logistics_alliance_members WHERE alliance_id=? ORDER BY joined LIMIT 1) AND NOT EXISTS(SELECT 1 FROM logistics_alliance_members WHERE alliance_id=? AND role='leader')").bind(al.alliance_id,al.alliance_id,al.alliance_id),db().prepare('DELETE FROM logistics_alliances WHERE id=? AND NOT EXISTS(SELECT 1 FROM logistics_alliance_members WHERE alliance_id=?)').bind(al.alliance_id,al.alliance_id));}
   stmts.push(db().prepare('DELETE FROM logistics_world_companies WHERE world_id=? AND user_id=? AND revision=?').bind(id,u.id,row.revision),db().prepare('INSERT INTO admin_audit(id,actor,action,target,created) VALUES(?,?,?,?,?)').bind(crypto.randomUUID(),u.id,'dissolve-company',id+':'+name,now));
-  await refreshDriverMarket(id,world.day).catch(()=>{});await db().batch(stmts);
+  await refreshDriverMarket(id,world.day).catch(()=>{});await ensureChunkTable();stmts.push(await deleteChunks(id,u.id));await db().batch(stmts);
   return reply({dissolved:true,listedVehicles:listed,releasedDrivers:(st.drivers||[]).length,cancelledContracts:st.contracts.filter(c=>!c.cancelled&&c.endDay>=st.day).length});
  }
  if(row.last_action===body.requestId)return reply({...await snapshot(u,id),duplicate:true});
  if(row.revision!==body.revision)return reply({...await snapshot(u,id),error:'Die Welt wurde inzwischen aktualisiert. Bitte erneut versuchen.'},409);
  const rules=await readPartnerRules();const now=Date.now(),state=applyStateRules(normalizeFreightState(await decodeCompany(row.state)),rules);
  state.maintenanceOff=!parseSettings(world.settings).maintenance;state.fuelOff=!parseSettings(world.settings).fuel;state.driversOff=!parseSettings(world.settings).drivers;state.sites.push(...await allianceSitesFor(id,u.id,state));await enforceWorldRules(cmd as OnlineCommand,state,parseSettings(world.settings),id);
- const update=async(r:Company,s:State)=>db().prepare('UPDATE logistics_world_companies SET state=?,revision=revision+1,last_action=?,updated=? WHERE world_id=? AND user_id=?').bind(await encodeCompany(s),body.requestId,now,id,r.user_id);
+ const chunkStatements:D1PreparedStatement[]=[];
+ const update=async(r:Company,s:State)=>{const enc=await encodeCompanyParts(s,id,r.user_id);chunkStatements.push(...enc.statements);return db().prepare('UPDATE logistics_world_companies SET state=?,revision=revision+1,last_action=?,updated=? WHERE world_id=? AND user_id=?').bind(enc.value,body.requestId,now,id,r.user_id);};
  const statements:D1PreparedStatement[]=[];let checked=[row];
  if(cmd.type==='offerUsedVehicle'){
   const offers=await readUsedVehicleOffers(id);if(offers.filter(o=>o.sellerId===u.id).length>=100)throw Error('Höchstens 100 offene Fahrzeugangebote je Spedition.');
@@ -274,7 +275,7 @@ export async function POST(req:NextRequest){const ctx:Record<string,unknown>={};
   const before=new Set(state.vehicles.map(v=>v.id)),updated=applyAction(state,routed,verified);
   if((action.type==='buy'||action.type==='buyFleet')&&driversActive(updated)&&await isPremium(u.id)){let n=0;for(const v of updated.vehicles)if(!before.has(v.id))n+=autoCrew(updated,v,role=>freshCandidate(role));if(n)updated.events.unshift({day:updated.day,text:`Premium: ${n} Fahrer automatisch eingestellt und zugewiesen.`,type:'good'});}if(action.type==='cancelContract')statements.push(db().prepare("UPDATE logistics_container_offers SET status='cancelled' WHERE id=? AND world_id=? AND accepted_by=? AND status='accepted'").bind(action.contractId,id,u.id));delete updated.borrowedTracks;statements.push(await update(row,updated));
  }
- try{await commit(world,checked,statements,rules.revision);}catch{return reply({...await snapshot(u,id),error:'Eine andere Aktion hat die Welt aktualisiert. Bitte erneut versuchen.'},409);}
+ try{await commit(world,checked,[...chunkStatements,...statements],rules.revision);}catch{return reply({...await snapshot(u,id),error:'Eine andere Aktion hat die Welt aktualisiert. Bitte erneut versuchen.'},409);}
  return reply(await snapshot(u,id));
  }catch(e:any){await logError('online:'+String(ctx.command||'POST'),e,ctx);return reply({error:e.message||'Online-Aktion fehlgeschlagen.'},422);}}
 
