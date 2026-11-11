@@ -428,3 +428,6 @@
 .log-news-page .log-news-card.letter p{font-style:italic}.log-letter-form{display:flex;flex-direction:column;gap:6px;margin-top:10px;font-family:system-ui,sans-serif}
 .log-report-form{display:flex;flex-direction:column;gap:6px;margin-top:6px;max-width:420px}
 .log-stats-dialog{max-width:1150px;width:min(96vw,1150px)}.log-stats-dialog .log-company-stats{padding:0}
+.log-hidden{display:none!important}.log-lobby-tabs{margin:8px 0 12px}.log-order-panel h3{margin:14px 0 8px}
+.log-order-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}.log-order-form label{display:flex;flex-direction:column;gap:4px;font-size:.85rem}.log-order-form fieldset{border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:6px 10px}.log-order-wide{grid-column:1/-1}
+.log-order-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}.log-member-chip{display:inline-block;background:rgba(255,255,255,.08);border-radius:999px;padding:1px 8px;margin:2px}

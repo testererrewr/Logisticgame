@@ -28,7 +28,8 @@ export async function POST(req:NextRequest){try{
   await db().prepare('UPDATE logistics_worlds SET host_url=NULL WHERE id=?').bind(world).run();await setMove(world,{...m,state:'done-back',done:Date.now()});
   return text('ok');}
  const body=await req.json().catch(()=>({})) as any,node=await nodeByToken(String(body.token||''));if(!node)return NextResponse.json({error:'Nicht erlaubt.'},{status:403});
- if(action==='heartbeat'){const pending=(await moves()).filter(m=>m.node===node.name);const upd=(node as any).update===1;
+ if(action==='heartbeat'){const am=(node as any).autoMove;if(am){const row=await db().prepare('SELECT host_url FROM logistics_worlds WHERE id=?').bind(am).first<{host_url:string|null}>();if(row&&!row.host_url){await db().batch([db().prepare('UPDATE logistics_worlds SET host_url=? WHERE id=?').bind('https://'+node.domain,am),db().prepare('INSERT OR REPLACE INTO logistics_runtime(id,updated,payload) VALUES(?,?,?)').bind(MOVE+am,Date.now(),JSON.stringify({node:node.name,state:'pending',at:Date.now(),by:'Installation'}))]);}(node as any).autoMove=undefined;}
+  const pending=(await moves()).filter(m=>m.node===node.name);const upd=(node as any).update===1;
   await saveNode({...node,lastSeen:Date.now(),version:String(body.version||'').slice(0,20),port:Number(body.port)||undefined,worlds:String(body.worlds||'').split(',').filter(w=>w&&w!=='keine'),status:'online',...(upd?{update:0}:{})} as any);
   const mv=pending.find(m=>m.state==='pending'),bk=pending.find(m=>m.state==='back');
   return NextResponse.json({ok:true,move:mv?{world:mv.world}:null,back:bk?{world:bk.world}:null,update:upd?1:0});}
