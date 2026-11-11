@@ -104,3 +104,8 @@ function checkPickups(s:State,p:Progress,day:number){const prev=day-1,list:Picku
 }
 
 export function liveSnapshot(s:State):Snapshot{const p=s.progress;if(!p)return snapshot(s);const odo=sumKm(s),prev=(p as any).odo??odo;return {day:s.day,earned:s.earned,spent:s.spent,eh:sumEh(s),km:p.totals.km+Math.max(0,odo-prev),contracts:p.totals.contracts+s.contracts.filter(c=>c.completedDay!==undefined&&c.completedDay>=p.last.day&&!(c as any).counted).length,byType:byType(s)};}
+
+export const TIER_NAMES=['Bronze','Silber','Gold','Platin','Diamant'],TIER_ICONS=['🥉','🥈','🥇','💠','💎'];
+export const TIER_GROUPS:{id:string;name:string;icon:string;ids:string[]}[]=[{id:'eh',name:'Auslieferung',icon:'🚚',ids:['eh-1k','eh-10k','eh-100k','eh-1m']},{id:'km',name:'Strecke',icon:'🛣️',ids:['km-10k','km-100k','km-1m']},{id:'fleet',name:'Flotte',icon:'🚛',ids:['fleet-10','fleet-50','fleet-150']},{id:'profit',name:'Gewinn',icon:'💶',ids:['profit-1m','profit-10m','profit-100m']},{id:'contracts',name:'Aufträge',icon:'📋',ids:['first-contract','contracts-25','contracts-250']},{id:'stamps',name:'Stempelpass',icon:'🛂',ids:['stamps-5','stamps-15','stamps-50','stamps-100','stamps-all']},{id:'challenge',name:'Herausforderungen',icon:'🎯',ids:['challenge-1','challenge-25']},{id:'collector',name:'Sammler',icon:'💎',ids:['collector-1','collector-5']}];
+export const TIERED=new Set(TIER_GROUPS.flatMap(g=>g.ids));
+export function tierOf(group:{ids:string[]},has:(id:string)=>boolean){let t=-1;group.ids.forEach((id,i)=>{if(has(id))t=i;});return t;}

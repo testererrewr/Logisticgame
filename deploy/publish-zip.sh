@@ -13,8 +13,10 @@ tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
 unzip -q "$ZIP" -d "$tmp"
 src="$tmp"; [[ -d "$tmp/Logisticgame" ]] && src="$tmp/Logisticgame"
 GAL="$REPO/data/logistics-vehicle-gallery.json"; keep=""
-if [[ -f "$GAL" ]]; then keep="$tmp/gallery-server.json"; cp "$GAL" "$keep"; fi
+keep="$tmp/gallery-server.json"; if git -C "$REPO" show HEAD:data/logistics-vehicle-gallery.json > "$keep" 2>/dev/null && [[ -s "$keep" ]]; then :; elif [[ -f "$GAL" ]]; then cp "$GAL" "$keep"; else keep=""; fi
+for f in data/logistics-vehicle-photo-misses.json; do git -C "$REPO" show "HEAD:$f" > "$tmp/keep-misses.json" 2>/dev/null || rm -f "$tmp/keep-misses.json"; done
 cp -a "$src"/. "$REPO"/
+[[ -f "$tmp/keep-misses.json" && ! -f "$src/data/logistics-vehicle-photo-misses.json" ]] && cp "$tmp/keep-misses.json" "$REPO/data/logistics-vehicle-photo-misses.json" || true
 if [[ -n "$keep" ]]; then node -e 'const fs=require("fs"),[a,b,root]=process.argv.slice(1);const zip=JSON.parse(fs.readFileSync(a)),srv=JSON.parse(fs.readFileSync(b));for(const [k,v] of Object.entries(srv)){if(v&&v.path&&fs.existsSync(root+"/public"+v.path)&&v.match!=="symbol"&&v.match!=="illustration")zip[k]=v;}fs.writeFileSync(a,JSON.stringify(zip,null,1));' "$GAL" "$keep" "$REPO" || cp "$keep" "$GAL"; fi
 (cd "$REPO" && timeout 900 node scripts/fetch-vehicle-photos.mjs --quiet-if-complete) || echo "(Fotoimport übersprungen)"
 git add -A

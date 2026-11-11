@@ -89,7 +89,8 @@ async function findPhoto(terms){
  }
 }
 
-const FORCE_V=2,has=(c)=>c&&existsSync(join(ROOT,'public',c.path||'')),todo=[...new Set([...Object.keys(SEARCH),...FORCE])].filter(id=>{const c=gallery[id];if(FORCE.has(id))return !(has(c)&&(c.match==='wiki-lead'||c.forced===FORCE_V));return !(c&&c.match!=='symbol'&&c.match!=='illustration'&&has(c));});
+const MISS=join(ROOT,'data/logistics-vehicle-photo-misses.json'),misses=existsSync(MISS)?JSON.parse(readFileSync(MISS,'utf8')):{};
+const FORCE_V=2,has=(c)=>c&&existsSync(join(ROOT,'public',c.path||'')),todo=[...new Set([...Object.keys(SEARCH),...FORCE])].filter(id=>{const c=gallery[id];if(FORCE.has(id))return !(has(c)&&(c.match==='wiki-lead'||c.forced===FORCE_V));return !(c&&c.match!=='symbol'&&c.match!=='illustration'&&has(c))&&misses[id]!==FORCE_V;});
 if(!todo.length){if(!process.argv.includes('--quiet-if-complete'))console.log('Alle Fahrzeugfotos vorhanden.');process.exit(0);}
 console.log(`==> Fahrzeugfotos von Wikimedia Commons ergänzen (${todo.length} fehlen)`);
 let changed=0;
@@ -98,7 +99,7 @@ for(const id of todo){const terms=SEARCH[id]||[];
  if(false&&current&&current.match!=='symbol'&&current.match!=='illustration'&&existsSync(join(ROOT,'public',current.path||'')))continue;
  try{
   const lead=await wikiLead(WIKI[id]),photo=lead||await findPhoto(terms);if(FORCE.has(id)&&!photo&&gallery[id]){gallery[id].forced=FORCE_V;changed++;}
-  if(!photo){console.log(`- ${id}: kein frei lizenziertes Foto gefunden, Symbolbild bleibt.`);continue;}
+  if(!photo){console.log(`- ${id}: kein frei lizenziertes Foto gefunden, Symbolbild bleibt.`);misses[id]=FORCE_V;writeFileSync(MISS,JSON.stringify(misses,null,1));continue;}
   const ext=photo.thumb.split('?')[0].split('.').pop().toLowerCase().replace('jpeg','jpg');
   const r=await fetch(photo.thumb,{headers:{'User-Agent':UA}});if(!r.ok)throw Error('Download HTTP '+r.status);
   const file=`${id}.${ext}`;writeFileSync(join(OUT,file),Buffer.from(await r.arrayBuffer()));
