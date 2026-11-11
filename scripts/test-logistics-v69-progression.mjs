@@ -6,7 +6,7 @@ import {newsOfDay,activeNews,travelEventFactor,newsPriceFactor} from '../lib/log
 const s=newState();s.driversOff=true;let x=s;for(let i=0;i<9;i++)x=stepTime(x,x.day+1,100000);
 const p=x.progress;assert.ok(p&&p.reports.length>=7,'Tagesberichte');assert.equal(p.reports[0].day,Math.floor(x.day)-1);
 
-x.deliveryStats={wood:1200};const cash=x.cash;x=stepTime(x,x.day+1,100000);assert.ok(x.progress.achievements['eh-1k'],'Erfolg freigeschaltet');assert.ok(x.cash>=cash+25000-1e4,'Prämie');
+x.deliveryStats={wood:12000};const cash=x.cash;x=stepTime(x,x.day+1,100000);assert.ok(x.progress.achievements['eh-1k'],'Erfolg freigeschaltet');assert.ok(x.cash>=cash+25000-1e4,'Prämie');
 
 const w=weeklyChallenges(3,4);assert.equal(w.length,3);assert.deepEqual(w,weeklyChallenges(3,4));
 const c=w[0];assert.ok(challengeProgress(c,{day:1,earned:0,spent:0,eh:0,km:0,contracts:0,byType:{}},{day:2,earned:1e9,spent:0,eh:1e9,km:1e9,contracts:1e9,byType:{[c.freight||'x']:1e9}})>=c.target);

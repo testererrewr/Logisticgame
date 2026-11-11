@@ -4,6 +4,7 @@ import VehiclePhoto from './vehicle-photo';
 import {SPECIAL_CARGO} from '../../lib/logistics/special-cargo';
 import {CONTINENTS,ISLAND_GROUPS,ISLANDS,COUNTRY_TOTAL} from '../../lib/logistics/stamps-data';
 
+let currentWorld='';export const setProfileWorld=(w:string)=>{currentWorld=w;};
 export const openProfile=(user='me')=>window.dispatchEvent(new CustomEvent('log-open-profile',{detail:user}));
 export const openMessage=(to:string)=>window.dispatchEvent(new CustomEvent('log-open-message',{detail:to}));
 const eur=(n:number)=>n.toLocaleString('de-DE',{style:'currency',currency:'EUR',maximumFractionDigits:0});
@@ -18,9 +19,9 @@ function Guestbook({user,me}:{user:string;me:string}){const [rows,setRows]=useSt
  return <><h3>📖 Gästebuch</h3>{user!==me&&<div className="log-guestbook-form"><textarea rows={2} maxLength={500} placeholder="Etwas Nettes hinterlassen …" value={text} onChange={e=>setText(e.target.value)}/><button className="log-primary" disabled={!text.trim()} onClick={async()=>{if(await post({action:'guestbook',user,text}))setText('');}}>Eintragen</button></div>}{err&&<p role="alert">{err}</p>}
   <div className="log-guestbook">{rows.map(r=><article key={r.id}><small><button className="log-news-link" onClick={()=>openProfile(r.author_id)}>{r.author}</button> · {new Date(r.created).toLocaleDateString('de-DE')}</small><p>{r.text}</p>{(user===me||r.author_id===me)&&<button className="log-link" onClick={()=>void post({action:'deleteGuestbook',id:r.id})}>löschen</button>}</article>)}{!rows.length&&<p className="log-muted">Noch keine Einträge.</p>}</div></>;}
 export default function ProfileDialog(){
- const [user,setUser]=useState<string|null>(null),[data,setData]=useState<any>(null),[error,setError]=useState('');
- useEffect(()=>{const on=(e:Event)=>setUser(String((e as CustomEvent).detail||'me'));window.addEventListener('log-open-profile',on);return()=>window.removeEventListener('log-open-profile',on);},[]);
- useEffect(()=>{if(!user)return;let alive=true;setData(null);setError('');fetch('/api/logistik/profile?user='+encodeURIComponent(user),{cache:'no-store'}).then(async r=>{const d=await r.json() as any;if(!r.ok)throw Error(d.error);if(alive)setData(d);}).catch(e=>alive&&setError(e.message));return()=>{alive=false;};},[user]);
+ const [user,setUser]=useState<string|null>(null),[data,setData]=useState<any>(null),[error,setError]=useState(''),[world,setWorld]=useState('');
+ useEffect(()=>{const on=(e:Event)=>setWorld(currentWorld);setUser(String((e as CustomEvent).detail||'me'));window.addEventListener('log-open-profile',on);return()=>window.removeEventListener('log-open-profile',on);},[]);
+ useEffect(()=>{if(!user)return;let alive=true;setData(null);setError('');fetch('/api/logistik/profile?user='+encodeURIComponent(user)+(world?'&world='+encodeURIComponent(world):''),{cache:'no-store'}).then(async r=>{const d=await r.json() as any;if(!r.ok)throw Error(d.error);if(alive){setData(d);if(d.world&&d.world!==world)setWorld(d.world);}}).catch(e=>alive&&setError(e.message));return()=>{alive=false;};},[user,world]);
  useEffect(()=>{if(!user)return;const esc=(e:KeyboardEvent)=>{if(e.key==='Escape')setUser(null);};document.addEventListener('keydown',esc);return()=>document.removeEventListener('keydown',esc);},[user]);
  if(!user)return null;const earned=data?.achievements.filter((a:any)=>a.earned)||[];
  return <div className="log-dialog-backdrop" onClick={e=>{if(e.target===e.currentTarget)setUser(null);}}><section className="log-ranking-dialog log-profile" role="dialog" aria-modal="true" aria-label="Spielerprofil">
@@ -28,12 +29,13 @@ export default function ProfileDialog(){
   {error&&<p role="alert">{error}</p>}{!data&&!error&&<p>Profil wird geladen …</p>}
   {data&&<>
    <header className="log-profile-head"><div className="log-profile-avatar">{(data.user.name||'?').slice(0,1).toUpperCase()}</div><div><h2>{data.user.name}{data.user.premium&&<span className="log-premium-star" title="Premium"> ★</span>}{data.user.legend&&<span className="log-legend" title={`${data.user.legend.titles}× Saison-Podium, bestes Ergebnis Platz ${data.user.legend.best}`}>👑 {data.user.legend.label}</span>}{data.user.id===data.me&&<small className="log-muted"> (du)</small>}</h2>{data.user.id!==data.me&&<button className="log-secondary" onClick={()=>{setUser(null);openMessage(data.user.id);}}>✉️ Nachricht senden</button>}<small className="log-muted">Dabei seit {new Date(data.user.since).toLocaleDateString('de-DE')} · {data.companies.length} {data.companies.length===1?'Welt':'Welten'}</small></div></header>
+   {data.companies?.length>0&&<div className="log-trailer-toolbar"><label>Welt <select value={data.world||''} onChange={e=>setWorld(e.target.value)}>{data.companies.map((c:any)=><option key={c.worldId} value={c.worldId}>{c.world}{c.status==='finished'?' (beendet)':''}</option>)}</select></label><small className="log-muted">Erfolge, Stempelpass, Vitrine und Sammlung gelten pro Welt.</small></div>}
    <div className="log-report-tiles"><div><small>Erfolge</small><b>{earned.length} / {data.achievements.length}</b></div><div><small>Ausgeliefert</small><b>{Math.round(data.totals.transported).toLocaleString('de-DE')} EH</b></div><div><small>Fahrzeuge</small><b>{data.totals.vehicles}</b></div><div><small>Aufträge</small><b>{data.totals.orders}</b></div><div><small>Gefahren</small><b>{Math.round(data.totals.km).toLocaleString('de-DE')} km</b></div><div><small>Wochenziele</small><b>{data.totals.challenges}</b></div></div>
    {data.showcase?.length>0&&<><h3>✨ Vitrine</h3><div className="log-showcase">{data.showcase.map((v:any,i:number)=><article key={i}><VehiclePhoto id={v.modelId} owner={data.user.id} world={v.worldId}/><b>{v.name}</b>{v.plate&&<span className="log-plate">{v.plate}</span>}<small className="log-badge-reward">{v.edition}</small><small className="log-muted">{v.world} · {v.km.toLocaleString('de-DE')} km · {v.eh.toLocaleString('de-DE')} EH</small></article>)}</div></>}
    <StampPass stamps={data.stamps||[]} islands={data.islands||[]}/>
    <h3>💎 Sammlung seltener Waren</h3><div className="log-collection">{SPECIAL_CARGO.map(c=>{const n=data.collection?.[c.id]||0;return <span key={c.id} className={n?'on':''} title={c.text}>{c.icon}<small>{c.name}{n>1?' ×'+n:''}</small></span>;})}</div>
    {data.badges.length>0&&<><h3>Saison-Abzeichen</h3><div className="log-season-badges">{data.badges.map((b:any)=><span key={b.worldId} className="log-season-badge" title={b.world}>{b.rank===1?'🥇':b.rank===2?'🥈':b.rank===3?'🥉':'🎖️'} Platz {b.rank} von {b.players} · {b.world}</span>)}</div></>}
-   <h3>Erfolge & Abzeichen <small className="log-muted">(alle Welten)</small></h3>
+   <h3>Erfolge & Abzeichen</h3>
    <div className="log-badges">{data.achievements.map((a:any)=><article key={a.id} className={a.earned?'on':''} title={a.text}><span>{a.icon}</span><b>{a.name}</b><small>{a.text}</small>{a.earned&&<small className="log-badge-reward">{a.earned.world+' · Tag '+a.earned.day}</small>}</article>)}</div>
    <Guestbook user={data.user.id} me={data.me}/>
    <h3>Speditionen</h3>

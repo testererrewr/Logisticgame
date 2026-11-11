@@ -2,7 +2,7 @@
 # Sicherung der Spieldaten. Standard: alle Spielstände, Konten, Welten, Allianzen …
 # ohne das riesige Betriebsregister (lässt sich jederzeit neu importieren). Vollsicherung: BACKUP_FULL=1
 set -euo pipefail
-if [[ -f /etc/logistik/logistik.env ]]; then set -a; . /etc/logistik/logistik.env; set +a; fi
+EF="${ENV_FILE:-/etc/logistik/logistik.env}"; if [[ -f "$EF" ]]; then set -a; . "$EF"; set +a; fi
 STATE_DIR="${STATE_DIR:-/var/lib/logistik/state}"
 BACKUP_DIR="${BACKUP_DIR:-/var/backups/logistik}"
 KEEP="${BACKUP_KEEP:-5}"

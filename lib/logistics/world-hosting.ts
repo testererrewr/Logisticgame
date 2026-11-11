@@ -7,3 +7,4 @@ const envVal=(k:string)=>String((env as any)?.[k]||(typeof process!=='undefined'
 export const instanceRole=():'test'|'stable'|'all'=>envVal('LOGISTIK_INSTANCE')==='test'?'test':envVal('LOGISTIK_SPLIT')==='1'?'stable':'all';
 export const isTestWorld=(settings:unknown)=>{try{const o=typeof settings==='string'?JSON.parse(settings||'{}'):settings||{};return !!(o as any).testWorld;}catch{return false;}};
 export const ownsWorld=(settings:unknown)=>{const r=instanceRole();if(r==='all')return true;return r==='test'?isTestWorld(settings):!isTestWorld(settings);};
+export const hostedElsewhere=(hostUrl:unknown)=>{if(!hostUrl)return false;const d=envVal('DOMAIN')||envVal('LOGISTIK_DOMAIN');if(!d)return false;try{return new URL(String(hostUrl)).host!==d;}catch{return false;}};

@@ -3,7 +3,7 @@
 #   sudo bash /opt/logistik/app/deploy/world-import.sh /root/welt-<welt-id>.sql.gz
 set -euo pipefail
 [[ $EUID -eq 0 ]] || { echo "Bitte mit sudo ausführen." >&2; exit 1; }
-[[ -f /etc/logistik/logistik.env ]] && { set -a; . /etc/logistik/logistik.env; set +a; }
+EF="${ENV_FILE:-/etc/logistik/logistik.env}"; [[ -f "$EF" ]] && { set -a; . "$EF"; set +a; }
 STATE_DIR="${STATE_DIR:-/var/lib/logistik/state}"
 F="${1:-}";[[ -f "$F" ]] || { echo "Exportdatei angeben." >&2; exit 1; }
 DB="$(find "$STATE_DIR" -name '*.sqlite' ! -name 'metadata.sqlite' | head -1)";[[ -n "$DB" ]] || { echo "Datenbank nicht gefunden – zuerst das Spiel installieren und einmal starten." >&2; exit 1; }

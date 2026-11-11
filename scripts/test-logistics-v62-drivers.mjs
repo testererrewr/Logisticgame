@@ -14,10 +14,10 @@ function world(){const s=newState();s.live=true;s.cash=1e7;build(s,'depot',47,15
 
  const before=x.cash,paid=x.drivers[0].paidUntilDay;let y=x;for(let i=0;i<9;i++)y=stepTime(y,y.day+1,100000);assert.ok(y.drivers[0].paidUntilDay>paid,'Lohn weiter bezahlt');assert.ok(Object.values(y.finance.days).some(r=>r.expenseCategories?.Personal>0),'Finanzkategorie Personal');}
 
-{assert.equal(levelOf(0),1);assert.equal(levelOf(LEVEL_HOURS[4]),5);const {s}=world();const v=purchaseVehicle(s,'truck','krone-profi');s.drivers=[];hireDriver(s,{id:'p',name:'Profi',role:'truck',xpHours:5000},v.id);
+{assert.equal(levelOf(0),1);assert.equal(levelOf(LEVEL_HOURS[4]),5);const {s}=world();const v=purchaseVehicle(s,'truck','krone-profi');s.drivers=[];hireDriver(s,{id:'p',name:'Profi',role:'truck',xpHours:6000},v.id);
  assert.ok(Math.abs(fuelFactor(s,v)-.92)<1e-9,'-8 % Treibstoff');assert.equal(breakdownFactor(s,v),.8);assert.ok(Math.abs(handlingFactor(s,v)-.9)<1e-9,'10 % schneller');
  const base=handlingDays(v,100);v.crewFactor=handlingFactor(s,v);assert.ok(Math.abs(handlingDays(v,100)-base*.9)<1e-12);
- const c=fireDriver(s,s.drivers[0].id);assert.equal(c.xpHours,5000,'Kündigung: Stufe bleibt erhalten');assert.equal(s.drivers.length,0);assert.equal(breakdownFactor(s,v),1.3,'ohne Fahrer = Neuling-Risiko');}
+ const c=fireDriver(s,s.drivers[0].id);assert.equal(c.xpHours,6000,'Kündigung: Stufe bleibt erhalten');assert.equal(s.drivers.length,0);assert.equal(breakdownFactor(s,v),1.3,'ohne Fahrer = Neuling-Risiko');}
 
 {const s=newState();s.cash=1e9;s.drivers=[];const d=build(s,'airport',47.07,15.44);const v=purchaseVehicle(s,'boeing-737-800bcf');const n=autoCrew(s,v,(role,i)=>({id:'auto-'+i,name:'Pilot '+i,role,xpHours:0}));assert.equal(n,2);assert.ok(crewReady(s,v));assert.throws(()=>hireDriver(s,{id:'x',name:'X',role:'air',xpHours:0},v.id),/genug Besatzung/);}
 

@@ -1,0 +1,7 @@
+[Unit]
+Description=Weltverbund Logistik – Verbindung Weltserver %i zum Hauptserver
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /opt/logistik-%i/app/deploy/node-agent.sh %i
+TimeoutStartSec=3600

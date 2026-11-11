@@ -1377,6 +1377,7 @@
   "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
   "changes": "Vorschaubild 640 px von Wikimedia Commons.",
   "match": "wiki-lead",
+  "forced": 2,
   "exactModelPhotoAvailable": true
  },
  "classic-vw-t1-pritsche": {
@@ -1542,6 +1543,7 @@
   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
   "changes": "Vorschaubild 640 px von Wikimedia Commons.",
   "match": "wiki-lead",
+  "forced": 2,
   "exactModelPhotoAvailable": true
  },
  "classic-douglas-dc3": {
@@ -1557,6 +1559,7 @@
   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
   "changes": "Vorschaubild 640 px von Wikimedia Commons.",
   "match": "wiki-lead",
+  "forced": 2,
   "exactModelPhotoAvailable": true
  },
  "classic-junkers-ju52": {
@@ -1602,6 +1605,7 @@
   "licenseUrl": "https://commons.wikimedia.org/wiki/File:PSA_Electra,_circa_1960s.jpg",
   "changes": "Vorschaubild 640 px von Wikimedia Commons.",
   "match": "wiki-lead",
+  "forced": 2,
   "exactModelPhotoAvailable": true
  }
 }

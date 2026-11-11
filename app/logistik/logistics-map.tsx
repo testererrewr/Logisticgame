@@ -39,7 +39,7 @@ export default function LogisticsMap({brand=null,region=null,sites,selected,visi
  useEffect(()=>{const on=()=>{try{setDayNight(localStorage.getItem('log-daynight')!=='0');setShowWeather(localStorage.getItem('log-weather')!=='0');}catch{}};window.addEventListener('log-display-change',on);return()=>window.removeEventListener('log-display-change',on);},[]);
  useEffect(()=>{const L=LRef.current,map=mapRef.current;nightLayer.current?.remove();nightLayer.current=null;if(!mapReady||!L||!map||!dayNight)return;
   if(!map.getPane('log-night')){const pane=map.createPane('log-night');pane.style.zIndex='340';pane.style.pointerEvents='none';}
-  const rad=Math.PI/180,doy=((Math.floor(day)%360)+360)%360*365/360,dec=-23.44*Math.cos(2*Math.PI/365*(doy+10)),hour=simEpoch!=null?(((simEpoch+(day-1)*86400000)%86400000)+86400000)%86400000/3600000:new Date().getUTCHours()+new Date().getUTCMinutes()/60,sunLon=-(hour-12)*15,tanD=Math.tan((Math.abs(dec)<.1?.1:dec)*rad);
+  const rad=Math.PI/180,doy=Math.floor((Date.now()-Date.UTC(new Date().getUTCFullYear(),0,1))/86400000),dec=-23.44*Math.cos(2*Math.PI/365*(doy+10)),hour=(()=>{const n=new Date();return n.getUTCHours()+n.getUTCMinutes()/60;})(),sunLon=-(hour-12)*15,tanD=Math.tan((Math.abs(dec)<.1?.1:dec)*rad);
   const line:number[][]=[];for(let lon=-180;lon<=180;lon+=2){const lat=Math.atan(-Math.cos((lon-sunLon)*rad)/tanD)/rad;line.push([lat,lon]);}
   const pole=dec>0?-90:90,ring=[...line,[pole,180],[pole,-180]],group=L.layerGroup().addTo(map);
   for(const shift of [-360,0,360])L.polygon(ring.map(([a,b])=>[a,b+shift]),{pane:'log-night',interactive:false,stroke:false,fillColor:'#020617',fillOpacity:.32}).addTo(group);

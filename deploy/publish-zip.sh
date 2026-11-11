@@ -11,9 +11,11 @@ git pull --ff-only
 tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
 unzip -q "$ZIP" -d "$tmp"
 src="$tmp"; [[ -d "$tmp/Logisticgame" ]] && src="$tmp/Logisticgame"
+GAL="$REPO/data/logistics-vehicle-gallery.json"; keep=""
+if [[ -f "$GAL" ]]; then keep="$tmp/gallery-server.json"; cp "$GAL" "$keep"; fi
 cp -a "$src"/. "$REPO"/
-echo "==> Fahrzeugfotos von Wikimedia Commons ergänzen (falls noch fehlend)"
-(cd "$REPO" && timeout 900 node scripts/fetch-vehicle-photos.mjs) || echo "(Fotoimport übersprungen)"
+if [[ -n "$keep" ]]; then node -e 'const fs=require("fs"),[a,b,root]=process.argv.slice(1);const zip=JSON.parse(fs.readFileSync(a)),srv=JSON.parse(fs.readFileSync(b));for(const [k,v] of Object.entries(srv)){if(v&&v.path&&fs.existsSync(root+"/public"+v.path)&&v.match!=="symbol"&&v.match!=="illustration")zip[k]=v;}fs.writeFileSync(a,JSON.stringify(zip,null,1));' "$GAL" "$keep" "$REPO" || cp "$keep" "$GAL"; fi
+(cd "$REPO" && timeout 900 node scripts/fetch-vehicle-photos.mjs --quiet-if-complete) || echo "(Fotoimport übersprungen)"
 git add -A
 if git diff --cached --quiet; then echo "Keine Änderungen gegenüber GitHub."; else
   git -c user.name="testererrewr" -c user.email="testererrewr@users.noreply.github.com" commit -qm "Update $(basename "$ZIP" .zip)"

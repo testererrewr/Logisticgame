@@ -14,7 +14,7 @@ fi
 mkdir -p "$STATE_DIR"
 
 umask 077
-env | grep -E '^(SIMULATION_TRIGGER_SECRET|SIMULATION_OWNER_EMAIL|ADMIN_EMAIL|ADMIN_SETUP_HASH|CATALOG_PUSH_HASH|BACKUP_READ_HASH|LOGISTIK_[A-Z0-9_]+)=' > dist/server/.dev.vars || true
+env | grep -E '^(DOMAIN|SIMULATION_TRIGGER_SECRET|SIMULATION_OWNER_EMAIL|ADMIN_EMAIL|ADMIN_SETUP_HASH|CATALOG_PUSH_HASH|BACKUP_READ_HASH|LOGISTIK_[A-Z0-9_]+)=' > dist/server/.dev.vars || true
 
 export WRANGLER_SEND_METRICS=false CLOUDFLARE_CF_FETCH_ENABLED=false
 exec node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js dev \

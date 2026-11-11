@@ -12,7 +12,7 @@ export const CREW_ROLES:Record<CrewRole,{name:string;plural:string;wage:number;c
 };
 export interface Driver {id:string;name:string;role:CrewRole;xpHours:number;wage:number;vehicleId?:string;hiredDay:number;paidUntilDay:number}
 
-export const LEVEL_HOURS=[0,50,200,600,1500];
+export const LEVEL_HOURS=[0,150,600,2000,6000];
 export const MAX_DRIVERS=5000;
 
 export const WAGE_STEP=.15;

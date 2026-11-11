@@ -1,0 +1,8 @@
+[Unit]
+Description=Weltverbund Logistik – Abrechnung Weltserver %i
+
+[Service]
+Type=oneshot
+User=logistik
+EnvironmentFile=/etc/logistik/%i.env
+ExecStart=/bin/bash /opt/logistik-%i/app/deploy/tick.sh

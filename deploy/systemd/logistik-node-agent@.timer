@@ -1,0 +1,11 @@
+[Unit]
+Description=Weltverbund Logistik – Weltserver %i meldet sich jede Minute
+
+[Timer]
+OnBootSec=60s
+OnUnitActiveSec=60s
+AccuracySec=5s
+Unit=logistik-node-agent@%i.service
+
+[Install]
+WantedBy=timers.target

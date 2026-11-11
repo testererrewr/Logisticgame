@@ -4,7 +4,7 @@
 #   sudo bash /opt/logistik/app/deploy/world-export.sh <welt-id>      → /root/welt-<welt-id>.sql.gz
 set -euo pipefail
 [[ $EUID -eq 0 ]] || { echo "Bitte mit sudo ausführen." >&2; exit 1; }
-[[ -f /etc/logistik/logistik.env ]] && { set -a; . /etc/logistik/logistik.env; set +a; }
+EF="${ENV_FILE:-/etc/logistik/logistik.env}"; [[ -f "$EF" ]] && { set -a; . "$EF"; set +a; }
 STATE_DIR="${STATE_DIR:-/var/lib/logistik/state}"
 W="${1:-}";[[ "$W" =~ ^[-a-zA-Z0-9_]{6,100}$ ]] || { echo "Welt-ID angeben (siehe Verwaltung → Welten)." >&2; exit 1; }
 DB="$(find "$STATE_DIR" -name '*.sqlite' ! -name 'metadata.sqlite' | head -1)";[[ -n "$DB" ]] || { echo "Datenbank nicht gefunden." >&2; exit 1; }
@@ -33,7 +33,7 @@ for t in logistics_entitlements logistics_user_achievements; do
   [[ -n "$(q "SELECT name FROM sqlite_master WHERE type='table' AND name='$t'")" ]] && dump "$t" "user_id IN $USERS" IGNORE
 done
 dump logistics_runtime "id LIKE '%$W%'"
-[[ -n "$(q "SELECT name FROM sqlite_master WHERE type='table' AND name='logistics_company_chunks'")" ]] && dump logistics_company_chunks "id LIKE '$W%' OR id LIKE '%:$W:%' OR id LIKE '%|$W|%'"
+[[ -n "$(q "SELECT name FROM sqlite_master WHERE type='table' AND name='logistics_company_chunks'")" ]] && dump logistics_company_chunks "owner LIKE '$W|%'"
 echo "COMMIT;" >> "$OUT"
 gzip -f "$OUT"
 echo "Fertig: $OUT.gz ($(du -h "$OUT.gz" | cut -f1))"

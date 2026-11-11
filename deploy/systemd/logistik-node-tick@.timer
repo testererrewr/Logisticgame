@@ -1,0 +1,11 @@
+[Unit]
+Description=Weltverbund Logistik – Abrechnung Weltserver %i alle 20 Sekunden
+
+[Timer]
+OnBootSec=90s
+OnUnitActiveSec=20s
+AccuracySec=2s
+Unit=logistik-node-tick@%i.service
+
+[Install]
+WantedBy=timers.target

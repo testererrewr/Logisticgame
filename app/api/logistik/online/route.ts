@@ -1,5 +1,5 @@
 import {installD1Retry} from '../../../../lib/d1-retry';
-import {hostedWorlds,hostedHere,ownsWorld,isTestWorld,instanceRole} from '../../../../lib/logistics/world-hosting';
+import {hostedWorlds,hostedHere,ownsWorld,isTestWorld,instanceRole,hostedElsewhere} from '../../../../lib/logistics/world-hosting';
 installD1Retry();
 import {sameOrigin} from '../../../../lib/same-origin';
 import {encodeCompanyParts,decodeCompany,ensureChunkTable,deleteChunks} from '../../../../lib/logistics/company-codec';
@@ -18,6 +18,7 @@ import {env} from 'cloudflare:workers';
 import {readProject,deliverToProject,projectUpdate,settleProjects} from '../../../../lib/logistics/world-projects';
 import {stampCountries} from '../../../../lib/logistics/stamps-server';
 import {setNewsCountryResolver} from '../../../../lib/logistics/world-events';
+import {ensureStoredNews,newsForClient} from '../../../../lib/logistics/news-store';
 import {prepareConvoys,settleConvoys,type ConvoyCtx} from '../../../../lib/logistics/alliance-convoy';
 import {countryAt} from '../../../../lib/countries-server';
 setNewsCountryResolver(p=>countryAt(p));
@@ -104,7 +105,7 @@ async function settleWorldNow(id:string,budgetMs:number):Promise<World>{
  const settleAt=Date.now();let latest:World|undefined,startDay:number|undefined;
  const measure=(w:World)=>{const seconds=(Date.now()-settleAt)/1000;if(startDay!==undefined&&seconds>.5){const rate=(w.day-startDay)*24/seconds,old=catchRate.get(id);catchRate.set(id,old?old*.6+rate*.4:rate);}};
  for(let attempt=0;attempt<2000;attempt++){
-  const world=await readWorld(id);if(!world)throw Error('Diese Welt existiert nicht.');latest=world;startDay??=world.day;if(settleAt-world.last_tick<4000||!ownsWorld((world as any).settings))return world;
+  const world=await readWorld(id);if(!world)throw Error('Diese Welt existiert nicht.');latest=world;startDay??=world.day;if(settleAt-world.last_tick<4000||!ownsWorld((world as any).settings)||hostedElsewhere((world as any).host_url))return world;
   if(attempt>0&&Date.now()-settleAt>budgetMs){measure(world);behind.add(id);return world;}
   const seasonEnd=seasonEndDay(parseSettings(world.settings));
   const target=Math.min(clockTarget(world,settleAt),seasonEnd??Infinity);if(target<=world.day+1e-8)return world;
@@ -118,6 +119,7 @@ async function settleWorldNow(id:string,budgetMs:number):Promise<World>{
   {const amap=await allianceMap(id);for(const row of rows){const aid=amap.get(row.user_id);if(!aid)continue;const own=states.get(row.user_id)!;own.sites.push(...allySites(own,rows.filter(r=>r.user_id!==row.user_id&&amap.get(r.user_id)===aid).map(r=>({id:r.user_id,name:r.name||'Spedition',state:states.get(r.user_id)!})),amap.storage.get(aid)!==false));}}
   if(attempt===0)for(const state of states.values())await prepareVehicleRoads(state);
   const achBefore=new Map<string,number>();try{await db().prepare('CREATE TABLE IF NOT EXISTS logistics_user_achievements(user_id TEXT NOT NULL,achievement TEXT NOT NULL,world_id TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(user_id,achievement))').run();const done=(await db().prepare('SELECT user_id,achievement FROM logistics_user_achievements WHERE world_id<>? AND user_id IN (SELECT value FROM json_each(?))').bind(id,JSON.stringify(rows.map(r=>r.user_id))).all<{user_id:string;achievement:string}>()).results;for(const [u,st] of states){(st as any).rewardedElsewhere=done.filter(d=>d.user_id===u).map(d=>d.achievement);achBefore.set(u,Object.keys(st.progress?.achievements||{}).length);}}catch{}
+  try{await ensureStoredNews(next);}catch(e){await logError('settle:news',e,{world:id},'warn');}
   let convoyCtx:ConvoyCtx|null=null;try{convoyCtx=await prepareConvoys(id,states,next);}catch(e){await logError('settle:convoy-prepare',e,{world:id},'error');}
   const advanced=stepSharedWorld(states,next,market);
   for(const [u,st] of advanced){delete (st as any).rewardedElsewhere;const ach=Object.keys(st.progress?.achievements||{});if(ach.length>(achBefore.get(u)??ach.length))statements.push(...ach.map(a=>db().prepare('INSERT OR IGNORE INTO logistics_user_achievements(user_id,achievement,world_id,created) VALUES(?,?,?,?)').bind(u,a,id,Date.now())));}try{stampCountries(advanced);}catch(e){await logError('settle:stamps',e,{world:id},'warn');}
@@ -165,7 +167,8 @@ async function snapshot(u:User,worldId:string,geo=''){
  if(!row)throw Error('Bitte zuerst dieser Welt beitreten.');
  const rules=await readPartnerRules();const state=applyStateRules(normalizeFreightState(await decodeCompany(row.state)),rules);state.borrowedTracks=await borrowedTracks(worldId,u.id);state.sites.push(...await allianceSitesFor(worldId,u.id,state));state.maintenanceOff=!parseSettings(world.settings).maintenance;state.fuelOff=!parseSettings(world.settings).fuel;state.driversOff=!parseSettings(world.settings).drivers;
  const geometrySig=geometrySignature(state),geometryOmitted=!!geo&&geo===geometrySig;if(geometryOmitted){delete state.roadRoutes;for(const l of state.lines)delete l.legs;}
- return {geometrySig,geometryOmitted,state,partnerRules:rules,market:{...newMarket(world.day),...JSON.parse(world.market||'{}')},companyName:row.name||state.companyName||u.name,revision:row.revision,user:u.name,userId:u.id,role:u.role,serverNow:Date.now(),world:{catchUpHours:Math.round(catchUpHours(world)*10)/10,catchUpSeconds:catchUpSeconds(world),revision:world.revision,id:world.id,name:world.name,day:world.day,timeScale:world.time_scale,simTime:world.created+(world.day-1)*86400000,status:world.status,tickMs:worldTickMs(world),settings:settingsSummary(parseSettings(world.settings))},companies:results[2].results,offers:results[3].results.map((raw:unknown)=>{const o=raw as Offer;return ({...o,quantity:Number(o.quantity)*(o.quantity_unit==='EH'?1:10)});}),permissions:results[4].results};
+ try{await ensureStoredNews(world.day);}catch{}
+ return {news:newsForClient(world.day),geometrySig,geometryOmitted,state,partnerRules:rules,market:{...newMarket(world.day),...JSON.parse(world.market||'{}')},companyName:row.name||state.companyName||u.name,revision:row.revision,user:u.name,userId:u.id,role:u.role,serverNow:Date.now(),world:{catchUpHours:Math.round(catchUpHours(world)*10)/10,catchUpSeconds:catchUpSeconds(world),revision:world.revision,id:world.id,name:world.name,day:world.day,timeScale:world.time_scale,simTime:world.created+(world.day-1)*86400000,status:world.status,tickMs:worldTickMs(world),settings:settingsSummary(parseSettings(world.settings))},companies:results[2].results,offers:results[3].results.map((raw:unknown)=>{const o=raw as Offer;return ({...o,quantity:Number(o.quantity)*(o.quantity_unit==='EH'?1:10)});}),permissions:results[4].results};
 }
 function validPoint(p:unknown):p is Coords{return Array.isArray(p)&&p.length===2&&p.every(x=>typeof x==='number'&&Number.isFinite(x))&&Math.abs(p[0])<=85&&Math.abs(p[1])<=180;}
 async function verifySites(command:OnlineAction):Promise<Site[]|undefined>{
@@ -198,7 +201,8 @@ async function validateSharedCapacity(action:OnlineAction,state:State,rows:Compa
  const used=(await Promise.all(rows.map(async r=>normalizeFreightState(await decodeCompany(r.state)).contracts))).flat().filter(c=>c.kind===a.type&&c.siteId===a.siteId&&!c.cancelled&&c.endDay>=state.day&&(a.type!=='supply'||c.good===a.good)).reduce((n,c)=>n+c.daily,0);
  if(used+a.daily>cap)throw Error(`In dieser Welt sind noch ${Math.max(0,cap-used)} EH/Tag frei. Andere Speditionen haben Kapazität gebucht.`);
 }
-export async function GET(req:NextRequest){const ctx:Record<string,unknown>={};try{
+const slow=(kind:string,t0:number,ctx:Record<string,unknown>)=>{const ms=Date.now()-t0;if(ms>6000)void logError('perf:'+kind,new Error(`Anfrage dauerte ${(ms/1000).toFixed(1)} s`),ctx,'warn');};
+export async function GET(req:NextRequest){const ctx:Record<string,unknown>={},t0=Date.now();try{
  const u=await currentUser(req);if(!u||u.status!=='active')return reply({error:'Bitte anmelden.'},401);ctx.user=u.id;
  const id=req.nextUrl.searchParams.get('world');ctx.world=id||undefined;
  if(!id){
@@ -206,7 +210,7 @@ export async function GET(req:NextRequest){const ctx:Record<string,unknown>={};t
   return reply({user:u.name,worlds:rows.results.filter(w=>['owner','admin'].includes(u.role)||w.status!=='draft').map(w=>({...w,external:!hostedHere(w.id,(w as any).host_url,new URL(req.url).origin)?(w as any).host_url||null:null,testWorld:isTestWorld(w.settings),settings:settingsSummary(parseSettings(w.settings)),day:clockTarget(w,Date.now())})),singleplayerEnabled:false,isAdmin:['owner','admin'].includes(u.role)});
  }
  await settleWorld(id);if(!await readCompany(id,u.id))return reply({error:'Bitte zuerst dieser Welt beitreten.'},403);
- return reply(await snapshot(u,id,(req.nextUrl.searchParams.get('geo')||'').slice(0,60)));
+ const out=await snapshot(u,id,(req.nextUrl.searchParams.get('geo')||'').slice(0,60));slow('online-GET',t0,ctx);return reply(out);
  }catch(e:any){await logError('online:GET',e,{...ctx,url:req.nextUrl.search});return reply({error:e.message||'Welt nicht erreichbar.'},503);}}
 
 async function enforceWorldRules(cmd:OnlineCommand,state:State,cfg:ReturnType<typeof parseSettings>,worldId:string){
@@ -227,7 +231,7 @@ async function enforceWorldRules(cmd:OnlineCommand,state:State,cfg:ReturnType<ty
  if(ids.length){const known=new Map(state.sites.map(p=>[p.id,p])),missing=ids.filter(i=>!known.has(i));for(const p of missing.length?await registryByIds(missing):[])known.set(p.id,p);for(const i of ids){const p=known.get(i);if(p)pts.push({lat:p.lat,lon:p.lon,name:p.name});}}
  assertInRegion(cfg,pts);
 }
-export async function POST(req:NextRequest){const ctx:Record<string,unknown>={};try{
+export async function POST(req:NextRequest){const ctx:Record<string,unknown>={},t0=Date.now();try{
  const raw=await req.text();if(raw.length>1000000)return reply({error:'Aktion zu groß.'},413);
  const u=await currentUser(req);if(!u||u.status!=='active')return reply({error:'Anmeldung erforderlich.'},401);ctx.user=u.id;
  if(!sameOrigin(req))return reply({error:'Ungültiger Ursprung.'},403);
@@ -236,8 +240,8 @@ export async function POST(req:NextRequest){const ctx:Record<string,unknown>={};
  if(!cmd||typeof cmd.type!=='string')return reply({error:'Ungültige Aktion.'},400);ctx.command=cmd.type;ctx.world=String(body.worldId||'')||undefined;ctx.payload=JSON.stringify(cmd).slice(0,800);
  if(cmd.type==='createWorld')return reply({error:'Welten werden ausschließlich in der Admin-Verwaltung erstellt.'},403);
  const id=String(body.worldId||'');if(!id||id.length>100)throw Error('Eine Online-Welt auswählen.');
- const world=await settleWorld(id);
- if(cmd.type==='joinWorld'){await join(world,u,cmd.name||'');return reply(await snapshot(u,id));}
+ const world=await settleWorld(id);if(hostedElsewhere((world as any).host_url))throw Error('Diese Welt läuft jetzt auf '+new URL(String((world as any).host_url)).host+' – bitte dort anmelden.');
+ if(cmd.type==='joinWorld'){await join(world,u,cmd.name||'');const snap=await snapshot(u,id);slow('online-join',t0,ctx);return reply(snap);}
  if(world.status!=='running')return reply({error:'Diese Welt ist pausiert oder noch nicht geöffnet.'},403);
  if(body.marketVersion!==4)return reply({error:'Das Liefersystem wurde aktualisiert. Bitte die Seite neu laden.'},409);
  if(body.quantityUnit!=='EH')return reply({error:'Das Spiel wurde auf EH aktualisiert. Bitte die Seite neu laden.'},409);
@@ -329,9 +333,9 @@ export async function POST(req:NextRequest){const ctx:Record<string,unknown>={};
  }catch(e:any){await logError('online:'+String(ctx.command||'POST'),e,ctx);return reply({error:e.message||'Online-Aktion fehlgeschlagen.'},422);}}
 
 export async function settleAllWorlds(source='scheduled'){
- const hosted=hostedWorlds(),rows=(await db().prepare("SELECT id,settings FROM logistics_worlds WHERE status='running' ORDER BY last_tick LIMIT 200").all<{id:string;settings:string}>()).results.filter(r=>(!hosted||hosted.has(r.id))&&ownsWorld(r.settings)).slice(0,50);
+ const hosted=hostedWorlds(),rows=(await db().prepare("SELECT id,settings,host_url FROM logistics_worlds WHERE status='running' ORDER BY last_tick LIMIT 200").all<{id:string;settings:string;host_url:string|null}>()).results.filter(r=>(!hosted||hosted.has(r.id))&&ownsWorld(r.settings)&&!hostedElsewhere(r.host_url)).slice(0,50);
  const completed:string[]=[],errors:{id:string;error:string}[]=[];
- for(const row of rows){try{await settleWorld(row.id,15000);completed.push(row.id);}catch(e:any){errors.push({id:row.id,error:e.message});await logError('tick:settle',e,{world:row.id,source},'error');}}
+ for(const row of rows){const ts=Date.now();try{await settleWorld(row.id,15000);completed.push(row.id);const ms=Date.now()-ts;if(ms>12000)await logError('perf:settle',new Error(`Abrechnung dauerte ${(ms/1000).toFixed(1)} s`),{world:row.id,source},'warn');}catch(e:any){errors.push({id:row.id,error:e.message});await logError('tick:settle',e,{world:row.id,source},'error');}}
  continuePartnerImports();
  const payload={source,completed,errors,at:Date.now()};
  await db().prepare('INSERT INTO logistics_runtime(id,updated,payload) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET updated=excluded.updated,payload=excluded.payload').bind('simulation',Date.now(),JSON.stringify(payload)).run();
