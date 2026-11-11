@@ -20,14 +20,16 @@ export async function GET(req:NextRequest){try{
   db().prepare("SELECT * FROM logistics_runtime WHERE id='simulation'"),
   db().prepare('SELECT * FROM logistics_loaded_areas ORDER BY loaded DESC LIMIT 40'),
   db().prepare('SELECT count(*) AS n FROM logistics_partner_registry'),
- ]);return reply({worldImport:worldImportStatus(await readWorldImport()),entitlements:await (async()=>{await ensureBrandingTables();return (await db().prepare('SELECT user_id,feature FROM logistics_entitlements').all()).results;})(),worlds:worlds.results.map((w:any)=>({...w,settings:settingsSummary(parseSettings(w.settings))})),users:users.results,runtime:runtime.results[0]||null,areas:areas.results,partnerCount:(partners.results[0] as any)?.n||0,role:u.role});
+ ]);const {instanceRole}=await import('../../../../lib/logistics/world-hosting');const ro=await db().prepare("SELECT id,updated,payload FROM logistics_runtime WHERE id IN ('rollout-request','rollout-status')").all<{id:string;updated:number;payload:string}>().catch(()=>({results:[] as any[]}));
+ return reply({rollout:{instance:instanceRole(),request:ro.results.find(r=>r.id==='rollout-request')||null,status:ro.results.find(r=>r.id==='rollout-status')||null},worldImport:worldImportStatus(await readWorldImport()),entitlements:await (async()=>{await ensureBrandingTables();return (await db().prepare('SELECT user_id,feature FROM logistics_entitlements').all()).results;})(),worlds:worlds.results.map((w:any)=>({...w,settings:settingsSummary(parseSettings(w.settings))})),users:users.results,runtime:runtime.results[0]||null,areas:areas.results,partnerCount:(partners.results[0] as any)?.n||0,role:u.role});
  }catch(e:any){await logError('api:admin',e,{url:req.url});return reply({error:e.message},422);}}
 export async function POST(req:NextRequest){try{
  const raw=await req.text();if(raw.length>50000)return reply({error:'Anfrage zu groß.'},413);
  const u=await currentUser(req);if(!u||u.status!=='active'||!['owner','admin'].includes(u.role))return reply({error:'Nur für Administratoren.'},403);
  if(!sameOrigin(req))return reply({error:'Ungültiger Ursprung.'},403);
  const body:any=JSON.parse(raw),now=Date.now();let result:unknown={ok:true};
- if(body.action==='worldHost'){const {normalizeHostUrl}=await import('../../../../lib/logistics/world-hosting');await ensureWorldSettingsColumn();await db().prepare('UPDATE logistics_worlds SET host_url=? WHERE id=?').bind(normalizeHostUrl(body.hostUrl),String(body.id||'')).run();result={ok:true};}
+ if(body.action==='rollout'){if(u.role!=='owner')throw Error('Nur der Owner rollt Updates aus.');await db().prepare("INSERT OR REPLACE INTO logistics_runtime(id,updated,payload) VALUES('rollout-request',?,?)").bind(now,JSON.stringify({by:u.name,at:now})).run();result={requested:true};}
+ else if(body.action==='worldHost'){const {normalizeHostUrl}=await import('../../../../lib/logistics/world-hosting');await ensureWorldSettingsColumn();await db().prepare('UPDATE logistics_worlds SET host_url=? WHERE id=?').bind(normalizeHostUrl(body.hostUrl),String(body.id||'')).run();result={ok:true};}
  else if(body.action==='worldImport'){if(typeof body.enabled!=='boolean')throw Error('Importstatus fehlt.');result=await setWorldImportEnabled(body.enabled);if(body.enabled)continueWorldImport();}
  else if(body.action==='worldImportRetry'){result=await retryWorldImport();continueWorldImport();}
  else if(body.action==='createWorld'){
@@ -51,7 +53,7 @@ export async function POST(req:NextRequest){try{
   const id=String(body.worldId||''),name=String(body.name||'').trim(),scale=Number(body.timeScale),status=String(body.status||'running');
   if(name.length<3||name.length>60||!Number.isFinite(scale)||scale<.1||scale>1440||!['draft','running','paused','stopped','finished'].includes(status))throw Error('Ungültige Welteinstellungen.');
   await settleWorld(id);await db().prepare('UPDATE logistics_worlds SET name=?,description=?,time_scale=?,tick_ms=?,status=?,last_tick=?,revision=revision+1 WHERE id=?').bind(name,String(body.description||'').slice(0,300),scale,86400000/scale,status,Date.now(),id).run();
-  if(body.rules&&typeof body.rules==='object'){const row=await db().prepare('SELECT settings FROM logistics_worlds WHERE id=?').bind(id).first<{settings:string|null}>();let cur:any={};try{cur=JSON.parse(row?.settings||'{}')||{};}catch{}for(const k of ['maintenance','fuel','drivers'])if(typeof body.rules[k]==='boolean')cur[k]=body.rules[k];await db().prepare('UPDATE logistics_worlds SET settings=? WHERE id=?').bind(JSON.stringify(cur),id).run();}
+  if(body.rules&&typeof body.rules==='object'){const row=await db().prepare('SELECT settings FROM logistics_worlds WHERE id=?').bind(id).first<{settings:string|null}>();let cur:any={};try{cur=JSON.parse(row?.settings||'{}')||{};}catch{}for(const k of ['maintenance','fuel','drivers','testWorld'])if(typeof body.rules[k]==='boolean')cur[k]=body.rules[k];await db().prepare('UPDATE logistics_worlds SET settings=? WHERE id=?').bind(JSON.stringify(cur),id).run();}
  }else if(body.action==='role'){
   if(u.role!=='owner')return reply({error:'Nur der Besitzer kann Administratoren ernennen.'},403);
   const target=await db().prepare('SELECT role FROM users WHERE id=?').bind(body.userId).first<{role:string}>();if(!target||target.role==='owner'||!['user','admin'].includes(body.role))throw Error('Das Besitzerkonto ist geschützt.');

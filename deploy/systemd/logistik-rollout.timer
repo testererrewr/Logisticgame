@@ -1,0 +1,11 @@
+[Unit]
+Description=Weltverbund Logistik – Rollout-Anfragen jede Minute prüfen
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=60s
+AccuracySec=5s
+Unit=logistik-rollout.service
+
+[Install]
+WantedBy=timers.target

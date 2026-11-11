@@ -383,3 +383,14 @@
 
 .log-news-new{display:inline-block;background:#ef4444;color:#fff;font-weight:800;font-size:.7rem;letter-spacing:.06em;padding:1px 6px;border-radius:999px;margin-right:6px;vertical-align:middle}
 .log-menu-new{margin-left:6px;font-size:.6rem}
+.log-company-stats{padding:16px;max-width:1100px}
+.log-company-stats .log-page-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.log-stats-chart{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:8px;margin-bottom:12px}
+.log-stats-chart svg{width:100%;height:auto;display:block;color:#94a3b8}
+.log-stats-legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.8rem;margin-top:4px}
+.log-stats-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:middle}
+.log-stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.log-quiz-answers{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:8px 0}
+.log-quiz-ok{background:#16a34a;color:#fff;border:0;border-radius:8px;padding:8px}
+.log-quiz-wrong{background:#dc2626;color:#fff;border:0;border-radius:8px;padding:8px}
+.log-test-badge{font-size:.75rem;color:#a78bfa;margin-left:6px}

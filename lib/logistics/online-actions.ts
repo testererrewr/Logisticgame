@@ -1,3 +1,4 @@
+import {answerQuiz,claimDailyTask} from './daily';
 import {sellVehicle,sellFleet,sellTrailers} from './vehicle-sales';
 import {requestService,cancelService,resolveIncident,ackIncidents,setBreakdownPolicy,type BreakdownOption,type BreakdownPolicy} from './maintenance';
 import type {UnloadPlanEntry} from './engine';
@@ -48,7 +49,7 @@ export type OnlineAction=
  |{type:'updateLine';lineId:string;settings:Pick<Line,'departure'|'manualDeparture'|'name'|'tripsPerDay'|'tripLimit'|'stopWhenDemandMet'|'stopWhenSourcesEmpty'> & {duration?:number|null}}
  |{type:'renameVehicle';vehicleId:string;name:string}
  |{type:'showcaseVehicle';vehicleId:string;on:boolean}
- |{type:'discardStock';siteId:string;good:GoodId;quantity:number}
+ |{type:'discardStock';siteId:string;good:GoodId;quantity:number}|{type:'dailyQuiz';answer:number}|{type:'claimDailyTask'}
  |{type:'setPlate';vehicleId:string;plate:string}
  |{type:'setContainerOrders';vehicleId:string;orderIds:string[]|null}
  |{type:'setReturnLine';vehicleId:string;lineId:string}
@@ -116,6 +117,8 @@ export function applyAction(state:State,command:OnlineAction,verifiedSites?:Site
  case 'updateLine':updateLine(s,command.lineId,command.settings);break;
  case 'renameVehicle':renameVehicle(s,command.vehicleId,command.name);break;
  case 'discardStock':discardStock(s,command.siteId,command.good,Number(command.quantity));break;
+  case 'dailyQuiz':answerQuiz(s,Math.floor(Number(command.answer)));break;
+  case 'claimDailyTask':claimDailyTask(s);break;
  case 'setPlate':setPlate(s,command.vehicleId,String(command.plate||''));break;
  case 'showcaseVehicle':{const v=s.vehicles.find(x=>x.id===command.vehicleId);if(!v||!v.rare)throw Error('Nur seltene Fahrzeuge und Erfolgs-Fahrzeuge können ausgestellt werden.');if(command.on&&s.vehicles.filter(x=>x.showcase).length>=6&&!v.showcase)throw Error('Höchstens 6 Fahrzeuge in der Vitrine.');v.showcase=!!command.on||undefined;break;}
  case 'setContainerOrders':setVehicleContainerOrders(s,command.vehicleId,command.orderIds===null?undefined:command.orderIds);break;

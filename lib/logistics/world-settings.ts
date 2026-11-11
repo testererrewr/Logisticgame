@@ -5,7 +5,7 @@ export type ModeGroup='road'|'rail'|'ship'|'air';
 export const MODE_GROUPS:{id:ModeGroup;name:string}[]=[{id:'road',name:'LKW & Transporter'},{id:'rail',name:'Züge'},{id:'ship',name:'Schiffe'},{id:'air',name:'Flugzeuge'}];
 export const DEFAULT_START_CASH=5500000;
 export interface WorldRegion {kind:'world'|'continents'|'countries';values:string[]}
-export interface WorldSettings {startCash:number;modes:ModeGroup[];region:WorldRegion;maintenance:boolean;fuel:boolean;drivers:boolean;seasonDays:number}
+export interface WorldSettings {startCash:number;modes:ModeGroup[];region:WorldRegion;maintenance:boolean;fuel:boolean;drivers:boolean;seasonDays:number;testWorld?:boolean}
 type RegionData={continents:string[];countries:Record<string,{continents:string[];bbox:[number,number,number,number]}>};
 const data=regions as unknown as RegionData;
 export const CONTINENTS=data.continents;
@@ -24,7 +24,7 @@ export function parseSettings(raw:unknown):WorldSettings{
  const kind=['world','continents','countries'].includes(v.region?.kind)?v.region.kind:'world';
  const pool=kind==='continents'?CONTINENTS:COUNTRY_NAMES;
  const values=kind==='world'||!Array.isArray(v.region?.values)?[]:[...new Set(v.region.values.filter((x:unknown)=>typeof x==='string'&&pool.includes(x)))] as string[];
- return {startCash,modes:modes.length?modes:DEFAULT_SETTINGS.modes,region:kind!=='world'&&values.length?{kind,values}:{kind:'world',values:[]},maintenance:v.maintenance!==false,fuel:v.fuel!==false,drivers:v.drivers!==false,seasonDays:Number.isFinite(v.seasonDays)&&v.seasonDays>0?Math.min(3650,Math.round(v.seasonDays)):0};
+ return {startCash,modes:modes.length?modes:DEFAULT_SETTINGS.modes,region:kind!=='world'&&values.length?{kind,values}:{kind:'world',values:[]},maintenance:v.maintenance!==false,fuel:v.fuel!==false,drivers:v.drivers!==false,seasonDays:Number.isFinite(v.seasonDays)&&v.seasonDays>0?Math.min(3650,Math.round(v.seasonDays)):0,...(v.testWorld?{testWorld:true}:{})};
 }
 
 export function validateSettings(raw:unknown):WorldSettings{
@@ -49,4 +49,4 @@ export function regionBounds(s:WorldSettings):[number,number,number,number]|null
  return b;
 }
 export function regionLabel(s:WorldSettings){if(s.region.kind==='world')return 'Ganze Welt';const list=s.region.values;return (s.region.kind==='continents'?(list.length===1?'Kontinent: ':'Kontinente: '):(list.length===1?'Land: ':'Länder: '))+(list.length>6?list.slice(0,6).join(', ')+' … (+'+(list.length-6)+')':list.join(', '));}
-export function settingsSummary(s:WorldSettings){return {startCash:s.startCash,modes:s.modes,modeNames:MODE_GROUPS.filter(m=>s.modes.includes(m.id)).map(m=>m.name),region:s.region,regionLabel:regionLabel(s),bounds:regionBounds(s),maintenance:s.maintenance,fuel:s.fuel,drivers:s.drivers,seasonDays:s.seasonDays,seasonEnd:seasonEndDay(s)};}
+export function settingsSummary(s:WorldSettings){return {startCash:s.startCash,modes:s.modes,modeNames:MODE_GROUPS.filter(m=>s.modes.includes(m.id)).map(m=>m.name),region:s.region,regionLabel:regionLabel(s),bounds:regionBounds(s),maintenance:s.maintenance,fuel:s.fuel,drivers:s.drivers,seasonDays:s.seasonDays,seasonEnd:seasonEndDay(s),testWorld:!!s.testWorld};}

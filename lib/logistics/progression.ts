@@ -1,3 +1,4 @@
+import {rollDaily} from './daily';
 import {credit,log,purchaseVehicle,good,VEHICLES,TRAILERS,FREIGHT_NAMES,type State,type GoodId,type VehicleModelId} from './engine';
 import {hireDriver,driversActive,LEVEL_HOURS,driverName,type CrewRole} from './drivers';
 import {stableHash} from './business-rules';
@@ -8,7 +9,7 @@ export interface Snapshot {day:number;earned:number;spent:number;eh:number;km:nu
 export interface DailyReport {day:number;income:number;costs:number;profit:number;eh:number;km:number;contracts:number;cash:number;topGood?:string;topGoodEh?:number;vehicles:number;challengeDone?:string[];achievements?:string[]}
 export interface Challenge {id:string;kind:'eh'|'km'|'contracts'|'revenue'|'type';title:string;target:number;prize:number;freight?:string}
 export interface PickupWarning {day:number;contractId:string;siteId:string;siteName:string;good:string;daily:number;stock:number;picked?:number}
-export interface Progress {stamps?:Record<string,number>;islands?:Record<string,number>;collection?:Record<string,number>;pickups?:PickupWarning[];v:1;last:Snapshot;totals:{km:number;contracts:number;challenges:number};weekIndex:number;weekStart:Snapshot;weekSize:number;weekDone:string[];achievements:Record<string,number>;reports:DailyReport[]}
+export interface Progress {stamps?:Record<string,number>;islands?:Record<string,number>;collection?:Record<string,number>;pickups?:PickupWarning[];hist?:[number,number,number,number,number,number][];v:1;last:Snapshot;totals:{km:number;contracts:number;challenges:number};weekIndex:number;weekStart:Snapshot;weekSize:number;weekDone:string[];achievements:Record<string,number>;reports:DailyReport[]}
 
 const WEEK=7;
 export const weekOf=(day:number)=>Math.floor((Math.floor(day)-1)/WEEK);
@@ -93,7 +94,7 @@ export function progressDay(s:State){const p=ensureProgress(s),day=Math.floor(s.
  for(const c of weeklyChallenges(p.weekIndex,p.weekSize)){if(p.weekDone.includes(c.id))continue;if(challengeProgress(c,p.weekStart,now)>=c.target){p.weekDone.push(c.id);p.totals.challenges++;credit(s,c.prize,'Prämien & Erfolge');log(s,'🎯 Wochen-Herausforderung geschafft: '+c.title+' · Prämie '+c.prize.toLocaleString('de-DE')+' €','good');(report.challengeDone??=[]).push(c.title);}}
  if(weekOf(day)!==p.weekIndex){p.weekIndex=weekOf(day);p.weekStart=now;p.weekSize=Math.ceil(s.vehicles.length/3);p.weekDone=[];}
  for(const a of ACHIEVEMENTS){if(p.achievements[a.id])continue;if(a.metric(s,p)>=a.goal){p.achievements[a.id]=day;const elsewhere=(s as any).rewardedElsewhere?.includes(a.id);if(!elsewhere)grant(s,a);log(s,'🏅 Erfolg freigeschaltet: '+a.name+(elsewhere?' · Belohnung wurde bereits in einer anderen Welt vergeben':' · Belohnung: '+rewardText(a.reward)),'good');(report.achievements??=[]).push(a.name);}}
- if(p.last.day<day)p.reports=[report,...p.reports].slice(0,14);p.last=snapshot(s,p);
+ if(p.last.day<day){p.reports=[report,...p.reports].slice(0,14);const h=(p as any).hist??=[];h.push([report.day,Math.round(report.eh),Math.round(report.km),report.vehicles,Math.round(report.cash),report.contracts]);if(h.length>366)h.splice(0,h.length-366);}p.last=snapshot(s,p);try{rollDaily(s);}catch{}
 }
 
 function checkPickups(s:State,p:Progress,day:number){const prev=day-1,list:PickupWarning[]=[];

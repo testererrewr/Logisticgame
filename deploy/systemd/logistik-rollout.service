@@ -1,0 +1,7 @@
+[Unit]
+Description=Weltverbund Logistik – Rollout-Anfrage aus der Verwaltung prüfen
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /opt/logistik/app/deploy/rollout-watch.sh
+TimeoutStartSec=1800

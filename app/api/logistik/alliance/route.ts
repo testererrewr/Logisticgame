@@ -2,6 +2,7 @@ import {logError} from '../../../../lib/logistics/error-log';
 import {NextRequest,NextResponse} from 'next/server';
 import {env} from 'cloudflare:workers';
 import {currentUser} from '../online/route';
+import {acceptConvoy,convoysFor,convoyOffers} from '../../../../lib/logistics/alliance-convoy';
 import {ensureAllianceTables,invalidateAllianceCache,allianceOffers,ensureAllianceExtras,weeklyTarget,weeklyReward,weeklyGood,SHARED_KINDS,STORAGE_KINDS,ensureAllianceSocial,allianceBadges,chronicle,hqLevel,hqBonus,HQ_LEVELS} from '../../../../lib/logistics/alliance-server';
 import {addFeed} from '../../../../lib/logistics/social-server';
 import {weekOf} from '../../../../lib/logistics/progression';
@@ -46,7 +47,8 @@ export async function GET(req:NextRequest){try{
    social={treasury:Number((a as any).treasury||0),hq:{funds,level,next:HQ_LEVELS[level+1]??null,bonus:hqBonus(level),levels:HQ_LEVELS},badges:await allianceBadges(mine.alliance_id),chronicle:(await db().prepare('SELECT id,day,text,created FROM logistics_alliance_chronicle WHERE alliance_id=? ORDER BY created DESC LIMIT 60').bind(mine.alliance_id).all()).results,duels};}catch{}
   const {logo:_logo,...plain}=a as any;const weeks=(await db().prepare('SELECT week,target,progress,reward,status,baselines FROM logistics_alliance_weekly WHERE alliance_id=? ORDER BY week DESC LIMIT 12').bind(mine.alliance_id).all<any>().catch(()=>({results:[]}))).results.map((w:any)=>({week:w.week+1,target:w.target,progress:w.progress,reward:w.reward,status:w.status,good:JSON.parse(w.baselines||'{}').__good||null}));
   const orderStats=await db().prepare("SELECT count(*) AS total,sum(CASE WHEN status='completed' THEN 1 ELSE 0 END) AS done,sum(CASE WHEN status='completed' THEN quantity ELSE 0 END) AS eh,sum(CASE WHEN status='completed' THEN reward ELSE 0 END) AS reward FROM logistics_alliance_orders WHERE alliance_id=?").bind(mine.alliance_id).first<any>().catch(()=>null);
-  detail={...plain,...social,weeks,orderStats,weekly,help,mySites,goods:GOODS.filter(g=>g.id!=='containers'&&!g.seasonal).map(g=>({id:g.id,name:g.name})),logo:_logo?`/api/logistik/alliance?logo=${mine.alliance_id}&v=${(a as any).logo_updated||0}`:null,premium:await isPremium(u.id),role:mine.role,members,posts,pending,day,orders,offers};}
+  let convoys:any[]=[],convoyOffersList:any[]=[];try{convoys=await convoysFor(mine.alliance_id);convoyOffersList=await convoyOffers(world,mine.alliance_id,day);}catch{}
+  detail={...plain,...social,weeks,orderStats,convoys,convoyOffers:convoyOffersList,weekly,help,mySites,goods:GOODS.filter(g=>g.id!=='containers'&&!g.seasonal).map(g=>({id:g.id,name:g.name})),logo:_logo?`/api/logistik/alliance?logo=${mine.alliance_id}&v=${(a as any).logo_updated||0}`:null,premium:await isPremium(u.id),role:mine.role,members,posts,pending,day,orders,offers};}
  let ranking:unknown=null;try{await ensureAllianceExtras();const day=(await db().prepare('SELECT day FROM logistics_worlds WHERE id=?').bind(world).first<{day:number}>())?.day||0,week=weekOf(day);
   const rows=(await db().prepare('SELECT w.alliance_id AS id,w.week,w.progress,w.target,w.status,a.name,a.tag,a.color,(SELECT count(*) FROM logistics_alliance_members m WHERE m.alliance_id=a.id) AS members FROM logistics_alliance_weekly w JOIN logistics_alliances a ON a.id=w.alliance_id WHERE w.world_id=? AND w.week IN (?,?) ORDER BY w.progress DESC').bind(world,week,week-1).all<any>()).results;
   ranking={week:week+1,endsIn:(week+1)*7+1-day,current:rows.filter(r=>r.week===week),last:rows.filter(r=>r.week===week-1).slice(0,3)};}catch{}
@@ -101,6 +103,8 @@ export async function POST(req:NextRequest){try{
   await db().prepare('INSERT INTO logistics_alliance_posts(id,alliance_id,user_id,text,created) VALUES(?,?,?,?,?)').bind(crypto.randomUUID(),mine!.alliance_id,u.id,`📦 Allianz-Auftrag angenommen: ${title} in ${offer.days} Tagen an beliebige Kunden liefern.`,now).run();
  }else if(action==='cancelOrder'){
   if(mine?.role!=='leader')throw Error('Nur der Owner kann abbrechen.');await db().prepare("UPDATE logistics_alliance_orders SET status='cancelled' WHERE alliance_id=? AND status='active'").bind(mine.alliance_id).run();
+ }else if(action==='convoyAccept'){
+  if(!mine||!lead)throw Error('Nur Owner und Admins können Konvoi-Aufträge annehmen.');const day=(await db().prepare('SELECT day FROM logistics_worlds WHERE id=?').bind(world).first<{day:number}>())?.day||0;const r=await acceptConvoy(world,mine.alliance_id,day,String(body.key||''));try{await ensureAllianceSocial();await chronicle(mine.alliance_id,day,`🚚 Konvoi angenommen: ${r.offer.quantity.toLocaleString('de-DE')} EH ${r.offer.goodName} · ${r.offer.sourceName} → ${r.offer.destinationName}.`).run();}catch{}
  }else if(action==='logo'||action==='removeLogo'){
   if(mine?.role!=='leader')throw Error('Nur der Owner ändert die Allianz.');if(action==='logo'&&!await isPremium(u.id))throw Error('Allianzlogo und -farben sind eine Premium-Funktion.');await db().prepare('UPDATE logistics_alliances SET logo=?,logo_updated=? WHERE id=?').bind(action==='logo'?validImage(body.image,120000):null,now,mine.alliance_id).run();
  }else if(action==='settings'){

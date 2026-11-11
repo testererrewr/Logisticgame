@@ -20,4 +20,13 @@ if git diff --cached --quiet; then echo "Keine Änderungen gegenüber GitHub."; 
   git config credential.helper store
   git push
 fi
-bash /opt/logistik/app/deploy/update.sh
+if [[ -d /opt/logistik/app-test && "${ROLLOUT:-test}" != "all" ]]; then
+  echo "==> Update nur für die Testwelten (Testinstanz)"
+  APP=/opt/logistik/app-test SERVICE=logistik-test bash /opt/logistik/app-test/deploy/update.sh
+  echo
+  echo "Testwelten laufen mit dem neuen Stand. Alle anderen Welten: Verwaltung -> Update für alle ausrollen"
+  echo "(oder sofort für alle: ROLLOUT=all SKIP_BACKUP=1 bash $0 $ZIP)"
+else
+  bash /opt/logistik/app/deploy/update.sh
+  if [[ -d /opt/logistik/app-test ]]; then APP=/opt/logistik/app-test SERVICE=logistik-test bash /opt/logistik/app-test/deploy/update.sh || true; fi
+fi
