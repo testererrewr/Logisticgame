@@ -29,7 +29,7 @@ import {feedFromStates,ensureSocialTables,feedStatement} from '../../../../lib/l
 import {allianceMap,allySites,allianceSitesFor,settleAllianceOrders,settleAllianceWeekly,settleAllianceHelp,settleAllianceDuels,ensureAllianceSocial,chronicle,hqLevel} from '../../../../lib/logistics/alliance-server';
 import {seasonFinalStatements} from '../../../../lib/logistics/season-server';
 import {logError} from '../../../../lib/logistics/error-log';
-import {hireDriver,fireDriver,autoCrew,driversActive,roleOfModel,crewNeeded} from '../../../../lib/logistics/drivers';
+import {hireDriver,fireDriver,autoCrew,driversActive,roleOfModel,crewNeeded,CREW_ROLES,type CrewRole} from '../../../../lib/logistics/drivers';
 import {newState as newCompanyState} from '../../../../lib/logistics/engine';
 import {readCandidate,takeCandidate,returnToMarket,freshCandidate,refreshDriverMarket} from '../../../../lib/logistics/driver-market';
 import {isPremium} from '../../../../lib/logistics/branding-server';
@@ -307,7 +307,8 @@ export async function POST(req:NextRequest){const ctx:Record<string,unknown>={},
  }else if(cmd.type==='hireDriver'){
   if(!driversActive(state))throw Error('In dieser Welt ist das Fahrersystem ausgeschaltet.');const cand=await readCandidate(id,cmd.candidateId);hireDriver(state,cand,cmd.vehicleId||undefined);delete state.borrowedTracks;statements.push(...takeCandidate(id,cand.id,u.id),await update(row,state));
  }else if(cmd.type==='hireDrivers'){
-  if(!driversActive(state))throw Error('In dieser Welt ist das Fahrersystem ausgeschaltet.');const ids=[...new Set((Array.isArray(cmd.candidateIds)?cmd.candidateIds:[]).map(String))].slice(0,100);if(!ids.length)throw Error('Bewerber auswählen.');
+  if(!driversActive(state))throw Error('In dieser Welt ist das Fahrersystem ausgeschaltet.');const fresh=typeof (cmd as any).role==='string'&&(cmd as any).count>0;const ids=fresh?[]:[...new Set((Array.isArray(cmd.candidateIds)?cmd.candidateIds:[]).map(String))].slice(0,100);if(!fresh&&!ids.length)throw Error('Bewerber auswählen.');
+  if(fresh){const role=(cmd as any).role as CrewRole,n=Math.max(1,Math.min(100,Math.floor(Number((cmd as any).count))));if(!CREW_ROLES[role])throw Error('Unbekannte Personalart.');for(let i=0;i<n;i++){const cand=freshCandidate(role);let target:string|undefined;if(cmd.assign){const v=state.vehicles.find(x=>!x.wrecked&&roleOfModel(x.modelId)===role&&(state.drivers||[]).filter(d=>d.vehicleId===x.id).length<crewNeeded(x));target=v?.id;}hireDriver(state,cand,target);}}
   let hired=0;for(const cid of ids){const cand=await readCandidate(id,cid);let target:string|undefined;if(cmd.assign){const v=state.vehicles.find(x=>!x.wrecked&&roleOfModel(x.modelId)===cand.role&&(state.drivers||[]).filter(d=>d.vehicleId===x.id).length<crewNeeded(x));target=v?.id;}hireDriver(state,cand,target);statements.push(...takeCandidate(id,cand.id,u.id));hired++;}
   delete state.borrowedTracks;statements.push(await update(row,state));
  }else if(cmd.type==='fireDriver'){

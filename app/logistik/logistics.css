@@ -427,3 +427,4 @@
 .log-tier.t0{border-color:#b45309}.log-tier.t1{border-color:#94a3b8}.log-tier.t2{border-color:#eab308;box-shadow:0 0 0 1px rgba(234,179,8,.3)}.log-tier.t3{border-color:#22d3ee}.log-tier.t4{border-color:#a78bfa;box-shadow:0 0 12px rgba(167,139,250,.35)}
 .log-news-page .log-news-card.letter p{font-style:italic}.log-letter-form{display:flex;flex-direction:column;gap:6px;margin-top:10px;font-family:system-ui,sans-serif}
 .log-report-form{display:flex;flex-direction:column;gap:6px;margin-top:6px;max-width:420px}
+.log-stats-dialog{max-width:1150px;width:min(96vw,1150px)}.log-stats-dialog .log-company-stats{padding:0}

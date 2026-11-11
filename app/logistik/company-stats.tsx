@@ -28,7 +28,7 @@ export default function CompanyStats({state}:{state:State}){
  const sumI=inc.reduce((a,b)=>a+b,0),sumE=exp.reduce((a,b)=>a+b,0),catTotal=(l:[string,number][])=>l.reduce((a,b)=>a+b[1],0)||1;
  const MODE:Record<string,string>={truck:'LKW',van:'Transporter',rail:'Züge',ship:'Schiffe',air:'Flugzeuge'};
  return <div className="log-company-stats">
-  <div className="log-page-head"><h1>📊 Statistik</h1><div className="log-tabs">{[30,90,365].map(r=><button key={r} className={range===r?'on':''} onClick={()=>setRange(r)}>{r} Tage</button>)}</div></div>
+  <div className="log-page-head"><h1>📊 Statistik</h1><div className="log-tabs">{[1,7,30,90,365].map(r=><button key={r} className={range===r?'on':''} onClick={()=>setRange(r)}>{r===1?'Heute':r+' Tage'}</button>)}</div></div>
   <div className="log-report-tiles"><div><small>Umsatz</small><b>{eur(sumI)}</b></div><div><small>Kosten</small><b>{eur(sumE)}</b></div><div><small>Gewinn</small><b className={sumI-sumE>=0?'up':'down'}>{eur(sumI-sumE)}</b></div><div><small>Marge</small><b>{sumI?Math.round((sumI-sumE)/sumI*100):0} %</b></div><div><small>Kontostand</small><b>{eur(state.cash)}</b></div><div><small>Fahrzeuge</small><b>{state.vehicles.filter(v=>!v.wrecked).length}</b></div></div>
   <h3>Umsatz, Kosten und Gewinn pro Tag</h3><Chart labels={days} money bars={range<=90} series={[{name:'Umsatz',color:'#22c55e',values:inc},{name:'Kosten',color:'#ef4444',values:exp},...(range>90?[{name:'Gewinn',color:'#3b82f6',values:profit}]:[])]}/>
   {hd.length>1?<><h3>Ausgelieferte EH pro Tag</h3><Chart labels={hd} bars={range<=90} series={[{name:'EH',color:'#14b8a6',values:col(1)}]}/>

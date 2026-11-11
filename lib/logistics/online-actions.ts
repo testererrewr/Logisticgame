@@ -71,7 +71,7 @@ export type CooperationAction=
  |{type:'trackPermission';receiverId:string;enabled:boolean}
  |{type:'hireDriver';candidateId:string;vehicleId?:string}
  |{type:'fireDriver';driverId:string}
- |{type:'hireDrivers';candidateIds:string[];assign?:boolean}
+ |{type:'hireDrivers';candidateIds?:string[];assign?:boolean;role?:string;count?:number}
  |{type:'dissolveCompany';confirm:string}
  |{type:'allianceDonate';amount:number;target?:'hq'|'treasury'}
  |{type:'projectDeliver';projectId:string;siteId:string;good:GoodId;quantity:number};
