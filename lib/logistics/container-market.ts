@@ -50,6 +50,7 @@ async function stripeRows(stripes:number[][],perStripe:number):Promise<Lite[]>{c
 async function withPayload(ids:string[]){const map=new Map<string,Site>();for(let i=0;i<ids.length;i+=200){const rows=(await env.DB!.prepare('SELECT id,payload FROM logistics_partner_registry WHERE id IN (SELECT value FROM json_each(?))').bind(JSON.stringify(ids.slice(i,i+200))).all<{id:string;payload:string}>()).results;for(const r of rows){try{map.set(r.id,JSON.parse(r.payload));}catch{}}}return map;}
 const farCache=new Map<string,Lite[]>();
 async function farSample(seed:string,inside:((lat:number,lon:number)=>boolean)|null,rules:PartnerRules){const hit=farCache.get(seed);if(hit)return hit;const list=await sampleRegistry(seed,1500,inside,rules,false,1500).catch(()=>[] as Lite[]);if(farCache.size>20)farCache.clear();if(list.length)farCache.set(seed,list);return list;}
+const failCount=new Map<string,number>();export const lastGenError=new Map<string,{country:string;message:string;at:number}>();
 const stateKey=(worldId:string,gen:number)=>'container-countries-v1:'+worldId+':'+gen;
 
 export async function ensureContainerDay(worldId:string,day:number,rules:PartnerRules,budget=6,timeMs=3500){await seedRegistry();await ensureOfferGoodColumn();const started=Date.now(),gen=await generation(worldId),key=stateKey(worldId,gen),lockId='container-gen-lock:'+worldId;
@@ -60,8 +61,7 @@ export async function ensureContainerDay(worldId:string,day:number,rules:Partner
   const due=countryAreas().filter(c=>c.name!=='Antarktika'&&(!allowed||allowed.has(c.name))&&done[c.name]!==countryPeriod(day,c.name)).sort((a,b)=>(done[a.name]===undefined?0:1)-(done[b.name]===undefined?0:1)||stableHash(a.name+day)-stableHash(b.name+day));
   let generated=0,processed=0;if(!due.length)return {generated:0,pending:0};const far=await farSample(worldId+'/far/'+Math.floor(day)+'/'+gen,inside,rules);
   for(const c of due){if(processed>=budget||processed>0&&Date.now()-started>timeMs)break;processed++;const period=countryPeriod(day,c.name);
-   try{generated+=await generateCountry(worldId,c,period,gen,day,rules,inside,far);}catch(e){console.error('container country',c.name,e);}
-   done[c.name]=period;}
+   try{generated+=await generateCountry(worldId,c,period,gen,day,rules,inside,far);done[c.name]=period;failCount.delete(worldId+c.name);}catch(e){const n=(failCount.get(worldId+c.name)||0)+1;failCount.set(worldId+c.name,n);if(n>=5){done[c.name]=period;failCount.delete(worldId+c.name);}lastGenError.set(worldId,{country:c.name,message:String((e as any)?.message||e).slice(0,300),at:Date.now()});try{const {logError}=await import('./error-log');await logError('container-country',e,{world:worldId,country:c.name,attempt:n},'warn');}catch{}}}
   await env.DB!.batch([env.DB!.prepare('INSERT INTO logistics_runtime(id,updated,payload) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET updated=excluded.updated,payload=excluded.payload').bind(key,Date.now(),JSON.stringify(done)),
    env.DB!.prepare("DELETE FROM logistics_container_offers WHERE world_id=? AND status='open' AND accepted_by IS NULL AND day<=?").bind(worldId,day-ORDER_PERIOD_DAYS)]);
   return {generated,pending:Math.max(0,due.length-processed)};

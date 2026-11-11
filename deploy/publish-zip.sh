@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 [[ $EUID -eq 0 ]] || { echo "Bitte mit sudo ausführen." >&2; exit 1; }
+if [[ "${PUBLISH_COPY:-}" != "1" ]]; then self="$(mktemp /tmp/publish-zip.XXXXXX.sh)"; cp "$0" "$self"; PUBLISH_COPY=1 exec bash "$self" "$@"; fi
 ZIP="${1:?Pfad zur Update-ZIP angeben, z. B. /root/Logisticgame-Update-7-komplett.zip}"
 REPO="${REPO_DIR:-/root/Logisticgame}"
 [[ -f "$ZIP" ]] || { echo "$ZIP nicht gefunden." >&2; exit 1; }

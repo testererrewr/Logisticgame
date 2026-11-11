@@ -14,6 +14,7 @@ fi
 mkdir -p "$STATE_DIR"
 
 umask 077
+export LOGISTIK_VERSION="$(git log -1 --format='%h · %s · %cd' --date=format:'%d.%m.%Y %H:%M' 2>/dev/null | sed 's/Update Logisticgame-//; s/-komplett//' | tr -d '\n"' || echo unbekannt)"
 env | grep -E '^(DOMAIN|SIMULATION_TRIGGER_SECRET|SIMULATION_OWNER_EMAIL|ADMIN_EMAIL|ADMIN_SETUP_HASH|CATALOG_PUSH_HASH|BACKUP_READ_HASH|LOGISTIK_[A-Z0-9_]+)=' > dist/server/.dev.vars || true
 
 export WRANGLER_SEND_METRICS=false CLOUDFLARE_CF_FETCH_ENABLED=false

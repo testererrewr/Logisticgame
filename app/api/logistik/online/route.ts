@@ -19,6 +19,8 @@ import {readProject,deliverToProject,projectUpdate,settleProjects} from '../../.
 import {stampCountries} from '../../../../lib/logistics/stamps-server';
 import {setNewsCountryResolver} from '../../../../lib/logistics/world-events';
 import {ensureStoredNews,newsForClient} from '../../../../lib/logistics/news-store';
+import {cleanupOrderLines,newlyCompletedOrders} from '../../../../lib/logistics/order-lines';
+import {ensureMessageTable,systemMessageStatement} from '../../../../lib/logistics/system-message';
 import {prepareConvoys,settleConvoys,type ConvoyCtx} from '../../../../lib/logistics/alliance-convoy';
 import {countryAt} from '../../../../lib/countries-server';
 setNewsCountryResolver(p=>countryAt(p));
@@ -131,6 +133,7 @@ async function settleWorldNow(id:string,budgetMs:number):Promise<World>{
   try{statements.push(...await settleAllianceDuels(id,next));}catch(e){await logError('settle:alliance-duels',e,{world:id},'error');}
   try{statements.push(...await settleAllianceHelp(id,advanced,next));}catch(e){await logError('settle:alliance-help',e,{world:id},'error');}
   try{statements.push(...await feedFromStates(id,advanced,new Map(rows.map(r=>[r.user_id,r.name||''])),world.day,next));}catch(e){await logError('settle:feed',e,{world:id},'warn');}
+  try{await ensureMessageTable();for(const row of rows){const st=advanced.get(row.user_id);if(!st)continue;cleanupOrderLines(st);for(const m of newlyCompletedOrders(st))statements.push(systemMessageStatement(id,row.user_id,m.text));}}catch(e){await logError('settle:order-lines',e,{world:id},'warn');}
   const dissolved=new Set<string>();try{for(const row of rows){const st=advanced.get(row.user_id)!;if(st.cash>=0){delete (st as any).insolventSince;continue;}const since=(st as any).insolventSince??=next,left=3-(next-since);if(left>0){if((st as any).insolventWarned!==Math.floor(next)){(st as any).insolventWarned=Math.floor(next);log(st,`⚠️ Konto im Minus! Ohne Ausgleich wird die Spedition in ${left<1?Math.round(left*24)+' Stunden':left.toFixed(1).replace('.',',')+' Tagen'} aufgelöst.`,'warn');}continue;}statements.push(...await insolvencyStatements(id,row,st,next));dissolved.add(row.user_id);}}catch(e){await logError('settle:insolvency',e,{world:id},'error');}
   for(const row of rows){if(dissolved.has(row.user_id))continue;const state=advanced.get(row.user_id)!;delete state.borrowedTracks;const enc=await encodeCompanyParts(state,id,row.user_id);statements.push(...enc.statements,db().prepare('UPDATE logistics_world_companies SET state=?,updated=? WHERE world_id=? AND user_id=?').bind(enc.value,Date.now(),id,row.user_id));}
   const deadlines=[...advanced.values()].flatMap(s=>s.contracts.filter(c=>c.kind==='haulage'&&!c.cancelled&&c.endDay>=s.day&&c.delivered<(c.total||0)).map(c=>({id:c.id,deadline:c.endDay})));if(deadlines.length)statements.push(db().prepare("UPDATE logistics_container_offers SET deadline=(SELECT json_extract(value,'$.deadline') FROM json_each(?) WHERE json_extract(value,'$.id')=logistics_container_offers.id) WHERE world_id=? AND status='accepted' AND id IN (SELECT json_extract(value,'$.id') FROM json_each(?) WHERE json_extract(value,'$.deadline')>logistics_container_offers.deadline)").bind(JSON.stringify(deadlines),id,JSON.stringify(deadlines)));
@@ -201,13 +204,16 @@ async function validateSharedCapacity(action:OnlineAction,state:State,rows:Compa
  const used=(await Promise.all(rows.map(async r=>normalizeFreightState(await decodeCompany(r.state)).contracts))).flat().filter(c=>c.kind===a.type&&c.siteId===a.siteId&&!c.cancelled&&c.endDay>=state.day&&(a.type!=='supply'||c.good===a.good)).reduce((n,c)=>n+c.daily,0);
  if(used+a.daily>cap)throw Error(`In dieser Welt sind noch ${Math.max(0,cap-used)} EH/Tag frei. Andere Speditionen haben Kapazität gebucht.`);
 }
+let versionNoted=false;
+const lobbyMine=new Map<string,{at:number;map:Map<string,any>}>();
 const slow=(kind:string,t0:number,ctx:Record<string,unknown>)=>{const ms=Date.now()-t0;if(ms>6000)void logError('perf:'+kind,new Error(`Anfrage dauerte ${(ms/1000).toFixed(1)} s`),ctx,'warn');};
 export async function GET(req:NextRequest){const ctx:Record<string,unknown>={},t0=Date.now();try{
  const u=await currentUser(req);if(!u||u.status!=='active')return reply({error:'Bitte anmelden.'},401);ctx.user=u.id;
  const id=req.nextUrl.searchParams.get('world');ctx.world=id||undefined;
  if(!id){
   await ensureWorldSettingsColumn();const rows=await db().prepare('SELECT w.*,(SELECT count(*) FROM logistics_world_companies c WHERE c.world_id=w.id) AS companies,EXISTS(SELECT 1 FROM logistics_world_companies c WHERE c.world_id=w.id AND c.user_id=?) AS joined FROM logistics_worlds w ORDER BY created DESC LIMIT 100').bind(u.id).all<World&{companies:number;joined:number}>();
-  return reply({user:u.name,worlds:rows.results.filter(w=>['owner','admin'].includes(u.role)||w.status!=='draft').map(w=>({...w,external:!hostedHere(w.id,(w as any).host_url,new URL(req.url).origin)?(w as any).host_url||null:null,testWorld:isTestWorld(w.settings),settings:settingsSummary(parseSettings(w.settings)),day:clockTarget(w,Date.now())})),singleplayerEnabled:false,isAdmin:['owner','admin'].includes(u.role)});
+  const cachedMine=lobbyMine.get(u.id),mine:Map<string,any>=cachedMine&&Date.now()-cachedMine.at<60000?cachedMine.map:new Map<string,any>();if(!cachedMine||Date.now()-cachedMine.at>=60000)try{const own=(await db().prepare('SELECT world_id,name,state FROM logistics_world_companies WHERE user_id=? LIMIT 30').bind(u.id).all<{world_id:string;name:string;state:string}>()).results;const {rowFor}=await import('../../../../lib/logistics/ranking');for(const c of own){try{const st=await decodeCompany(c.state),r=rowFor(u.id,c.name||u.name,st);mine.set(c.world_id,{company:c.name||u.name,value:r.value,cash:r.cash,vehicles:r.vehicles,lines:r.lines,transported:r.transported,profit30:r.profit30});}catch{}}lobbyMine.set(u.id,{at:Date.now(),map:mine});if(lobbyMine.size>500)lobbyMine.clear();}catch{}
+  return reply({user:u.name,worlds:rows.results.filter(w=>['owner','admin'].includes(u.role)||w.status!=='draft').map(w=>({...w,external:!hostedHere(w.id,(w as any).host_url,new URL(req.url).origin)?(w as any).host_url||null:null,testWorld:isTestWorld(w.settings),mine:mine.get(w.id)||null,settings:settingsSummary(parseSettings(w.settings)),day:clockTarget(w,Date.now())})),singleplayerEnabled:false,isAdmin:['owner','admin'].includes(u.role)});
  }
  await settleWorld(id);if(!await readCompany(id,u.id))return reply({error:'Bitte zuerst dieser Welt beitreten.'},403);
  const out=await snapshot(u,id,(req.nextUrl.searchParams.get('geo')||'').slice(0,60));slow('online-GET',t0,ctx);return reply(out);
@@ -333,6 +339,7 @@ export async function POST(req:NextRequest){const ctx:Record<string,unknown>={},
  }catch(e:any){await logError('online:'+String(ctx.command||'POST'),e,ctx);return reply({error:e.message||'Online-Aktion fehlgeschlagen.'},422);}}
 
 export async function settleAllWorlds(source='scheduled'){
+ if(!versionNoted){versionNoted=true;const v=String((env as any).LOGISTIK_VERSION||'');if(v)await db().prepare('INSERT OR REPLACE INTO logistics_runtime(id,updated,payload) VALUES(?,?,?)').bind('version:'+instanceRole(),Date.now(),v).run().catch(()=>{versionNoted=false;});}
  const hosted=hostedWorlds(),rows=(await db().prepare("SELECT id,settings,host_url FROM logistics_worlds WHERE status='running' ORDER BY last_tick LIMIT 200").all<{id:string;settings:string;host_url:string|null}>()).results.filter(r=>(!hosted||hosted.has(r.id))&&ownsWorld(r.settings)&&!hostedElsewhere(r.host_url)).slice(0,50);
  const completed:string[]=[],errors:{id:string;error:string}[]=[];
  for(const row of rows){const ts=Date.now();try{await settleWorld(row.id,15000);completed.push(row.id);const ms=Date.now()-ts;if(ms>12000)await logError('perf:settle',new Error(`Abrechnung dauerte ${(ms/1000).toFixed(1)} s`),{world:row.id,source},'warn');}catch(e:any){errors.push({id:row.id,error:e.message});await logError('tick:settle',e,{world:row.id,source},'error');}}
