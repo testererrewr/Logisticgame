@@ -18,6 +18,10 @@ if [[ "${1:-}" != "--no-pull" ]]; then
   exec bash "$APP/deploy/update.sh" --no-pull
 fi
 
+SECRET="${SIMULATION_TRIGGER_SECRET:-}"
+notice(){ [[ -n "$SECRET" ]] || return 0; curl -s -m 5 -o /dev/null -X POST "http://$BIND_IP:$PORT/api/logistik/status" -H "Authorization: Bearer $SECRET" -H 'Content-Type: application/json' -d "$1" || true; }
+notice "{\"minutes\":${MAINT_MINUTES:-5},\"message\":\"Ein Update wird eingespielt. Der Server startet in wenigen Minuten kurz neu – dein Spielstand bleibt erhalten.\"}"
+
 echo "==> Abhängigkeiten installieren"
 as_app "npm ci --include=dev --no-audit --no-fund"
 
@@ -25,6 +29,7 @@ echo "==> Bauen (kann einige Minuten dauern)"
 as_app "rm -rf dist.prev && if [ -d dist ]; then cp -a dist dist.prev; fi"
 if ! as_app "npm run build"; then
   echo "!! Build fehlgeschlagen – vorherige Version bleibt aktiv." >&2
+  notice '{"clear":true}'
   as_app "if [ -d dist.prev ]; then rm -rf dist && mv dist.prev dist; fi"
   exit 1
 fi
@@ -46,7 +51,7 @@ if [[ "$SERVICE" == logistik-node@* ]]; then n="${SERVICE#logistik-node@}"; syst
 echo -n "==> Warte auf den Server "
 for i in $(seq 1 90); do
   code="$(curl -s -o /dev/null -w '%{http_code}' "http://$BIND_IP:$PORT/" || true)"
-  if [[ "$code" =~ ^(200|30[0-9])$ ]]; then echo " ok ($code)"; exit 0; fi
+  if [[ "$code" =~ ^(200|30[0-9])$ ]]; then echo " ok ($code)"; notice '{"clear":true}'; exit 0; fi
   echo -n "."; sleep 2
 done
 echo; echo "!! Server antwortet nicht. Log: journalctl -u $SERVICE -n 100 --no-pager" >&2

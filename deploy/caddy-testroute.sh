@@ -10,7 +10,8 @@ SRC="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/etc/caddy/Cadd
 if [[ -z "$SRC" ]]; then DIR="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/etc/caddy"}}{{.Source}}{{end}}{{end}}' "$C")"; [[ -n "$DIR" ]] && SRC="$DIR/Caddyfile"; fi
 [[ -n "$SRC" && -f "$SRC" ]] || { echo "Caddyfile des Containers $C nicht gefunden (kein Volume auf /etc/caddy)." >&2; exit 1; }
 echo "Caddy-Container: $C"; echo "Caddyfile:       $SRC"
-if grep -q 'lgx_inst=test' "$SRC"; then echo "Weiterleitung zur Testinstanz ist bereits eingetragen."; exit 0; fi
+reload(){ if docker exec "$C" caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null 2>&1; then return 0; fi; echo "Caddy-Admin-Schnittstelle ist aus – starte den Container kurz neu …"; docker restart "$C" >/dev/null && sleep 3 && docker ps --filter "name=^${C}$" --filter status=running -q | grep -q .; }
+if grep -q 'lgx_inst=test' "$SRC"; then echo "Weiterleitung ist eingetragen – lade Caddy neu."; reload && echo "✅ Caddy läuft mit der Weiterleitung zur Testinstanz."; exit 0; fi
 cp "$SRC" "$SRC.vor-testinstanz.$(date +%Y%m%d%H%M%S)"
 node - "$SRC" "$DOMAIN" "$BIND_IP" "$PORT" "$TEST_PORT" <<'JS'
 const fs=require('fs'),[file,domain,ip,port,test]=process.argv.slice(2);let s=fs.readFileSync(file,'utf8');
@@ -20,7 +21,7 @@ if(start<0){s=s.trimEnd()+'\n\n'+block+'\n';}else{let i=s.indexOf('{',start),dep
 fs.writeFileSync(file,s);
 JS
 if docker exec "$C" caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null 2>&1; then
-  docker exec "$C" caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile && echo "✅ Caddy neu geladen – Testwelten laufen jetzt über die Testinstanz."
+  reload && echo "✅ Caddy neu geladen – Testwelten laufen jetzt über die Testinstanz." || { echo "!! Caddy startet nicht – stelle die Sicherung wieder her." >&2; cp "$(ls -1t "$SRC".vor-testinstanz.* | head -1)" "$SRC"; docker restart "$C" >/dev/null; exit 1; }
 else
   echo "!! Neue Konfiguration ist ungültig – stelle die Sicherung wieder her." >&2
   cp "$(ls -1t "$SRC".vor-testinstanz.* | head -1)" "$SRC"; exit 1

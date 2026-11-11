@@ -26,6 +26,8 @@ import {countryAt} from '../../../../lib/countries-server';
 setNewsCountryResolver(p=>countryAt(p));
 import {settleAuctions} from '../../../../lib/logistics/used-vehicle-store';
 import {feedFromStates,ensureSocialTables,feedStatement} from '../../../../lib/logistics/social-server';
+import {activeSupplyRows,attachSupplySites,settleSupplyContracts,supplySitesFor,type SupplyRow} from '../../../../lib/logistics/supply-contracts';
+import {settleAllianceStock} from '../../../../lib/logistics/alliance-stock';
 import {allianceMap,allySites,allianceSitesFor,settleAllianceOrders,settleAllianceWeekly,settleAllianceHelp,settleAllianceDuels,ensureAllianceSocial,chronicle,hqLevel} from '../../../../lib/logistics/alliance-server';
 import {seasonFinalStatements} from '../../../../lib/logistics/season-server';
 import {logError} from '../../../../lib/logistics/error-log';
@@ -119,6 +121,7 @@ async function settleWorldNow(id:string,budgetMs:number):Promise<World>{
   {const cfg=parseSettings(world.settings);for(const st of states.values()){st.maintenanceOff=!cfg.maintenance;st.fuelOff=!cfg.fuel;st.driversOff=!cfg.drivers;}}
   for(const row of rows){const state=states.get(row.user_id)!;state.borrowedTracks=permissions.filter(p=>p.grantee_id===row.user_id).flatMap(p=>states.get(p.owner_id)?.tracks||[]);}
   {const amap=await allianceMap(id);for(const row of rows){const aid=amap.get(row.user_id);if(!aid)continue;const own=states.get(row.user_id)!;own.sites.push(...allySites(own,rows.filter(r=>r.user_id!==row.user_id&&amap.get(r.user_id)===aid).map(r=>({id:r.user_id,name:r.name||'Spedition',state:states.get(r.user_id)!})),amap.storage.get(aid)!==false));}}
+  let supplyRows:SupplyRow[]=[];try{supplyRows=await activeSupplyRows(id);attachSupplySites(states,supplyRows);}catch(e){await logError('settle:supply-sites',e,{world:id},'warn');}
   if(attempt===0)for(const state of states.values())await prepareVehicleRoads(state);
   const achBefore=new Map<string,number>();try{await db().prepare('CREATE TABLE IF NOT EXISTS logistics_user_achievements(user_id TEXT NOT NULL,achievement TEXT NOT NULL,world_id TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(user_id,achievement))').run();const done=(await db().prepare('SELECT user_id,achievement FROM logistics_user_achievements WHERE world_id<>? AND user_id IN (SELECT value FROM json_each(?))').bind(id,JSON.stringify(rows.map(r=>r.user_id))).all<{user_id:string;achievement:string}>()).results;for(const [u,st] of states){(st as any).rewardedElsewhere=done.filter(d=>d.user_id===u).map(d=>d.achievement);achBefore.set(u,Object.keys(st.progress?.achievements||{}).length);}}catch{}
   try{await ensureStoredNews(next);}catch(e){await logError('settle:news',e,{world:id},'warn');}
@@ -132,6 +135,8 @@ async function settleWorldNow(id:string,budgetMs:number):Promise<World>{
   try{statements.push(...await settleAuctions(id,advanced,next));}catch(e){await logError('settle:auctions',e,{world:id},'error');}
   try{statements.push(...await settleAllianceDuels(id,next));}catch(e){await logError('settle:alliance-duels',e,{world:id},'error');}
   try{statements.push(...await settleAllianceHelp(id,advanced,next));}catch(e){await logError('settle:alliance-help',e,{world:id},'error');}
+  try{statements.push(...await settleAllianceStock(id,advanced));}catch(e){await logError('settle:alliance-stock',e,{world:id},'error');}
+  try{statements.push(...await settleSupplyContracts(id,advanced,next,supplyRows));}catch(e){await logError('settle:supply',e,{world:id},'error');}
   try{statements.push(...await feedFromStates(id,advanced,new Map(rows.map(r=>[r.user_id,r.name||''])),world.day,next));}catch(e){await logError('settle:feed',e,{world:id},'warn');}
   try{await ensureMessageTable();for(const row of rows){const st=advanced.get(row.user_id);if(!st)continue;cleanupOrderLines(st);for(const m of newlyCompletedOrders(st))statements.push(systemMessageStatement(id,row.user_id,m.text));}}catch(e){await logError('settle:order-lines',e,{world:id},'warn');}
   const dissolved=new Set<string>();try{for(const row of rows){const st=advanced.get(row.user_id)!;if(st.cash>=0){delete (st as any).insolventSince;continue;}const since=(st as any).insolventSince??=next,left=3-(next-since);if(left>0){if((st as any).insolventWarned!==Math.floor(next)){(st as any).insolventWarned=Math.floor(next);log(st,`⚠️ Konto im Minus! Ohne Ausgleich wird die Spedition in ${left<1?Math.round(left*24)+' Stunden':left.toFixed(1).replace('.',',')+' Tagen'} aufgelöst.`,'warn');}continue;}statements.push(...await insolvencyStatements(id,row,st,next));dissolved.add(row.user_id);}}catch(e){await logError('settle:insolvency',e,{world:id},'error');}
@@ -168,7 +173,7 @@ async function snapshot(u:User,worldId:string,geo=''){
  ]);
  const world=results[0].results[0] as unknown as World,row=results[1].results[0] as unknown as Company;
  if(!row)throw Error('Bitte zuerst dieser Welt beitreten.');
- const rules=await readPartnerRules();const state=applyStateRules(normalizeFreightState(await decodeCompany(row.state)),rules);state.borrowedTracks=await borrowedTracks(worldId,u.id);state.sites.push(...await allianceSitesFor(worldId,u.id,state));state.maintenanceOff=!parseSettings(world.settings).maintenance;state.fuelOff=!parseSettings(world.settings).fuel;state.driversOff=!parseSettings(world.settings).drivers;
+ const rules=await readPartnerRules();const state=applyStateRules(normalizeFreightState(await decodeCompany(row.state)),rules);state.borrowedTracks=await borrowedTracks(worldId,u.id);state.sites.push(...await allianceSitesFor(worldId,u.id,state));try{state.sites.push(...await supplySitesFor(worldId,u.id,state));}catch{}state.maintenanceOff=!parseSettings(world.settings).maintenance;state.fuelOff=!parseSettings(world.settings).fuel;state.driversOff=!parseSettings(world.settings).drivers;
  const geometrySig=geometrySignature(state),geometryOmitted=!!geo&&geo===geometrySig;if(geometryOmitted){delete state.roadRoutes;for(const l of state.lines)delete l.legs;}
  try{await ensureStoredNews(world.day);}catch{}
  return {news:newsForClient(world.day),geometrySig,geometryOmitted,state,partnerRules:rules,market:{...newMarket(world.day),...JSON.parse(world.market||'{}')},companyName:row.name||state.companyName||u.name,revision:row.revision,user:u.name,userId:u.id,role:u.role,serverNow:Date.now(),world:{catchUpHours:Math.round(catchUpHours(world)*10)/10,catchUpSeconds:catchUpSeconds(world),revision:world.revision,id:world.id,name:world.name,day:world.day,timeScale:world.time_scale,simTime:world.created+(world.day-1)*86400000,status:world.status,tickMs:worldTickMs(world),settings:settingsSummary(parseSettings(world.settings))},companies:results[2].results,offers:results[3].results.map((raw:unknown)=>{const o=raw as Offer;return ({...o,quantity:Number(o.quantity)*(o.quantity_unit==='EH'?1:10)});}),permissions:results[4].results};
@@ -272,7 +277,7 @@ export async function POST(req:NextRequest){const ctx:Record<string,unknown>={},
  if(row.last_action===body.requestId)return reply({...await snapshot(u,id),duplicate:true});
  if(row.revision!==body.revision)return reply({...await snapshot(u,id),error:'Die Welt wurde inzwischen aktualisiert. Bitte erneut versuchen.'},409);
  const rules=await readPartnerRules();const now=Date.now(),state=applyStateRules(normalizeFreightState(await decodeCompany(row.state)),rules);
- state.maintenanceOff=!parseSettings(world.settings).maintenance;state.fuelOff=!parseSettings(world.settings).fuel;state.driversOff=!parseSettings(world.settings).drivers;state.sites.push(...await allianceSitesFor(id,u.id,state));await enforceWorldRules(cmd as OnlineCommand,state,parseSettings(world.settings),id);
+ state.maintenanceOff=!parseSettings(world.settings).maintenance;state.fuelOff=!parseSettings(world.settings).fuel;state.driversOff=!parseSettings(world.settings).drivers;state.sites.push(...await allianceSitesFor(id,u.id,state));try{state.sites.push(...await supplySitesFor(id,u.id,state));}catch{}await enforceWorldRules(cmd as OnlineCommand,state,parseSettings(world.settings),id);
  const chunkStatements:D1PreparedStatement[]=[];
  const update=async(r:Company,s:State)=>{const enc=await encodeCompanyParts(s,id,r.user_id);chunkStatements.push(...enc.statements);return db().prepare('UPDATE logistics_world_companies SET state=?,revision=revision+1,last_action=?,updated=? WHERE world_id=? AND user_id=?').bind(enc.value,body.requestId,now,id,r.user_id);};
  const statements:D1PreparedStatement[]=[];let checked=[row];
