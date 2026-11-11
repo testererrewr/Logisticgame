@@ -102,7 +102,7 @@ export default function LogisticsGame({worldId,initial,onLeave,onAdmin}:{worldId
  const plannedStops=useMemo(()=>lineStops.map(st=>st.siteId),[lineStops]);
 
  useEffect(()=>{const close=(e:KeyboardEvent)=>{if(e.key==='Escape'&&tab==='standort'&&!selectedVehicle&&!pendingBuild){setSelected('');setTab('karte');}};document.addEventListener('keydown',close);return()=>document.removeEventListener('keydown',close);},[tab,selectedVehicle,pendingBuild]);
- useEffect(()=>{let busy=false;const tick=()=>{if(busy)return;busy=true;void fetch('/api/logistik/import/progress',{cache:'no-store'}).catch(()=>{}).finally(()=>{busy=false;});};tick();const timer=setInterval(tick,20000);return()=>clearInterval(timer);},[]);
+
  const [tradeCompany,setTradeCompany]=useState(''),[tradeSiteId,setTradeSiteId]=useState(''),[tradeGood,setTradeGood]=useState<GoodId>('wheat'),[tradeAmount,setTradeAmount]=useState(1),[tradePrice,setTradePrice]=useState(1000);
  const geoRef=useRef(''),revisionRef=useRef(initial.revision),queueRef=useRef<Promise<void>>(Promise.resolve()),pendingRef=useRef(0);
  const railContinuation=useRef<{point:Coords;tracks:number}|null>(null);

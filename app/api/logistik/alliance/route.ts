@@ -23,13 +23,14 @@ async function shareTracks(world:string,allianceId:string,user:string,enabled:bo
  if(stmts.length)await db().batch(stmts);
 }
 
-export async function GET(req:NextRequest){try{
+let reqCol:Promise<unknown>|undefined;const ensureReqColumn=()=>reqCol??=(async()=>{await ensureAllianceTables();const cols=(await db().prepare('PRAGMA table_info(logistics_alliances)').all<{name:string}>()).results;if(!cols.some(c=>c.name==='requirements'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN requirements TEXT').run().catch(()=>{});})().catch(e=>{reqCol=undefined;throw e;});
+export async function GET(req:NextRequest){try{await ensureReqColumn();
  const logoId=req.nextUrl.searchParams.get('logo');if(logoId){await ensureAllianceTables();const row=await db().prepare('SELECT logo FROM logistics_alliances WHERE id=?').bind(logoId.slice(0,100)).first<{logo:string|null}>();const m=row?.logo?.match(/^data:(image\/(?:png|jpeg|webp));base64,(.+)$/);if(!m)return new Response('Nicht gefunden',{status:404});return new Response(Uint8Array.from(atob(m[2]),c=>c.charCodeAt(0)),{headers:{'Content-Type':m[1],'Cache-Control':'public, max-age=3600','X-Content-Type-Options':'nosniff'}});}
  const u=await currentUser(req);if(!u||u.status!=='active')return reply({error:'Bitte anmelden.'},401);
  const world=(req.nextUrl.searchParams.get('world')||'').slice(0,100);if(!await inWorld(world,u.id))return reply({error:'Bitte der Welt beitreten.'},403);
  await ensureAllianceTables();
  const mine=await member(world,u.id);
- await ensureAllianceSocial().catch(()=>{});const alliances=(await db().prepare('SELECT a.id,a.name,a.tag,a.description,a.color,a.open,a.hq_funds,(SELECT count(*) FROM logistics_alliance_members m WHERE m.alliance_id=a.id) AS members FROM logistics_alliances a WHERE a.world_id=? ORDER BY members DESC,a.name LIMIT 200').bind(world).all()).results;
+ await ensureAllianceSocial().catch(()=>{});const alliances=(await db().prepare('SELECT a.id,a.name,a.tag,a.description,a.color,a.open,a.hq_funds,a.requirements,(SELECT count(*) FROM logistics_alliance_members m WHERE m.alliance_id=a.id) AS members FROM logistics_alliances a WHERE a.world_id=? ORDER BY members DESC,a.name LIMIT 200').bind(world).all()).results;
  const invites=(await db().prepare('SELECT a.id,a.name,a.tag FROM logistics_alliance_invites i JOIN logistics_alliances a ON a.id=i.alliance_id WHERE i.user_id=? AND a.world_id=?').bind(u.id,world).all()).results;
  let detail:unknown=null;
  if(mine){const a=await db().prepare('SELECT * FROM logistics_alliances WHERE id=?').bind(mine.alliance_id).first<Alliance>();
@@ -56,7 +57,7 @@ export async function GET(req:NextRequest){try{
  return reply({me:u.id,alliance:detail,alliances,invites,companies,ranking});
 }catch(e:any){await logError('api:alliance',e,{url:req.url});return reply({error:e.message||'Allianzen nicht verfügbar.'},503);}}
 
-export async function POST(req:NextRequest){try{
+export async function POST(req:NextRequest){try{await ensureReqColumn();
  const u=await currentUser(req);if(!u||u.status!=='active')return reply({error:'Bitte anmelden.'},401);
  if(!sameOrigin(req))return reply({error:'Ungültiger Ursprung.'},403);
  const body=await req.json() as any,world=String(body.world||'').slice(0,100),action=String(body.action||'');
@@ -76,6 +77,7 @@ export async function POST(req:NextRequest){try{
   if(mine)throw Error('Zuerst die aktuelle Allianz verlassen.');const id=String(body.allianceId||'');const a=await db().prepare('SELECT * FROM logistics_alliances WHERE id=? AND world_id=?').bind(id,world).first<Alliance>();if(!a)throw Error('Allianz nicht gefunden.');
   if(action==='accept'&&!await db().prepare('SELECT 1 FROM logistics_alliance_invites WHERE alliance_id=? AND user_id=?').bind(id,u.id).first())throw Error('Keine Einladung vorhanden.');if(action==='join'&&!a.open)throw Error('Diese Allianz nimmt nur auf Einladung auf.');
   const n=await db().prepare('SELECT count(*) AS n FROM logistics_alliance_members WHERE alliance_id=?').bind(id).first<{n:number}>();if((n?.n||0)>=25)throw Error('Die Allianz ist voll (25 Speditionen).');
+  {let req:any={};try{req=JSON.parse((a as any).requirements||'{}');}catch{}if(action==='join'&&(req.minValue||req.minVehicles||req.minEh)){const row=await db().prepare('SELECT name,state FROM logistics_world_companies WHERE world_id=? AND user_id=?').bind(world,u.id).first<{name:string;state:string}>();const {rowFor}=await import('../../../../lib/logistics/ranking');const {decodeCompany}=await import('../../../../lib/logistics/company-codec');const r=rowFor(u.id,row?.name||'',await decodeCompany(row!.state));const miss:string[]=[];if(req.minValue&&r.value<req.minValue)miss.push('Firmenwert ab '+Number(req.minValue).toLocaleString('de-DE')+' €');if(req.minVehicles&&r.vehicles<req.minVehicles)miss.push('mind. '+req.minVehicles+' Fahrzeuge');if(req.minEh&&r.transported<req.minEh)miss.push('mind. '+Number(req.minEh).toLocaleString('de-DE')+' EH transportiert');if(miss.length)throw Error('Beitrittsvoraussetzungen nicht erfüllt: '+miss.join(', ')+'.');}}
   await db().batch([db().prepare("INSERT INTO logistics_alliance_members(alliance_id,world_id,user_id,role,joined) VALUES(?,?,?,'member',?)").bind(id,world,u.id,now),db().prepare('DELETE FROM logistics_alliance_invites WHERE user_id=? AND alliance_id IN (SELECT id FROM logistics_alliances WHERE world_id=?)').bind(u.id,world)]);
   await shareTracks(world,id,u.id,true);try{await ensureAllianceSocial();await chronicle(id,(await db().prepare('SELECT day FROM logistics_worlds WHERE id=?').bind(world).first<{day:number}>())?.day||0,`👋 ${(await db().prepare("SELECT COALESCE(NULLIF(c.name,''),us.name) AS n FROM users us LEFT JOIN logistics_world_companies c ON c.user_id=us.id AND c.world_id=? WHERE us.id=?").bind(world,u.id).first<{n:string}>())?.n||'Eine Spedition'} ist beigetreten.`).run();}catch{}
  }else if(action==='decline'){await db().prepare('DELETE FROM logistics_alliance_invites WHERE alliance_id=? AND user_id=?').bind(String(body.allianceId||''),u.id).run();}
@@ -107,6 +109,8 @@ export async function POST(req:NextRequest){try{
   if(!mine||!lead)throw Error('Nur Owner und Admins können Konvoi-Aufträge annehmen.');const day=(await db().prepare('SELECT day FROM logistics_worlds WHERE id=?').bind(world).first<{day:number}>())?.day||0;const r=await acceptConvoy(world,mine.alliance_id,day,String(body.key||''));try{await ensureAllianceSocial();await chronicle(mine.alliance_id,day,`🚚 Konvoi angenommen: ${r.offer.quantity.toLocaleString('de-DE')} EH ${r.offer.goodName} · ${r.offer.sourceName} → ${r.offer.destinationName}.`).run();}catch{}
  }else if(action==='logo'||action==='removeLogo'){
   if(mine?.role!=='leader')throw Error('Nur der Owner ändert die Allianz.');if(action==='logo'&&!await isPremium(u.id))throw Error('Allianzlogo und -farben sind eine Premium-Funktion.');await db().prepare('UPDATE logistics_alliances SET logo=?,logo_updated=? WHERE id=?').bind(action==='logo'?validImage(body.image,120000):null,now,mine.alliance_id).run();
+ }else if(action==='requirements'){
+  if(!mine||!['leader','officer'].includes(mine.role))throw Error('Nur Owner und Admins legen Voraussetzungen fest.');const num=(v:unknown,max:number)=>Math.max(0,Math.min(max,Math.round(Number(v)||0)));await db().prepare('UPDATE logistics_alliances SET requirements=? WHERE id=?').bind(JSON.stringify({minValue:num(body.minValue,1e12),minVehicles:num(body.minVehicles,10000),minEh:num(body.minEh,1e12)}),mine.alliance_id).run();
  }else if(action==='settings'){
   if(mine?.role!=='leader')throw Error('Nur der Owner ändert die Allianz.');const cur=await db().prepare('SELECT color FROM logistics_alliances WHERE id=?').bind(mine.alliance_id).first<{color:string}>();const wanted=/^#[0-9a-f]{6}$/i.test(body.color)?body.color:cur?.color||'#4a90c8';if(wanted!==cur?.color&&!await isPremium(u.id))throw Error('Allianzlogo und -farben sind eine Premium-Funktion.');await db().prepare('UPDATE logistics_alliances SET description=?,color=?,open=?,share_storage=? WHERE id=?').bind(String(body.description||'').slice(0,500),wanted,body.open?1:0,body.shareStorage===false?0:1,mine.alliance_id).run();invalidateAllianceCache();
  }else if(action==='deletePost'){

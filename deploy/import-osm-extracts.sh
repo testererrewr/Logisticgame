@@ -141,4 +141,5 @@ UPDATE logistics_runtime SET updated=$now,payload=json_set(payload,'\$.enabled',
 INSERT OR REPLACE INTO logistics_loaded_areas(id,loaded,source,count) WITH RECURSIVE n(i) AS (SELECT 0 UNION ALL SELECT i+1 FROM n WHERE i<61199) SELECT 'world-root-v10:'||i,$now,'Geofabrik OSM-Extrakt',0 FROM n;" 2>>"$ERR" \
    && log "Weltimport als vollständig markiert: Die Karte fragt keine Overpass-Gebiete mehr ab." || fail "Abschluss-Markierung fehlgeschlagen"
 fi
+log "Kartenübersicht neu berechnen …"; bash "$APP/deploy/partner-maintenance.sh" raster >>"$LOG" 2>&1 || fail "Kartenübersicht konnte nicht berechnet werden"
 [[ $failed -eq 0 ]]
