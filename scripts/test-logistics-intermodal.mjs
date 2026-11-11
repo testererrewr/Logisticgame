@@ -3,7 +3,7 @@ import {newState,build,addTrack,signHaulage,purchaseVehicle,createLine,assignVeh
 let s=newState();s.cash=1000000000;
 s.sites.push({id:'osm:node:qa-source',name:'QA source',kind:'warehouse',lat:47.07,lon:15.43},{id:'osm:node:qa-dest',name:'QA destination',kind:'supermarket',lat:47.15,lon:15.43});
 build(s,'depot',47.06,15.43);build(s,'shipDepot',47.12,15.43);
-const a=build(s,'railDepot',47.08,15.43),b=build(s,'railDepot',47.09,15.43),p=build(s,'port',47.10,15.43),q=build(s,'port',47.14,15.43);
+build(s,'railDepot',47.085,15.43);const a=build(s,'railStation',47.08,15.43),b=build(s,'railStation',47.09,15.43),p=build(s,'port',47.10,15.43),q=build(s,'port',47.14,15.43);
 addTrack(s,[a.lat,a.lon],[b.lat,b.lon]);
 const order=signHaulage(s,'osm:node:qa-source','osm:node:qa-dest',12);
 for(const [model,mode,from,to] of [['truck','truck','osm:node:qa-source',a.id],['containerRail','rail',a.id,b.id],['truck','truck',b.id,p.id],['cargoShip','ship',p.id,q.id],['truck','truck',q.id,'osm:node:qa-dest']]){

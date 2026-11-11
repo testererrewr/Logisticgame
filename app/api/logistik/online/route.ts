@@ -1,3 +1,6 @@
+import {installD1Retry} from '../../../../lib/d1-retry';
+import {hostedWorlds,hostedHere} from '../../../../lib/logistics/world-hosting';
+installD1Retry();
 import {sameOrigin} from '../../../../lib/same-origin';
 import {encodeCompanyParts,decodeCompany,ensureChunkTable,deleteChunks} from '../../../../lib/logistics/company-codec';
 import {makeUsedOffer,buyUsedVehicle,withdrawUsedVehicle,dealerValue} from '../../../../lib/logistics/vehicle-sales';
@@ -77,7 +80,7 @@ export async function adjustAdminCompanyCash(actor:User,body:{worldId:string;use
 }
 const settling=new Map<string,Promise<World>>();
 const behind=new Set<string>();
-export function settleWorld(id:string,budgetMs=1500):Promise<World>{const running=settling.get(id);if(running){if(budgetMs>=10000)return running;return readWorld(id).then(w=>{if(!w)throw Error('Diese Welt existiert nicht.');return w;});}const job=settleWorldNow(id,budgetMs).finally(()=>{settling.delete(id);behind.delete(id);});settling.set(id,job);return job;}
+export function settleWorld(id:string,budgetMs=1500):Promise<World>{{const hs=hostedWorlds();if(hs&&!hs.has(id))return Promise.reject(Error('Diese Welt läuft auf einem anderen Server.'));}const running=settling.get(id);if(running){if(budgetMs>=10000)return running;return readWorld(id).then(w=>{if(!w)throw Error('Diese Welt existiert nicht.');return w;});}const job=settleWorldNow(id,budgetMs).finally(()=>{settling.delete(id);behind.delete(id);});settling.set(id,job);return job;}
 export function catchUpHours(world:World,now=Date.now()){return Math.max(0,(clockTarget(world,now)-world.day)*24);}
 const catchRate=new Map<string,number>();
 export function catchUpSeconds(world:World){const hours=catchUpHours(world);if(hours<=0)return 0;const rate=(catchRate.get(world.id)||.5)*.7,net=rate-(world.time_scale||1)/3600;return net>0?Math.ceil(hours/net):null;}
@@ -98,7 +101,9 @@ async function settleWorldNow(id:string,budgetMs:number):Promise<World>{
   for(const row of rows){const state=states.get(row.user_id)!;state.borrowedTracks=permissions.filter(p=>p.grantee_id===row.user_id).flatMap(p=>states.get(p.owner_id)?.tracks||[]);}
   {const amap=await allianceMap(id);for(const row of rows){const aid=amap.get(row.user_id);if(!aid)continue;const own=states.get(row.user_id)!;own.sites.push(...allySites(own,rows.filter(r=>r.user_id!==row.user_id&&amap.get(r.user_id)===aid).map(r=>({id:r.user_id,name:r.name||'Spedition',state:states.get(r.user_id)!})),amap.storage.get(aid)!==false));}}
   if(attempt===0)for(const state of states.values())await prepareVehicleRoads(state);
-  const advanced=stepSharedWorld(states,next,market);try{stampCountries(advanced);}catch(e){await logError('settle:stamps',e,{world:id},'warn');}
+  const achBefore=new Map<string,number>();try{await db().prepare('CREATE TABLE IF NOT EXISTS logistics_user_achievements(user_id TEXT NOT NULL,achievement TEXT NOT NULL,world_id TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(user_id,achievement))').run();const done=(await db().prepare('SELECT user_id,achievement FROM logistics_user_achievements WHERE world_id<>? AND user_id IN (SELECT value FROM json_each(?))').bind(id,JSON.stringify(rows.map(r=>r.user_id))).all<{user_id:string;achievement:string}>()).results;for(const [u,st] of states){(st as any).rewardedElsewhere=done.filter(d=>d.user_id===u).map(d=>d.achievement);achBefore.set(u,Object.keys(st.progress?.achievements||{}).length);}}catch{}
+  const advanced=stepSharedWorld(states,next,market);
+  for(const [u,st] of advanced){delete (st as any).rewardedElsewhere;const ach=Object.keys(st.progress?.achievements||{});if(ach.length>(achBefore.get(u)??ach.length))statements.push(...ach.map(a=>db().prepare('INSERT OR IGNORE INTO logistics_user_achievements(user_id,achievement,world_id,created) VALUES(?,?,?,?)').bind(u,a,id,Date.now())));}try{stampCountries(advanced);}catch(e){await logError('settle:stamps',e,{world:id},'warn');}
   try{statements.push(...await settleAllianceOrders(id,advanced,next));}catch(e){await logError('settle:alliance-orders',e,{world:id},'error');}
   try{statements.push(...await settleAllianceWeekly(id,advanced,next));}catch(e){await logError('settle:alliance-weekly',e,{world:id},'error');}
   try{statements.push(...await settleProjects(id,advanced,next));}catch(e){await logError('settle:projects',e,{world:id},'error');}
@@ -179,7 +184,7 @@ export async function GET(req:NextRequest){const ctx:Record<string,unknown>={};t
  const id=req.nextUrl.searchParams.get('world');ctx.world=id||undefined;
  if(!id){
   await ensureWorldSettingsColumn();const rows=await db().prepare('SELECT w.*,(SELECT count(*) FROM logistics_world_companies c WHERE c.world_id=w.id) AS companies,EXISTS(SELECT 1 FROM logistics_world_companies c WHERE c.world_id=w.id AND c.user_id=?) AS joined FROM logistics_worlds w ORDER BY created DESC LIMIT 100').bind(u.id).all<World&{companies:number;joined:number}>();
-  return reply({user:u.name,worlds:rows.results.filter(w=>['owner','admin'].includes(u.role)||w.status!=='draft').map(w=>({...w,settings:settingsSummary(parseSettings(w.settings)),day:clockTarget(w,Date.now())})),singleplayerEnabled:false,isAdmin:['owner','admin'].includes(u.role)});
+  return reply({user:u.name,worlds:rows.results.filter(w=>['owner','admin'].includes(u.role)||w.status!=='draft').map(w=>({...w,external:!hostedHere(w.id,(w as any).host_url,new URL(req.url).origin)?(w as any).host_url||null:null,settings:settingsSummary(parseSettings(w.settings)),day:clockTarget(w,Date.now())})),singleplayerEnabled:false,isAdmin:['owner','admin'].includes(u.role)});
  }
  await settleWorld(id);if(!await readCompany(id,u.id))return reply({error:'Bitte zuerst dieser Welt beitreten.'},403);
  return reply(await snapshot(u,id,(req.nextUrl.searchParams.get('geo')||'').slice(0,60)));
@@ -305,7 +310,7 @@ export async function POST(req:NextRequest){const ctx:Record<string,unknown>={};
  }catch(e:any){await logError('online:'+String(ctx.command||'POST'),e,ctx);return reply({error:e.message||'Online-Aktion fehlgeschlagen.'},422);}}
 
 export async function settleAllWorlds(source='scheduled'){
- const rows=(await db().prepare("SELECT id FROM logistics_worlds WHERE status='running' ORDER BY last_tick LIMIT 50").all<{id:string}>()).results;
+ const hosted=hostedWorlds(),rows=(await db().prepare("SELECT id FROM logistics_worlds WHERE status='running' ORDER BY last_tick LIMIT 200").all<{id:string}>()).results.filter(r=>!hosted||hosted.has(r.id)).slice(0,50);
  const completed:string[]=[],errors:{id:string;error:string}[]=[];
  for(const row of rows){try{await settleWorld(row.id,15000);completed.push(row.id);}catch(e:any){errors.push({id:row.id,error:e.message});await logError('tick:settle',e,{world:row.id,source},'error');}}
  continuePartnerImports();

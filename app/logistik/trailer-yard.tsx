@@ -24,7 +24,7 @@ export default function TrailerYard({state,commit,busy}:{state:State;busy?:boole
   <nav className="log-subtabs"><button className={tab==='stock'?'active':''} onClick={()=>setTab('stock')}>Meine Auflieger ({(state.trailers||[]).length})</button><button className={tab==='buy'?'active':''} onClick={()=>setTab('buy')}>Auflieger kaufen ({semis.length})</button></nav>
   {tab==='stock'&&<section>
    <h2>Abgestellte Auflieger <small>{(state.trailers||[]).length} im Depot · {attached} an Zugmaschinen</small></h2>
-   <p className="log-muted">Auflieger behalten ihre eigenen Kilometer und transportierten EH, auch wenn sie die Zugmaschine wechseln. Anhängen und Abhängen geht in den Fahrzeugdetails, wenn die Zugmaschine leer und ohne Linie im selben Depot steht. Feste Aufbauten (Pritsche, Koffer, Kühlkoffer) gehören zum Solo-LKW und lassen sich nicht abnehmen.</p>
+   
    <div className="log-trailer-toolbar">
     <select aria-label="Frachtart filtern" value={stockType} onChange={e=>{setStockType(e.target.value);setPicked([]);}}><option value="all">Alle Frachtarten</option>{Object.entries(FREIGHT_NAMES).map(([id,n])=><option key={id} value={id}>{n}</option>)}</select><select aria-label="Depot filtern" value={filter} onChange={e=>{setFilter(e.target.value);setPicked([]);}}><option value="all">Alle Depots</option>{depots.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}</select>
     <button className="log-secondary" disabled={!owned.length} onClick={()=>setPicked(picked.length===owned.length?[]:owned.map(t=>t.id))}>{picked.length===owned.length&&owned.length?'Auswahl aufheben':'Alle auswählen'}</button>

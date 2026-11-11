@@ -520,5 +520,85 @@
  "antonov-an-124-100": {
   "fuel": 3200,
   "energy": "kerosin"
+ },
+ "classic-ford-model-aa": {
+  "fuel": 22,
+  "energy": "diesel"
+ },
+ "classic-mercedes-l3500": {
+  "fuel": 26,
+  "energy": "diesel"
+ },
+ "classic-hanomag-l28": {
+  "fuel": 20,
+  "energy": "diesel"
+ },
+ "classic-magirus-s3500": {
+  "fuel": 30,
+  "energy": "diesel"
+ },
+ "classic-man-19304": {
+  "fuel": 32,
+  "energy": "diesel"
+ },
+ "classic-vw-t1-pritsche": {
+  "fuel": 9,
+  "energy": "diesel"
+ },
+ "classic-unimog-404": {
+  "fuel": 18,
+  "energy": "diesel"
+ },
+ "classic-man-kat1": {
+  "fuel": 40,
+  "energy": "diesel"
+ },
+ "classic-magirus-lf16": {
+  "fuel": 24,
+  "energy": "diesel"
+ },
+ "classic-mercedes-lp1113": {
+  "fuel": 26,
+  "energy": "diesel"
+ },
+ "classic-daf-turbo-twin": {
+  "fuel": 45,
+  "energy": "diesel"
+ },
+ "classic-man-dakar-service": {
+  "fuel": 40,
+  "energy": "diesel"
+ },
+ "classic-br01-dampflok": {
+  "fuel": 900,
+  "energy": "diesel"
+ },
+ "classic-sbb-krokodil": {
+  "fuel": 1200,
+  "energy": "strom"
+ },
+ "classic-kuemo-1950": {
+  "fuel": 0.25,
+  "energy": "schweröl"
+ },
+ "classic-rhine-barge": {
+  "fuel": 380,
+  "energy": "diesel"
+ },
+ "classic-douglas-dc3": {
+  "fuel": 120,
+  "energy": "kerosin"
+ },
+ "classic-junkers-ju52": {
+  "fuel": 110,
+  "energy": "kerosin"
+ },
+ "classic-antonov-an2": {
+  "fuel": 60,
+  "energy": "kerosin"
+ },
+ "classic-lockheed-l188": {
+  "fuel": 420,
+  "energy": "kerosin"
  }
 }

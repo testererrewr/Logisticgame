@@ -20,7 +20,7 @@ assert.throws(()=>settleTrade(afterSeller,afterBuyer,{siteId:hub.id,good:'bread'
 assert.throws(()=>settleTrade(afterSeller,afterBuyer,{siteId:hub.id,good:'bread',quantity:1,price:afterBuyer.cash+1,sellerId:'user-one'}),/Kapital/);
 assert.throws(()=>settleTrade(afterSeller,afterBuyer,{siteId:hub.id,good:'containers',quantity:1,price:0,sellerId:'user-one'}),/Übergabeterminal/);
 
-const depot=build(afterBuyer,'depot',47.075,15.45),truck=purchaseVehicle(afterBuyer,'truck','krone-profi');
+build(afterBuyer,'depot',47.08,15.46);const depot=build(afterBuyer,'warehouseSmall',47.075,15.45),truck=purchaseVehicle(afterBuyer,'truck','krone-profi');
 const line=createLine(afterBuyer,{name:'Partnerware ins eigene Depot',mode:'truck',good:'bread',stops:[{siteId:hub.id,action:'load',quantity:3},{siteId:depot.id,action:'unload',quantity:3}],duration:15});
 assignVehicle(afterBuyer,truck.id,line.id);
 let b=afterBuyer;for(let i=0;i<9;i++)b=stepDay(b);

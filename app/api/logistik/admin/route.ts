@@ -27,7 +27,8 @@ export async function POST(req:NextRequest){try{
  const u=await currentUser(req);if(!u||u.status!=='active'||!['owner','admin'].includes(u.role))return reply({error:'Nur für Administratoren.'},403);
  if(!sameOrigin(req))return reply({error:'Ungültiger Ursprung.'},403);
  const body:any=JSON.parse(raw),now=Date.now();let result:unknown={ok:true};
- if(body.action==='worldImport'){if(typeof body.enabled!=='boolean')throw Error('Importstatus fehlt.');result=await setWorldImportEnabled(body.enabled);if(body.enabled)continueWorldImport();}
+ if(body.action==='worldHost'){const {normalizeHostUrl}=await import('../../../../lib/logistics/world-hosting');await ensureWorldSettingsColumn();await db().prepare('UPDATE logistics_worlds SET host_url=? WHERE id=?').bind(normalizeHostUrl(body.hostUrl),String(body.id||'')).run();result={ok:true};}
+ else if(body.action==='worldImport'){if(typeof body.enabled!=='boolean')throw Error('Importstatus fehlt.');result=await setWorldImportEnabled(body.enabled);if(body.enabled)continueWorldImport();}
  else if(body.action==='worldImportRetry'){result=await retryWorldImport();continueWorldImport();}
  else if(body.action==='createWorld'){
   const name=String(body.name||'').trim();if(name.length<3||name.length>60)throw Error('Weltname: 3–60 Zeichen.');

@@ -3,7 +3,7 @@ import extraVehicles from '../../data/logistics-extra-vehicles.json';
 import extraTrailers from '../../data/logistics-extra-trailers.json';
 import extraWagons from '../../data/logistics-extra-wagons.json';
 import vehicleTuning from '../../data/logistics-vehicle-tuning.json';
-export interface VehicleSpec {fuel?:number;energy?:string;handling?:number;inland?:boolean;id:string;name:string;manufacturer:string;role:string;mode:Mode;types:FreightType[];capacity:number;price:number;cost:number;speed:number;icon:string;attachment?:string|null;source:string;factual:string}
+export interface VehicleSpec {classic?:string;fuel?:number;energy?:string;handling?:number;inland?:boolean;id:string;name:string;manufacturer:string;role:string;mode:Mode;types:FreightType[];capacity:number;price:number;cost:number;speed:number;icon:string;attachment?:string|null;source:string;factual:string}
 export interface TrailerSpec {id:string;name:string;mount:string;types:FreightType[];capacity:number;goods:string[]|null;heavyOnly?:boolean;price:number;source:string;factual:string}
 export interface WagonSpec {id:string;name:string;types:FreightType[];capacity:number;price:number;source:string}
 export const REAL_VEHICLES:VehicleSpec[]=[
@@ -21,7 +21,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "semi",
   "source": "https://www.man.eu/global/en/truck/all-models/overview.html",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "man-tgs",
@@ -37,7 +37,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "semi",
   "source": "https://www.man.eu/global/en/truck/all-models/overview.html",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "man-tgm",
@@ -53,7 +53,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "body",
   "source": "https://www.man.eu/global/en/truck/all-models/overview.html",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "man-tgl",
@@ -69,7 +69,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "body",
   "source": "https://www.man.eu/global/en/truck/all-models/overview.html",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "van",
@@ -87,7 +87,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚐",
   "attachment": null,
   "source": "https://www.man.eu/global/en/truck/all-models/overview.html",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "mercedes-benz-actros-l-1848-ls-4x2",
@@ -103,7 +103,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "semi",
   "source": "https://www.mercedes-benz-trucks.com/int/en/trucks.html",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "mercedes-benz-actros-f",
@@ -119,7 +119,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "semi",
   "source": "https://www.mercedes-benz-trucks.com/int/en/trucks.html",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "mercedes-benz-arocs",
@@ -135,7 +135,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "semi",
   "source": "https://www.mercedes-benz-trucks.com/int/en/trucks.html",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "reefer",
@@ -151,7 +151,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "body",
   "source": "https://www.mercedes-benz-trucks.com/int/en/trucks.html",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "mercedes-benz-sprinter",
@@ -169,7 +169,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚐",
   "attachment": null,
   "source": "https://www.mercedes-benz-trucks.com/int/en/trucks.html",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "volvo-fh",
@@ -185,7 +185,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "semi",
   "source": "https://www.volvotrucks.com/en-en/trucks.html",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "volvo-fh16",
@@ -201,7 +201,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "semi",
   "source": "https://www.volvotrucks.com/en-en/trucks.html",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "volvo-fh-aero",
@@ -217,7 +217,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "semi",
   "source": "https://www.volvotrucks.com/en-en/trucks.html",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "volvo-fm",
@@ -233,7 +233,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "semi",
   "source": "https://www.volvotrucks.com/en-en/trucks.html",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "volvo-fmx",
@@ -249,7 +249,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "semi",
   "source": "https://www.volvotrucks.com/en-en/trucks.html",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "volvo-fe",
@@ -265,7 +265,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "body",
   "source": "https://www.volvotrucks.com/en-en/trucks.html",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "volvo-fl",
@@ -281,7 +281,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "body",
   "source": "https://www.volvotrucks.com/en-en/trucks.html",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "scania-s-serie",
@@ -297,7 +297,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "semi",
   "source": "https://www.scania.com/sg/en/home/products/trucks.html",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "scania-r-serie",
@@ -313,7 +313,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "semi",
   "source": "https://www.scania.com/sg/en/home/products/trucks.html",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "scania-g-serie",
@@ -329,7 +329,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "semi",
   "source": "https://www.scania.com/sg/en/home/products/trucks.html",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "scania-p-serie",
@@ -345,7 +345,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "semi",
   "source": "https://www.scania.com/sg/en/home/products/trucks.html",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "scania-l-serie",
@@ -361,7 +361,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "body",
   "source": "https://www.scania.com/sg/en/home/products/trucks.html",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "daf-xf",
@@ -377,7 +377,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "semi",
   "source": "https://www.daf.global/en-US/Trucks/New-Generation-DAF",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "daf-xg",
@@ -393,7 +393,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "semi",
   "source": "https://www.daf.global/en-US/Trucks/New-Generation-DAF",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "daf-xgplus",
@@ -409,7 +409,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "semi",
   "source": "https://www.daf.global/en-US/Trucks/New-Generation-DAF",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "daf-xd",
@@ -425,7 +425,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "semi",
   "source": "https://www.daf.global/en-US/Trucks/New-Generation-DAF",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "daf-xb",
@@ -441,7 +441,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "body",
   "source": "https://www.daf.global/en-US/Trucks/New-Generation-DAF",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "iveco-s-way",
@@ -457,7 +457,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "semi",
   "source": "https://www.iveco.com/uk/Configurator",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "iveco-x-way",
@@ -473,7 +473,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "semi",
   "source": "https://www.iveco.com/uk/Configurator",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "iveco-eurocargo",
@@ -489,7 +489,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "body",
   "source": "https://www.iveco.com/uk/Configurator",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "iveco-daily",
@@ -507,7 +507,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚐",
   "attachment": null,
   "source": "https://www.iveco.com/uk/Configurator",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "renault-trucks-t",
@@ -523,7 +523,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "semi",
   "source": "https://www.renault-trucks.com/en/transport-and-urban-logistic-solutions/trucks",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "renault-trucks-t-high",
@@ -539,7 +539,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "semi",
   "source": "https://www.renault-trucks.com/en/transport-and-urban-logistic-solutions/trucks",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "renault-trucks-d",
@@ -555,7 +555,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚛",
   "attachment": "body",
   "source": "https://www.renault-trucks.com/en/transport-and-urban-logistic-solutions/trucks",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "renault-trucks-master",
@@ -573,7 +573,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
   "icon": "🚐",
   "attachment": null,
   "source": "https://www.renault-trucks.com/en/transport-and-urban-logistic-solutions/trucks",
-  "factual": "Reales Modell / reale Baureihe. Preis, Betriebskosten und nutzbare Frachtkapazität sind Spielwerte."
+  "factual": ""
  },
  {
   "id": "bulkRail",

@@ -27,7 +27,7 @@ as_app "rm -rf dist.prev"
 [[ -f "$APP/dist/server/wrangler.json" ]] || { echo "!! Build ohne dist/server/wrangler.json" >&2; exit 1; }
 
 echo "==> Sicherung vor dem Neustart"
-bash "$APP/deploy/backup.sh" || echo "(Sicherung übersprungen)"
+if [[ "${SKIP_BACKUP:-0}" == "1" ]]; then echo "(Sicherung auf Wunsch übersprungen – SKIP_BACKUP=1)"; else bash "$APP/deploy/backup.sh" || echo "(Sicherung übersprungen)"; fi
 
 echo "==> systemd-Dienste aktualisieren und neu starten"
 install -m 644 "$APP"/deploy/systemd/*.service "$APP"/deploy/systemd/*.timer /etc/systemd/system/

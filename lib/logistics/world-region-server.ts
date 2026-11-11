@@ -4,7 +4,7 @@ import {countryAt} from '../countries-server';
 import {allowedCountries,regionBounds,parseSettings,type WorldSettings} from './world-settings';
 
 let column:Promise<void>|undefined;
-export function ensureWorldSettingsColumn(){return column??=(async()=>{const cols=(await env.DB!.prepare('PRAGMA table_info(logistics_worlds)').all<{name:string}>()).results;if(!cols.some(c=>c.name==='settings'))await env.DB!.prepare("ALTER TABLE logistics_worlds ADD COLUMN settings text DEFAULT '{}' NOT NULL").run().catch(()=>{});})().catch(e=>{column=undefined;throw e;});}
+export function ensureWorldSettingsColumn(){return column??=(async()=>{const cols=(await env.DB!.prepare('PRAGMA table_info(logistics_worlds)').all<{name:string}>()).results;if(!cols.some(c=>c.name==='host_url'))await env.DB!.prepare('ALTER TABLE logistics_worlds ADD COLUMN host_url text').run().catch(()=>{});if(!cols.some(c=>c.name==='settings'))await env.DB!.prepare("ALTER TABLE logistics_worlds ADD COLUMN settings text DEFAULT '{}' NOT NULL").run().catch(()=>{});})().catch(e=>{column=undefined;throw e;});}
 
 const cache=new Map<string,WorldSettings>();
 export async function worldSettings(worldId:string):Promise<WorldSettings>{

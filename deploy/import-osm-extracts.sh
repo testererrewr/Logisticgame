@@ -90,7 +90,7 @@ sql "UPDATE logistics_runtime SET payload=json_set(payload,'\$.enabled',json('fa
 FILTER=(nwr/shop nwr/craft nwr/industrial nwr/forestry nwr/farm nwr/building=warehouse
   nwr/office=logistics,transport,forestry,forest_management
   nwr/amenity=restaurant,cafe,fast_food,pub,bar,hospital,clinic,pharmacy,doctors,dentist,veterinary,recycling,fuel,marketplace,social_facility,nursing_home
-  nwr/landuse=farmyard,quarry,industrial,forest nwr/man_made=works,mineshaft,adit,petroleum_well)
+  nwr/landuse=farmyard,quarry,industrial,forest nwr/man_made=works,mineshaft,adit,petroleum_well,water_works)
 
 n=0; ok=0; failed=0; START=$(date +%s)
 while IFS=$'\t' read -r id url; do

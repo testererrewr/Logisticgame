@@ -21,7 +21,7 @@ export default function LogisticsMap({brand=null,region=null,sites,selected,visi
   const layer=L.layerGroup().addTo(map);weatherLayer.current=layer;const hours=(c:any)=>Math.max(0,Math.round((c.until-day)*24));
   for(const c of weatherAt(day)){const w=WEATHER[c.kind as keyof typeof WEATHER];for(const shift of [-360,0,360]){const center=[c.lat,c.lon+shift];
    L.circle(center,{radius:c.radiusKm*1000,pane:'log-weather',interactive:false,stroke:true,weight:1,color:w.color,opacity:.45,fillColor:w.color,fillOpacity:.08+.05*c.strength}).addTo(layer);
-   L.marker(center,{interactive:true,keyboard:false,icon:L.divIcon({className:'log-weather-icon',html:'<span>'+w.icon+'</span>',iconSize:[28,28],iconAnchor:[14,14]})}).addTo(layer).bindTooltip(htmlText(w.name+' · Stärke '+c.strength+'/3 · noch ca. '+hours(c)+' Std.<br>'+w.text),{direction:'top'});}}
+   L.marker(center,{interactive:true,keyboard:false,icon:L.divIcon({className:'log-weather-icon',html:'<span>'+w.icon+'</span>',iconSize:[28,28],iconAnchor:[14,14]})}).addTo(layer).bindTooltip(htmlText(w.name+' · Stärke '+c.strength+'/3 · noch ca. '+hours(c)+' Std.')+'<br>'+htmlText(w.text),{direction:'top'});}}
   return()=>{weatherLayer.current?.remove();weatherLayer.current=null;};},[mapReady,mapEpoch,slot,showWeather]);
  const animLayer=useRef<any>(null);
  useEffect(()=>{const L=LRef.current,map=mapRef.current;if(!mapReady||!L||!map)return;if(typeof window!=='undefined'&&window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;

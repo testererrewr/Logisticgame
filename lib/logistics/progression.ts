@@ -58,18 +58,18 @@ export const ACHIEVEMENTS:Achievement[]=[
  {id:'contracts-250',icon:'🏆',name:'Auftragsprofi',text:'250 Aufträge abschließen.',metric:(_,p)=>p.totals.contracts,goal:250,reward:{driver:{role:'truck',level:5}}},
  {id:'collector-1',icon:'💎',name:'Kurier für Kostbares',text:'Eine seltene Ware zustellen.',metric:(_,p)=>Object.keys(p.collection||{}).length,goal:1,reward:{money:20000}},
  {id:'collector-5',icon:'🏛️',name:'Kurator',text:'5 verschiedene seltene Waren zustellen.',metric:(_,p)=>Object.keys(p.collection||{}).length,goal:5,reward:{driver:{role:'truck',level:5}}},
- {id:'stamps-5',icon:'🛂',name:'Grenzgänger',text:'Fahrzeuge in 5 Ländern.',metric:(_,p)=>Object.keys(p.stamps||{}).length,goal:5,reward:{money:30000}},
- {id:'stamps-15',icon:'🗺️',name:'Weitgereist',text:'Fahrzeuge in 15 Ländern.',metric:(_,p)=>Object.keys(p.stamps||{}).length,goal:15,reward:{driver:{role:'truck',level:4}}},
- {id:'stamps-50',icon:'✈️',name:'Globetrotter',text:'Fahrzeuge in 50 Ländern.',metric:(_,p)=>Object.keys(p.stamps||{}).length,goal:50,reward:{vehicle:'airbus-a321p2f'}},
- {id:'stamps-100',icon:'🌐',name:'Hundert Flaggen',text:'Fahrzeuge in 100 Ländern.',metric:(_,p)=>Object.keys(p.stamps||{}).length,goal:100,reward:{money:5000000}},
- {id:'stamps-all',icon:'👑',name:'Weltenbummler',text:'Alle Länder der Welt erreicht.',metric:(_,p)=>Object.keys(p.stamps||{}).length,goal:COUNTRY_TOTAL,reward:{money:50000000}},
- {id:'continents-6',icon:'🧭',name:'Sechs Kontinente',text:'Europa, Asien, Afrika, Nord- und Südamerika und Ozeanien erreicht.',metric:(_,p)=>new Set(Object.keys(p.stamps||{}).map(continentOf).filter(Boolean)).size,goal:6,reward:{vehicle:'boeing-767-300f'}},
- {id:'islands-5',icon:'🏝️',name:'Inselhüpfer',text:'5 besondere Inseln (z. B. Kanaren, Hawaii, Kreta) erreicht.',metric:(_,p)=>Object.keys(p.islands||{}).length,goal:5,reward:{money:150000}},
- {id:'group-caribbean',icon:'🏝️',name:'Karibik-Hopper',text:'5 Karibikstaaten erreicht.',metric:(_,p)=>ISLAND_GROUPS.find(x=>x.id==='caribbean')!.countries.filter(c=>p.stamps?.[c]!==undefined).length,goal:5,reward:{money:200000}},
- {id:'group-pacific',icon:'🌺',name:'Südsee-Kapitän',text:'3 Südsee-Inselstaaten erreicht.',metric:(_,p)=>ISLAND_GROUPS.find(x=>x.id==='pacific')!.countries.filter(c=>p.stamps?.[c]!==undefined).length,goal:3,reward:{money:250000}},
- {id:'group-british',icon:'💂',name:'Britische Inseln komplett',text:'Großbritannien, Irland, Isle of Man, Jersey und Guernsey.',metric:(_,p)=>ISLAND_GROUPS.find(x=>x.id==='british')!.countries.filter(c=>p.stamps?.[c]!==undefined).length,goal:5,reward:{money:150000}},
- {id:'group-nordic',icon:'🧊',name:'Hoher Norden',text:'6 nordische Länder inkl. Island, Färöer oder Grönland.',metric:(_,p)=>ISLAND_GROUPS.find(x=>x.id==='nordic')!.countries.filter(c=>p.stamps?.[c]!==undefined).length,goal:6,reward:{money:200000}},
- {id:'group-indian',icon:'🐢',name:'Indischer Ozean',text:'3 Inselstaaten im Indischen Ozean.',metric:(_,p)=>ISLAND_GROUPS.find(x=>x.id==='indian')!.countries.filter(c=>p.stamps?.[c]!==undefined).length,goal:3,reward:{money:200000}},
+ {id:'stamps-5',icon:'🛂',name:'Grenzgänger',text:'Erkunde 5 Länder.',metric:(_,p)=>Object.keys(p.stamps||{}).length,goal:5,reward:{money:30000}},
+ {id:'stamps-15',icon:'🗺️',name:'Weitgereist',text:'Erkunde 15 Länder.',metric:(_,p)=>Object.keys(p.stamps||{}).length,goal:15,reward:{driver:{role:'truck',level:4}}},
+ {id:'stamps-50',icon:'✈️',name:'Globetrotter',text:'Erkunde 50 Länder.',metric:(_,p)=>Object.keys(p.stamps||{}).length,goal:50,reward:{vehicle:'airbus-a321p2f'}},
+ {id:'stamps-100',icon:'🌐',name:'Hundert Flaggen',text:'Erkunde 100 Länder.',metric:(_,p)=>Object.keys(p.stamps||{}).length,goal:100,reward:{money:5000000}},
+ {id:'stamps-all',icon:'👑',name:'Weltenbummler',text:'Erkunde alle Länder der Welt.',metric:(_,p)=>Object.keys(p.stamps||{}).length,goal:COUNTRY_TOTAL,reward:{money:50000000}},
+ {id:'continents-6',icon:'🧭',name:'Sechs Kontinente',text:'Erkunde alle sechs Kontinente.',metric:(_,p)=>new Set(Object.keys(p.stamps||{}).map(continentOf).filter(Boolean)).size,goal:6,reward:{vehicle:'boeing-767-300f'}},
+ {id:'islands-5',icon:'🏝️',name:'Inselhüpfer',text:'Erkunde 5 besondere Inseln (z. B. Kanaren, Hawaii, Kreta).',metric:(_,p)=>Object.keys(p.islands||{}).length,goal:5,reward:{money:150000}},
+ {id:'group-caribbean',icon:'🏝️',name:'Karibik-Hopper',text:'Erkunde 5 Karibikstaaten.',metric:(_,p)=>ISLAND_GROUPS.find(x=>x.id==='caribbean')!.countries.filter(c=>p.stamps?.[c]!==undefined).length,goal:5,reward:{money:200000}},
+ {id:'group-pacific',icon:'🌺',name:'Südsee-Kapitän',text:'Erkunde 3 Südsee-Inselstaaten.',metric:(_,p)=>ISLAND_GROUPS.find(x=>x.id==='pacific')!.countries.filter(c=>p.stamps?.[c]!==undefined).length,goal:3,reward:{money:250000}},
+ {id:'group-british',icon:'💂',name:'Britische Inseln komplett',text:'Erkunde Großbritannien, Irland, Isle of Man, Jersey und Guernsey.',metric:(_,p)=>ISLAND_GROUPS.find(x=>x.id==='british')!.countries.filter(c=>p.stamps?.[c]!==undefined).length,goal:5,reward:{money:150000}},
+ {id:'group-nordic',icon:'🧊',name:'Hoher Norden',text:'Erkunde 6 nordische Länder.',metric:(_,p)=>ISLAND_GROUPS.find(x=>x.id==='nordic')!.countries.filter(c=>p.stamps?.[c]!==undefined).length,goal:6,reward:{money:200000}},
+ {id:'group-indian',icon:'🐢',name:'Indischer Ozean',text:'Erkunde 3 Inselstaaten im Indischen Ozean.',metric:(_,p)=>ISLAND_GROUPS.find(x=>x.id==='indian')!.countries.filter(c=>p.stamps?.[c]!==undefined).length,goal:3,reward:{money:200000}},
  {id:'challenge-1',icon:'🎯',name:'Herausgefordert',text:'Eine Wochen-Herausforderung schaffen.',metric:(_,p)=>p.totals.challenges,goal:1,reward:{money:10000}},
  {id:'challenge-25',icon:'🥇',name:'Wochensieger',text:'25 Wochen-Herausforderungen schaffen.',metric:(_,p)=>p.totals.challenges,goal:25,reward:{vehicle:'damen-cc2750'}},
 ];
@@ -92,7 +92,7 @@ export function progressDay(s:State){const p=ensureProgress(s),day=Math.floor(s.
 
  for(const c of weeklyChallenges(p.weekIndex,p.weekSize)){if(p.weekDone.includes(c.id))continue;if(challengeProgress(c,p.weekStart,now)>=c.target){p.weekDone.push(c.id);p.totals.challenges++;credit(s,c.prize,'Prämien & Erfolge');log(s,'🎯 Wochen-Herausforderung geschafft: '+c.title+' · Prämie '+c.prize.toLocaleString('de-DE')+' €','good');(report.challengeDone??=[]).push(c.title);}}
  if(weekOf(day)!==p.weekIndex){p.weekIndex=weekOf(day);p.weekStart=now;p.weekSize=Math.ceil(s.vehicles.length/3);p.weekDone=[];}
- for(const a of ACHIEVEMENTS){if(p.achievements[a.id])continue;if(a.metric(s,p)>=a.goal){p.achievements[a.id]=day;grant(s,a);log(s,'🏅 Erfolg freigeschaltet: '+a.name+' · Belohnung: '+rewardText(a.reward),'good');(report.achievements??=[]).push(a.name);}}
+ for(const a of ACHIEVEMENTS){if(p.achievements[a.id])continue;if(a.metric(s,p)>=a.goal){p.achievements[a.id]=day;const elsewhere=(s as any).rewardedElsewhere?.includes(a.id);if(!elsewhere)grant(s,a);log(s,'🏅 Erfolg freigeschaltet: '+a.name+(elsewhere?' · Belohnung wurde bereits in einer anderen Welt vergeben':' · Belohnung: '+rewardText(a.reward)),'good');(report.achievements??=[]).push(a.name);}}
  if(p.last.day<day)p.reports=[report,...p.reports].slice(0,14);p.last=snapshot(s,p);
 }
 

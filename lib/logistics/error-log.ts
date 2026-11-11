@@ -1,3 +1,5 @@
+import {installD1Retry} from '../d1-retry';
+installD1Retry();
 import {env} from 'cloudflare:workers';
 
 const db=()=>env.DB!;

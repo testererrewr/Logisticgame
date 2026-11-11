@@ -6,7 +6,7 @@ import {decodeCompany} from '../../../../lib/logistics/company-codec';
 import {rowFor} from '../../../../lib/logistics/ranking';
 import {seasonBadges} from '../../../../lib/logistics/season-server';
 import {allianceBadges} from '../../../../lib/logistics/alliance-server';
-import {ACHIEVEMENTS} from '../../../../lib/logistics/progression';
+import {ACHIEVEMENTS,rewardText} from '../../../../lib/logistics/progression';
 const db=()=>env.DB!;
 const cache=new Map<string,{at:number;data:unknown}>();
 
@@ -26,7 +26,7 @@ export async function GET(req:NextRequest){try{
    for(const [a,day] of Object.entries(p?.achievements||{}))if(!got.has(a))got.set(a,{world:r.world,day});
    totals.transported+=row.transported;totals.vehicles+=row.vehicles;totals.orders+=row.orders;totals.km+=p?.totals.km||0;totals.challenges+=p?.totals.challenges||0;
    companies.push({worldId:r.world_id,world:r.world,status:r.status,day:Math.floor(r.day),company:r.name||user.name,alliance:tags.get(r.world_id)||null,allianceBadges:aids.get(r.world_id)?(await allianceBadges(aids.get(r.world_id)!).catch(()=>[])).filter(b=>b.earned).map(b=>({icon:b.icon,name:b.name})):[],value:row.value,vehicles:row.vehicles,transported:row.transported,orders:row.orders,achievements:Object.keys(p?.achievements||{}).length});}catch{}}
- const achievements=ACHIEVEMENTS.map(a=>({id:a.id,icon:a.icon,name:a.name,text:a.text,earned:got.get(a.id)||null}));
+ const achievements=ACHIEVEMENTS.map(a=>({id:a.id,icon:a.icon,name:a.name,text:a.text,reward:rewardText(a.reward),earned:got.get(a.id)||null}));
  const badges=await seasonBadges(id).catch(()=>[] as any[]),podium=(badges as any[]).filter(b=>b.rank<=3),legend=podium.length?{titles:podium.length,best:Math.min(...podium.map(b=>b.rank)),label:podium.some(b=>b.rank===1)?'Legende':'Podiumsheld'}:null;
  const data={user:{id:user.id,name:user.name,since:user.created,premium,legend},companies,showcase,collection,stamps:[...stamps],islands:[...islands],achievements,totals,badges};
  cache.set(id,{at:Date.now(),data});if(cache.size>200)cache.delete(cache.keys().next().value!);

@@ -38,7 +38,7 @@ const mix=(t:string)=>{let h=2166136261;for(const c of t){h^=c.charCodeAt(0);h=M
 
 export function allianceOffers(allianceId:string,day:number,members:number):AllianceOffer[]{
  const d=Math.floor(day),rnd=mix(allianceId+':'+d),pool=GOODS.filter(g=>!g.seasonal&&g.id!=='containers'&&g.sale>0),out:AllianceOffer[]=[];
- for(let i=0;i<3&&pool.length;i++){const g=pool.splice(Math.floor(rnd()*pool.length),1)[0];const days=4+Math.floor(rnd()*7);const quantity=Math.max(50,Math.round((150+rnd()*350)*Math.max(1,members)*days/7/10)*10);const reward=Math.round(quantity*salePrice(g.id,d)*(.45+rnd()*.35));out.push({key:d+'-'+i,good:g.id,quantity,reward,days});}
+ for(let i=0;i<3&&pool.length;i++){const g=pool.splice(Math.floor(rnd()*pool.length),1)[0];const days=4+Math.floor(rnd()*7);const quantity=Math.max(2000,Math.round((1500+rnd()*2500)*Math.max(1,members)*days/7/10)*10);const reward=Math.round(quantity*salePrice(g.id,d)*(.45+rnd()*.35));out.push({key:d+'-'+i,good:g.id,quantity,reward,days});}
  return out;
 }
 interface OrderRow {id:string;alliance_id:string;good:string;quantity:number;delivered:number;reward:number;deadline_day:number;baselines:string;contributions:string;destination_name:string}
@@ -69,8 +69,8 @@ export function ensureAllianceExtras(){return extra??=db().batch([
 ]).then(()=>undefined).catch(e=>{extra=undefined;throw e;});}
 const ehOf=(s:State)=>Object.values(s.deliveryStats||{}).reduce((n,x)=>n+(x||0),0);
 
-export const weeklyTarget=(members:number)=>Math.max(1500,1500*members);
-export const weeklyReward=(members:number)=>15000+2500*Math.min(10,members);
+export const weeklyTarget=(members:number)=>Math.max(40000,25000*members);
+export const weeklyReward=(members:number)=>60000+10000*Math.min(10,members);
 export async function settleAllianceWeekly(worldId:string,states:Map<string,State>,day:number){
  await ensureAllianceTables();await ensureAllianceExtras();const out:D1PreparedStatement[]=[],week=weekOf(day);
  const map=await allianceMap(worldId);if(!map.size)return out;const byAlliance=new Map<string,string[]>();for(const [u,a] of map)(byAlliance.get(a)??byAlliance.set(a,[]).get(a)!).push(u);
