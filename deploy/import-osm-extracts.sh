@@ -46,7 +46,10 @@ log(){ echo "[$(ts)] $*" | tee -a "$LOG"; }
 fail(){ echo "[$(ts)] FEHLER $*" | tee -a "$LOG" >> "$ERR"; }
 
 if [[ "${args[0]}" == "status" ]]; then
-  echo "Fertige Regionen: $(ls "$WORK/fertig" 2>/dev/null | wc -l)"
+  S0=$(cat "$WORK/neu-seit" 2>/dev/null || echo 0); echo "Fertige Regionen: $(find "$WORK/fertig" -name '*.ok' -newermt "@$S0" 2>/dev/null | wc -l)"
+  echo "Aktuelle Region: $(grep -o '\[[0-9]*/[0-9]*\] .*' "$LOG" 2>/dev/null | tail -1)"
+  for f in "$WORK"/*.osm.pbf; do [[ -f "$f" ]] && echo "Download läuft: $(basename "$f") · $(du -h "$f" | cut -f1) · zuletzt geändert $(( $(date +%s)-$(stat -c %Y "$f") )) s her"; done
+  pgrep -a -f 'wget|osmium|sqlite3' 2>/dev/null | grep -v pgrep | cut -c1-160 | sed 's/^/Prozess: /' 
   [[ -f "$WORK/regionen.txt" ]] && echo "Geplante Regionen: $(wc -l < "$WORK/regionen.txt")"
   echo "Laufender Dienst: $(systemctl is-active logistik-osm-import 2>/dev/null || echo nein)"
   storage
@@ -93,21 +96,24 @@ FILTER=(nwr/shop nwr/craft nwr/industrial nwr/forestry nwr/farm nwr/building=war
   nwr/landuse=farmyard,quarry,industrial,forest nwr/man_made=works,mineshaft,adit,petroleum_well,water_works)
 
 ok=0; START=$(date +%s)
+mkdir -p "$WORK/fertig"; [[ $NEU -eq 1 ]] && { date +%s > "$WORK/neu-seit"; chown --reference="$WORK" "$WORK/neu-seit" 2>/dev/null || true; log "Kompletter Neuimport: alle Regionen werden neu geprüft. Ein Abbruch ist kein Problem – ohne --neu neu starten, dann geht es an der Stelle weiter."; }
+SINCE=$(cat "$WORK/neu-seit" 2>/dev/null || echo 0); NEU=0
+done_ok(){ [[ -f "$1" ]] && (( $(stat -c %Y "$1") >= SINCE )); }
 for pass in 1 2 3; do
 n=0; failed=0
-[[ $pass -gt 1 ]] && { NEU=0; log "Wiederholungsrunde $pass für fehlgeschlagene Regionen (nach 5 Minuten Pause) …"; sleep 300; }
+[[ $pass -gt 1 ]] && { log "Wiederholungsrunde $pass für fehlgeschlagene Regionen (nach 5 Minuten Pause) …"; sleep 300; }
 while IFS=$'\t' read -r id url; do
   n=$((n+1)); fid="${id//\//_}"; mark="$WORK/fertig/$fid.ok"
-  if [[ -f "$mark" && $NEU -eq 0 ]]; then continue; fi
+  if done_ok "$mark"; then continue; fi
   log "[$n/$TOTAL] $id"
   pbf="$WORK/$fid.osm.pbf"; flt="$WORK/$fid.filtered.osm.pbf"; geo="$WORK/$fid.geojsonseq"; t0=$(date +%s)
-  size=$(curl -sIL "$url" | awk 'tolower($1)=="content-length:"{v=$2} END{gsub("\r","",v); print v+0}')
+  size=$(curl -sIL -m 30 --retry 2 "$url" | awk 'tolower($1)=="content-length:"{v=$2} END{gsub("\r","",v); print v+0}')
   free=$(df --output=avail -B1 "$WORK" | tail -1)
   if [[ ${size:-0} -gt 0 && $free -lt $((size*3)) ]]; then fail "$id: zu wenig Speicher (frei $((free/1024/1024)) MB, benötigt ca. $((size*3/1024/1024)) MB) – übersprungen"; failed=$((failed+1)); continue; fi
-  good=0
+  good=0; log "  lade $(( ${size:-0}/1024/1024 )) MB …"
   for try in 1 2 3; do
-    wget -q -c --tries=20 --waitretry=30 --timeout=120 -O "$pbf" "$url" 2>>"$ERR"; rc=$?; if [[ $rc -ne 0 || ! -s "$pbf" ]]; then fail "$id: Download fehlgeschlagen (Versuch $try, wget-Code $rc) $url"; sleep $((try*60)); continue; fi
-    want=$(wget -q -O - "$url.md5" 2>/dev/null | awk '{print $1}'); have=$(md5sum "$pbf" | awk '{print $1}')
+    timeout --kill-after=30 $(( 900 + ${size:-0}/200000 )) wget -q -c --tries=8 --waitretry=20 --timeout=60 -O "$pbf" "$url" 2>>"$ERR"; rc=$?; [[ $rc -eq 124 || $rc -eq 137 ]] && log "  Download hängt – Abbruch nach Zeitlimit, neuer Versuch (Datei wird fortgesetzt)"; if [[ $rc -ne 0 || ! -s "$pbf" ]]; then fail "$id: Download fehlgeschlagen (Versuch $try, wget-Code $rc) $url"; sleep $((try*60)); continue; fi
+    want=$(timeout 90 wget -q --tries=3 --timeout=30 -O - "$url.md5" 2>/dev/null | awk '{print $1}'); have=$(md5sum "$pbf" | awk '{print $1}')
     if [[ -n "$want" && "$want" != "$have" ]]; then fail "$id: Prüfsumme falsch (erwartet $want, erhalten $have) – lade neu"; rm -f "$pbf"; sleep 30; continue; fi
     good=1; break
   done
@@ -122,14 +128,14 @@ while IFS=$'\t' read -r id url; do
   after=$(sql "SELECT count(*) FROM logistics_partner_registry;" 2>/dev/null || echo 0)
   rm -f "$geo"; ok=$((ok+1))
   echo "$(ts) neu: $((after-before)) · Register gesamt: $after" > "$mark"
-  elapsed=$(( $(date +%s)-START )); done_n=$(ls "$WORK/fertig" | wc -l)
+  elapsed=$(( $(date +%s)-START )); done_n=$(find "$WORK/fertig" -name '*.ok' -newermt "@$SINCE" | wc -l)
   log "  fertig in $(( $(date +%s)-t0 )) s · +$((after-before)) neue Betriebe · Register: $after · Fortschritt $done_n/$TOTAL"
   log "  $(storage)"
 done < "$WORK/regionen.txt"
 [[ $failed -eq 0 ]] && break
 done
 
-log "Durchlauf beendet: $ok Regionen importiert, $failed fehlgeschlagen, $(ls "$WORK/fertig" | wc -l)/$TOTAL insgesamt fertig."
+log "Durchlauf beendet: $ok Regionen importiert, $failed fehlgeschlagen, $(find "$WORK/fertig" -name '*.ok' -newermt "@$SINCE" | wc -l)/$TOTAL insgesamt fertig."
 log "$(storage)"
 if [[ $failed -gt 0 ]]; then log "Fehlgeschlagene Regionen: einfach denselben Befehl erneut starten (fertige werden übersprungen). Details: $ERR"; fi
 
