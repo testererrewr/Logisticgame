@@ -28,7 +28,7 @@ function writeSeen(w:string,v:any){try{localStorage.setItem(seenKey(w),JSON.stri
 function Messages({worldId,to,onRead}:{worldId:string;to:string;onRead:()=>void}){
  const [data,setData]=useState<any>(null),[peer,setPeer]=useState(to),[text,setText]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false);
  const load=useCallback(async()=>{try{const r=await fetch('/api/logistik/messages?world='+encodeURIComponent(worldId),{cache:'no-store'}),d=await r.json() as any;if(!r.ok)throw Error(d.error);setData(d);}catch(e:any){setError(e.message);}},[worldId]);
- useEffect(()=>{void load();const t=setInterval(()=>void load(),20000);return()=>clearInterval(t);},[load]);useEffect(()=>{if(to)setPeer(to);},[to]);
+ useEffect(()=>{void load();const t=setInterval(()=>{if(!document.hidden)void load();},20000);return()=>clearInterval(t);},[load]);useEffect(()=>{if(to)setPeer(to);},[to]);
  const post=async(body:any)=>{const r=await fetch('/api/logistik/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({world:worldId,...body})}),d=await r.json() as any;if(!r.ok)throw Error(d.error);};
  useEffect(()=>{if(!peer||!data)return;if(data.messages.some((m:any)=>m.from_id===peer&&!m.read&&m.to_id===data.me))void post({action:'read',with:peer}).then(()=>{onRead();void load();}).catch(()=>{});},[peer,data]);
  if(!data)return <p className="log-muted">{error||'Nachrichten werden geladen …'}</p>;

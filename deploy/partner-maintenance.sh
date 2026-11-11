@@ -24,5 +24,5 @@ INSERT INTO logistics_partner_grid_new SELECT 2,CAST((lat+90)/0.1 AS INTEGER),CA
 BEGIN;DELETE FROM logistics_partner_grid;INSERT INTO logistics_partner_grid SELECT * FROM logistics_partner_grid_new;COMMIT;
 DROP TABLE logistics_partner_grid_new;
 CREATE INDEX IF NOT EXISTS logistics_partner_grid_area ON logistics_partner_grid(level,kind,gy,gx);"
-echo "Betriebe je Art:"; sql "SELECT kind, sum(n) FROM logistics_partner_grid WHERE level=0 GROUP BY kind ORDER BY 2 DESC;" | column -t -s'|' || true
+echo "Betriebe je Art:"; sql "SELECT kind, sum(n) FROM logistics_partner_grid WHERE level=0 GROUP BY kind ORDER BY 2 DESC;" | awk -F'|' '{printf "  %-22s %12s\n",$1,$2}' || true
 echo "Fertig in $(( ($(date +%s)-t0)/60 )) Minuten."

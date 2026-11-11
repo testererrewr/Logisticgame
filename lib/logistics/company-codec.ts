@@ -28,16 +28,16 @@ export const deleteChunks=async(world:string,user:string)=>(await D()).prepare('
 const chunkTable=()=>chunkReady??=D().then(db=>db.prepare('CREATE TABLE IF NOT EXISTS logistics_company_chunks(id TEXT NOT NULL,idx INTEGER NOT NULL,owner TEXT NOT NULL,data TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(id,idx))').run().then(()=>db.prepare('CREATE INDEX IF NOT EXISTS logistics_company_chunks_owner ON logistics_company_chunks(owner,created)').run())).catch(e=>{chunkReady=undefined;throw e;});
 function stripAlliance(state:State){return state.sites.some(p=>(p as {allianceShared?:boolean}).allianceShared)?{...state,sites:state.sites.filter(p=>!(p as {allianceShared?:boolean}).allianceShared)}:state;}
 
-export async function encodeCompanyParts(state:State,world:string,user:string):Promise<{value:string;statements:D1PreparedStatement[]}>{
- const base=stripAlliance(state);let text=JSON.stringify(base);if(text.length<1500000)return {value:text,statements:[]};
- let out=await gzip(text);if(out.length<=LIMIT)return {value:out,statements:[]};
+export async function encodeCompanyParts(state:State,world:string,user:string):Promise<{value:string;statements:D1PreparedStatement[];text:string}>{
+ const base=stripAlliance(state);let text=JSON.stringify(base);if(text.length<1500000)return {value:text,statements:[],text};
+ let out=await gzip(text);if(out.length<=LIMIT)return {value:out,statements:[],text};
  let payload=out.slice(PREFIX.length);
- if(payload.length>PART*MAX_PARTS){for(const max of [3000,1200,500]){const small=compactState(structuredClone(base) as State,max);text=JSON.stringify(small);out=await gzip(text);if(out.length<=LIMIT)return {value:out,statements:[]};payload=out.slice(PREFIX.length);if(payload.length<=PART*MAX_PARTS)break;}if(payload.length>PART*MAX_PARTS)throw Error('Spielstand zu groß zum Speichern.');}
+ if(payload.length>PART*MAX_PARTS){for(const max of [3000,1200,500]){const small=compactState(structuredClone(base) as State,max);text=JSON.stringify(small);out=await gzip(text);if(out.length<=LIMIT)return {value:out,statements:[],text};payload=out.slice(PREFIX.length);if(payload.length<=PART*MAX_PARTS)break;}if(payload.length>PART*MAX_PARTS)throw Error('Spielstand zu groß zum Speichern.');}
  await chunkTable();const db=await D();const owner=world+'|'+user,id=owner+'|'+crypto.randomUUID(),now=Date.now(),parts:string[]=[];for(let i=0;i<payload.length;i+=PART)parts.push(payload.slice(i,i+PART));
  const statements=parts.map((data,idx)=>db.prepare('INSERT OR REPLACE INTO logistics_company_chunks(id,idx,owner,data,created) VALUES(?,?,?,?,?)').bind(id,idx,owner,data,now));
 
  statements.unshift(db.prepare('DELETE FROM logistics_company_chunks WHERE owner=? AND created<?').bind(owner,now-60000));
- return {value:CHUNK+id+':'+parts.length,statements};
+ return {value:CHUNK+id+':'+parts.length,statements,text};
 }
 
 export async function encodeCompany(state:State):Promise<string>{

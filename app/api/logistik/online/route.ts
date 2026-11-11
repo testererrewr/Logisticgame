@@ -62,7 +62,17 @@ export async function currentUser(req:Request):Promise<User|null>{
 const readWorld=async(id:string)=>{await ensureWorldSettingsColumn();return db().prepare('SELECT * FROM logistics_worlds WHERE id=?').bind(id).first<World>();};
 const readCompany=(world:string,user:string)=>db().prepare('SELECT * FROM logistics_world_companies WHERE world_id=? AND user_id=?').bind(world,user).first<Company>();
 const readCompanies=async(world:string)=>(await db().prepare('SELECT * FROM logistics_world_companies WHERE world_id=? ORDER BY user_id').bind(world).all<Company>()).results;
+let achTable:Promise<unknown>|undefined;
+const settleCache=new Map<string,{worldRev:number;entries:Map<string,{updated:number;revision:number;text:string}>}>();
+async function companiesForSettle(world:World):Promise<{rows:Company[];cached:Map<string,string>|null}>{
+ const c=settleCache.get(world.id);
+ if(c&&c.worldRev===(world as any).revision){const light=(await db().prepare('SELECT world_id,user_id,name,revision,updated FROM logistics_world_companies WHERE world_id=? ORDER BY user_id').bind(world.id).all<any>()).results;
+  if(light.length===c.entries.size&&light.every(r=>{const e=c.entries.get(r.user_id);return !!e&&e.updated===r.updated&&e.revision===r.revision;}))return {rows:light.map(r=>({...r,state:''})) as Company[],cached:new Map(light.map(r=>[r.user_id,c.entries.get(r.user_id)!.text]))};}
+ settleCache.delete(world.id);return {rows:await readCompanies(world.id),cached:null};}
+const trackCache=new Map<string,{at:number;tracks:Track[]}>();
 async function borrowedTracks(world:string,user:string):Promise<Track[]>{
+ const key=world+':'+user,hit=trackCache.get(key);if(hit&&Date.now()-hit.at<60000)return hit.tracks;const tracks=await loadBorrowedTracks(world,user);if(trackCache.size>500)trackCache.clear();trackCache.set(key,{at:Date.now(),tracks});return tracks;}
+async function loadBorrowedTracks(world:string,user:string):Promise<Track[]>{
  const rows=await db().prepare('SELECT w.state FROM logistics_world_permissions p JOIN logistics_world_companies w ON w.user_id=p.owner_id AND w.world_id=p.world_id WHERE p.world_id=? AND p.grantee_id=? AND p.enabled=1').bind(world,user).all<{state:string}>();
  return (await Promise.all(rows.results.map(async r=>normalizeFreightState(await decodeCompany(r.state)).tracks||[]))).flat();
 }
@@ -113,17 +123,17 @@ async function settleWorldNow(id:string,budgetMs:number):Promise<World>{
   if(attempt>0&&Date.now()-settleAt>budgetMs){measure(world);behind.add(id);return world;}
   const seasonEnd=seasonEndDay(parseSettings(world.settings));
   const target=Math.min(clockTarget(world,settleAt),seasonEnd??Infinity);if(target<=world.day+1e-8)return world;
-  const next=Math.min(target,world.day+1/72),rows=await readCompanies(id);
+  const next=Math.min(target,world.day+1/72),{rows,cached}=await companiesForSettle(world);
   const permissions=(await db().prepare('SELECT owner_id,grantee_id FROM logistics_world_permissions WHERE world_id=? AND enabled=1').bind(id).all<{owner_id:string;grantee_id:string}>()).results;
   const rules=await readPartnerRules(),market={...newMarket(world.day),...JSON.parse(world.market||'{}')};
-  const states=new Map(await Promise.all(rows.map(async r=>[r.user_id,applyStateRules(normalizeFreightState(await decodeCompany(r.state)),rules)] as [string,State])));
+  const states=new Map(await Promise.all(rows.map(async r=>[r.user_id,applyStateRules(normalizeFreightState(cached?.has(r.user_id)?JSON.parse(cached.get(r.user_id)!) as State:await decodeCompany(r.state)),rules)] as [string,State])));
   const statements:D1PreparedStatement[]=[];
   {const cfg=parseSettings(world.settings);for(const st of states.values()){st.maintenanceOff=!cfg.maintenance;st.fuelOff=!cfg.fuel;st.driversOff=!cfg.drivers;}}
   for(const row of rows){const state=states.get(row.user_id)!;state.borrowedTracks=permissions.filter(p=>p.grantee_id===row.user_id).flatMap(p=>states.get(p.owner_id)?.tracks||[]);}
   {const amap=await allianceMap(id);for(const row of rows){const aid=amap.get(row.user_id);if(!aid)continue;const own=states.get(row.user_id)!;own.sites.push(...allySites(own,rows.filter(r=>r.user_id!==row.user_id&&amap.get(r.user_id)===aid).map(r=>({id:r.user_id,name:r.name||'Spedition',state:states.get(r.user_id)!})),amap.storage.get(aid)!==false));}}
   let supplyRows:SupplyRow[]=[];try{supplyRows=await activeSupplyRows(id);attachSupplySites(states,supplyRows);}catch(e){await logError('settle:supply-sites',e,{world:id},'warn');}
   if(attempt===0)for(const state of states.values())await prepareVehicleRoads(state);
-  const achBefore=new Map<string,number>();try{await db().prepare('CREATE TABLE IF NOT EXISTS logistics_user_achievements(user_id TEXT NOT NULL,achievement TEXT NOT NULL,world_id TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(user_id,achievement))').run();const done=(await db().prepare('SELECT user_id,achievement FROM logistics_user_achievements WHERE world_id<>? AND user_id IN (SELECT value FROM json_each(?))').bind(id,JSON.stringify(rows.map(r=>r.user_id))).all<{user_id:string;achievement:string}>()).results;for(const [u,st] of states){(st as any).rewardedElsewhere=done.filter(d=>d.user_id===u).map(d=>d.achievement);achBefore.set(u,Object.keys(st.progress?.achievements||{}).length);}}catch{}
+  const achBefore=new Map<string,number>();try{await (achTable??=db().prepare('CREATE TABLE IF NOT EXISTS logistics_user_achievements(user_id TEXT NOT NULL,achievement TEXT NOT NULL,world_id TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(user_id,achievement))').run().catch(e=>{achTable=undefined;throw e;}));const done=(await db().prepare('SELECT user_id,achievement FROM logistics_user_achievements WHERE world_id<>? AND user_id IN (SELECT value FROM json_each(?))').bind(id,JSON.stringify(rows.map(r=>r.user_id))).all<{user_id:string;achievement:string}>()).results;for(const [u,st] of states){(st as any).rewardedElsewhere=done.filter(d=>d.user_id===u).map(d=>d.achievement);achBefore.set(u,Object.keys(st.progress?.achievements||{}).length);}}catch{}
   try{await ensureStoredNews(next);}catch(e){await logError('settle:news',e,{world:id},'warn');}
   let convoyCtx:ConvoyCtx|null=null;try{convoyCtx=await prepareConvoys(id,states,next);}catch(e){await logError('settle:convoy-prepare',e,{world:id},'error');}
   const advanced=stepSharedWorld(states,next,market);
@@ -140,12 +150,13 @@ async function settleWorldNow(id:string,budgetMs:number):Promise<World>{
   try{statements.push(...await feedFromStates(id,advanced,new Map(rows.map(r=>[r.user_id,r.name||''])),world.day,next));}catch(e){await logError('settle:feed',e,{world:id},'warn');}
   try{await ensureMessageTable();for(const row of rows){const st=advanced.get(row.user_id);if(!st)continue;cleanupOrderLines(st);for(const m of newlyCompletedOrders(st))statements.push(systemMessageStatement(id,row.user_id,m.text));}}catch(e){await logError('settle:order-lines',e,{world:id},'warn');}
   const dissolved=new Set<string>();try{for(const row of rows){const st=advanced.get(row.user_id)!;if(st.cash>=0){delete (st as any).insolventSince;continue;}const since=(st as any).insolventSince??=next,left=3-(next-since);if(left>0){if((st as any).insolventWarned!==Math.floor(next)){(st as any).insolventWarned=Math.floor(next);log(st,`⚠️ Konto im Minus! Ohne Ausgleich wird die Spedition in ${left<1?Math.round(left*24)+' Stunden':left.toFixed(1).replace('.',',')+' Tagen'} aufgelöst.`,'warn');}continue;}statements.push(...await insolvencyStatements(id,row,st,next));dissolved.add(row.user_id);}}catch(e){await logError('settle:insolvency',e,{world:id},'error');}
-  for(const row of rows){if(dissolved.has(row.user_id))continue;const state=advanced.get(row.user_id)!;delete state.borrowedTracks;const enc=await encodeCompanyParts(state,id,row.user_id);statements.push(...enc.statements,db().prepare('UPDATE logistics_world_companies SET state=?,updated=? WHERE world_id=? AND user_id=?').bind(enc.value,Date.now(),id,row.user_id));}
+  const written=new Map<string,{updated:number;revision:number;text:string}>();for(const row of rows){if(dissolved.has(row.user_id))continue;const state=advanced.get(row.user_id)!;delete state.borrowedTracks;const enc=await encodeCompanyParts(state,id,row.user_id),ts=Date.now();written.set(row.user_id,{updated:ts,revision:row.revision,text:enc.text});statements.push(...enc.statements,db().prepare('UPDATE logistics_world_companies SET state=?,updated=? WHERE world_id=? AND user_id=?').bind(enc.value,ts,id,row.user_id));}
   const deadlines=[...advanced.values()].flatMap(s=>s.contracts.filter(c=>c.kind==='haulage'&&!c.cancelled&&c.endDay>=s.day&&c.delivered<(c.total||0)).map(c=>({id:c.id,deadline:c.endDay})));if(deadlines.length)statements.push(db().prepare("UPDATE logistics_container_offers SET deadline=(SELECT json_extract(value,'$.deadline') FROM json_each(?) WHERE json_extract(value,'$.id')=logistics_container_offers.id) WHERE world_id=? AND status='accepted' AND id IN (SELECT json_extract(value,'$.id') FROM json_each(?) WHERE json_extract(value,'$.deadline')>logistics_container_offers.deadline)").bind(JSON.stringify(deadlines),id,JSON.stringify(deadlines)));
   const completed=[...advanced.values()].flatMap(s=>s.contracts.filter(c=>c.kind==='haulage'&&c.delivered>=(c.total||Infinity)).map(c=>c.id));if(completed.length)statements.push(db().prepare("UPDATE logistics_container_offers SET status='completed' WHERE world_id=? AND status='accepted' AND id IN (SELECT value FROM json_each(?))").bind(id,JSON.stringify(completed)));statements.push(db().prepare("UPDATE logistics_container_offers SET status='expired' WHERE world_id=? AND status='accepted' AND deadline<?").bind(id,next));
   if(seasonEnd!==null&&next>=seasonEnd-1e-9){try{const amap=await allianceMap(id),tags=new Map<string,string>();const tagRows=(await db().prepare('SELECT m.user_id,a.tag FROM logistics_alliance_members m JOIN logistics_alliances a ON a.id=m.alliance_id WHERE m.world_id=?').bind(id).all<{user_id:string;tag:string}>()).results;for(const t of tagRows)if(amap.has(t.user_id))tags.set(t.user_id,t.tag);statements.push(...await seasonFinalStatements(id,advanced,new Map(rows.map(r=>[r.user_id,r.name||''])),tags));try{const {ensureSocialTables,feedStatement}=await import('../../../../lib/logistics/social-server');await ensureSocialTables();statements.push(feedStatement(id,null,'history','Die Saison ist beendet – die Endwertung steht fest. Die Plätze 1–3 tragen ab jetzt einen bleibenden Titel.',{important:true,day:next,id:'season-end:'+id}));}catch{}}catch(e){await logError('settle:season-final',e,{world:id},'error');}}
   statements.push(db().prepare('UPDATE logistics_worlds SET day=?,last_tick=?,market=? WHERE id=?').bind(next,world.last_tick+(next-world.day)*worldTickMs(world),JSON.stringify(market),id));
-  try{await commit(world,[],statements,rules.revision);}catch{continue;}
+  try{await commit(world,[],statements,rules.revision);}catch{settleCache.delete(id);continue;}
+  settleCache.set(id,{worldRev:Number((world as any).revision||0)+1,entries:written});
   await ensureContainerDay(id,next,rules,3,2000).catch(e=>logError('container-generation',e,{world:id},'warn'));
 
  }
@@ -323,7 +334,7 @@ export async function POST(req:NextRequest){const ctx:Record<string,unknown>={},
   await otherCompany(id,u.id,cmd.receiverId);if(!GOODS.some(g=>g.id===cmd.good&&g.id!=='containers')||!numericAmount(cmd.quantity,10000)||!Number.isSafeInteger(cmd.price)||cmd.price<0||cmd.price>2000000000)throw Error('Ungültiges Handelsangebot.');
   if(!tradeTerminal(state,cmd.siteId)||stock(state,cmd.siteId,cmd.good)<cmd.quantity)throw Error('Nicht genug Ware am eigenen Übergabeterminal.');
   statements.push(db().prepare("INSERT OR IGNORE INTO logistics_world_offers(id,world_id,sender_id,receiver_id,site_id,good,quantity,price,status,created,expires,quantity_unit) VALUES(?,?,?,?,?,?,?,?,'open',?,?,'EH')").bind(body.requestId,id,u.id,cmd.receiverId,cmd.siteId,cmd.good,cmd.quantity,cmd.price,now,now+7*86400000),await update(row,state));
- }else if(cmd.type==='trackPermission'){
+ }else if(cmd.type==='trackPermission'){trackCache.clear();
   await otherCompany(id,u.id,cmd.receiverId);if(typeof cmd.enabled!=='boolean')throw Error('Ungültige Freigabe.');
   statements.push(db().prepare('INSERT INTO logistics_world_permissions(world_id,owner_id,grantee_id,enabled,updated) VALUES(?,?,?,?,?) ON CONFLICT(world_id,owner_id,grantee_id) DO UPDATE SET enabled=excluded.enabled,updated=excluded.updated').bind(id,u.id,cmd.receiverId,cmd.enabled?1:0,now),await update(row,state));
  }else if(cmd.type==='acceptTrade'){
