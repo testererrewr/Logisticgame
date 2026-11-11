@@ -3,7 +3,7 @@ import {useMemo,useState} from 'react';
 import {GOODS,FREIGHT_NAMES,salePrice,type GoodId} from '../../lib/logistics/engine';
 const euro=(n:number)=>n.toLocaleString('de-DE',{style:'currency',currency:'EUR',minimumFractionDigits:2,maximumFractionDigits:2});
 import ProductImage from './product-image';
-import NewsCarousel from './news-carousel';
+
 import {energyTable} from '../../lib/logistics/fuel';
 
 const HISTORY=30;
@@ -19,7 +19,7 @@ export default function CommodityExchange({day,worldId}:{day:number;worldId?:str
  const winners=[...rows].sort((a,b)=>b.change-a.change).slice(0,3),losers=[...rows].sort((a,b)=>a.change-b.change).slice(0,3);
  return <section className="log-exchange-board">
   <h1>Börse · Spieltag {today}</h1>
-  <NewsCarousel day={day} worldId={worldId}/>
+
   
   <h2>Energiepreise heute</h2><div className="log-energy-board">{energyTable(today).map(e=><div key={e.kind}><small>{e.name}</small><b>{e.now.toLocaleString('de-DE',{minimumFractionDigits:e.base<10?3:0,maximumFractionDigits:e.base<10?3:0})} {e.per}</b><span className={e.change>=0?'up':'down'}>{e.change>=0?'▲ +':'▼ '}{e.change.toFixed(1)} % zum Vortag</span><Spark values={e.history}/></div>)}</div>
   <div className="log-exchange-movers"><div><b>Gewinner heute</b>{winners.map(r=><span key={r.g.id} className="up">{r.g.name} +{r.change.toFixed(1)} %</span>)}</div><div><b>Verlierer heute</b>{losers.map(r=><span key={r.g.id} className="down">{r.g.name} {r.change.toFixed(1)} %</span>)}</div></div>

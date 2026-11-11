@@ -97,16 +97,16 @@ for pass in 1 2 3; do
 n=0; failed=0
 [[ $pass -gt 1 ]] && { NEU=0; log "Wiederholungsrunde $pass für fehlgeschlagene Regionen (nach 5 Minuten Pause) …"; sleep 300; }
 while IFS=$'\t' read -r id url; do
-  n=$((n+1)); mark="$WORK/fertig/$id.ok"
+  n=$((n+1)); fid="${id//\//_}"; mark="$WORK/fertig/$fid.ok"
   if [[ -f "$mark" && $NEU -eq 0 ]]; then continue; fi
   log "[$n/$TOTAL] $id"
-  pbf="$WORK/$id.osm.pbf"; flt="$WORK/$id.filtered.osm.pbf"; geo="$WORK/$id.geojsonseq"; t0=$(date +%s)
+  pbf="$WORK/$fid.osm.pbf"; flt="$WORK/$fid.filtered.osm.pbf"; geo="$WORK/$fid.geojsonseq"; t0=$(date +%s)
   size=$(curl -sIL "$url" | awk 'tolower($1)=="content-length:"{v=$2} END{gsub("\r","",v); print v+0}')
   free=$(df --output=avail -B1 "$WORK" | tail -1)
   if [[ ${size:-0} -gt 0 && $free -lt $((size*3)) ]]; then fail "$id: zu wenig Speicher (frei $((free/1024/1024)) MB, benötigt ca. $((size*3/1024/1024)) MB) – übersprungen"; failed=$((failed+1)); continue; fi
   good=0
   for try in 1 2 3; do
-    if ! wget -q -c --tries=20 --waitretry=30 --timeout=120 -O "$pbf" "$url" 2>>"$ERR"; then fail "$id: Download fehlgeschlagen (Versuch $try, wget-Code $?) $url"; sleep $((try*60)); continue; fi
+    wget -q -c --tries=20 --waitretry=30 --timeout=120 -O "$pbf" "$url" 2>>"$ERR"; rc=$?; if [[ $rc -ne 0 || ! -s "$pbf" ]]; then fail "$id: Download fehlgeschlagen (Versuch $try, wget-Code $rc) $url"; sleep $((try*60)); continue; fi
     want=$(wget -q -O - "$url.md5" 2>/dev/null | awk '{print $1}'); have=$(md5sum "$pbf" | awk '{print $1}')
     if [[ -n "$want" && "$want" != "$have" ]]; then fail "$id: Prüfsumme falsch (erwartet $want, erhalten $have) – lade neu"; rm -f "$pbf"; sleep 30; continue; fi
     good=1; break

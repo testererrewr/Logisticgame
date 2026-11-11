@@ -34,12 +34,12 @@ export async function generation(worldId:string){const r=await env.DB!.prepare('
 
 export async function regenerateContainerOrders(worldId:string,day:number,rules:PartnerRules){const gen=await generation(worldId)+1,period=orderPeriodDay(day);
  await env.DB!.batch([env.DB!.prepare("DELETE FROM logistics_container_offers WHERE world_id=? AND status='open' AND accepted_by IS NULL").bind(worldId),env.DB!.prepare('INSERT INTO logistics_runtime(id,updated,payload) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET updated=excluded.updated,payload=excluded.payload').bind('container-gen:'+worldId,Date.now(),String(gen))]);
- await ensureContainerDay(worldId,day,rules,40,20000);const n=await env.DB!.prepare("SELECT count(*) AS n FROM logistics_container_offers WHERE world_id=? AND status='open' AND day<=? AND day>?").bind(worldId,day,day-ORDER_PERIOD_DAYS).first<{n:number}>();return {period,count:n?.n||0,generation:gen};}
+ {const t=Date.now();while(Date.now()-t<25000){const r=await ensureContainerDay(worldId,day,rules,40,Math.max(2000,25000-(Date.now()-t)));if(r.pending===0)break;if(r.pending===-1)await new Promise(res=>setTimeout(res,1500));}}const n=await env.DB!.prepare("SELECT count(*) AS n FROM logistics_container_offers WHERE world_id=? AND status='open' AND day<=? AND day>?").bind(worldId,day,day-ORDER_PERIOD_DAYS).first<{n:number}>();return {period,count:n?.n||0,generation:gen};}
 type Lite=Site&{city?:string};
 
-export async function sampleRegistry(seed:string,count:number,inside:((lat:number,lon:number)=>boolean)|null,rules:PartnerRules,withPayload=false):Promise<Lite[]>{
+export async function sampleRegistry(seed:string,count:number,inside:((lat:number,lon:number)=>boolean)|null,rules:PartnerRules,withPayload=false,maxMs=4000):Promise<Lite[]>{const t0=Date.now();
  const max=(await env.DB!.prepare('SELECT max(rowid) AS m FROM logistics_partner_registry').first<{m:number}>())?.m||0;if(!max)return [];const out:Lite[]=[],seen=new Set<string>();
- for(let round=0;round<30&&out.length<count;round++){const ids:number[]=[];for(let i=0;i<1500;i++)ids.push(1+stableHash(seed+'/'+round+'/'+i)%max);
+ for(let round=0;round<30&&out.length<count&&(round===0||Date.now()-t0<maxMs);round++){const ids:number[]=[];for(let i=0;i<1500;i++)ids.push(1+stableHash(seed+'/'+round+'/'+i)%max);
   const rows=(await env.DB!.prepare(`SELECT id,kind,name,lat,lon,${withPayload?'payload,':''}COALESCE(json_extract(payload,'$.tags."addr:city"'),json_extract(payload,'$.tags."addr:town"'),json_extract(payload,'$.tags."addr:village"'),'') AS city FROM logistics_partner_registry WHERE rowid IN (SELECT value FROM json_each(?))`).bind(JSON.stringify(ids)).all<Lite&{payload?:string}>()).results;
   for(const r of rows){if(seen.has(r.id)||rules.items[r.id]?.hidden||inside&&!inside(r.lat,r.lon))continue;seen.add(r.id);let site:Lite=r;if(r.payload){try{site={...JSON.parse(r.payload),city:r.city};}catch{}}out.push(site);if(out.length>=count)break;}}
  return out;}
@@ -48,6 +48,8 @@ export const countryPeriod=(day:number,c:string)=>{const o=countryOffset(c);retu
 const SELECT_LITE=`r.id,r.kind,r.name,r.lat,r.lon,COALESCE(json_extract(r.payload,'$.tags."addr:city"'),json_extract(r.payload,'$.tags."addr:town"'),json_extract(r.payload,'$.tags."addr:village"'),'') AS city`;
 async function stripeRows(stripes:number[][],perStripe:number):Promise<Lite[]>{const out:Lite[]=[];for(let i=0;i<stripes.length;i+=15){const part=stripes.slice(i,i+15),sql=part.map(()=>`SELECT * FROM (SELECT ${SELECT_LITE} FROM logistics_partner_registry r WHERE r.lat BETWEEN ? AND ? AND r.lon BETWEEN ? AND ? LIMIT ?)`).join(' UNION ALL ');const rows=(await env.DB!.prepare(sql).bind(...part.flatMap(b=>[b[0],b[1],b[2],b[3],perStripe])).all<Lite>()).results;out.push(...rows);}return out;}
 async function withPayload(ids:string[]){const map=new Map<string,Site>();for(let i=0;i<ids.length;i+=200){const rows=(await env.DB!.prepare('SELECT id,payload FROM logistics_partner_registry WHERE id IN (SELECT value FROM json_each(?))').bind(JSON.stringify(ids.slice(i,i+200))).all<{id:string;payload:string}>()).results;for(const r of rows){try{map.set(r.id,JSON.parse(r.payload));}catch{}}}return map;}
+const farCache=new Map<string,Lite[]>();
+async function farSample(seed:string,inside:((lat:number,lon:number)=>boolean)|null,rules:PartnerRules){const hit=farCache.get(seed);if(hit)return hit;const list=await sampleRegistry(seed,1500,inside,rules,false,1500).catch(()=>[] as Lite[]);if(farCache.size>20)farCache.clear();if(list.length)farCache.set(seed,list);return list;}
 const stateKey=(worldId:string,gen:number)=>'container-countries-v1:'+worldId+':'+gen;
 
 export async function ensureContainerDay(worldId:string,day:number,rules:PartnerRules,budget=6,timeMs=3500){await seedRegistry();await ensureOfferGoodColumn();const started=Date.now(),gen=await generation(worldId),key=stateKey(worldId,gen),lockId='container-gen-lock:'+worldId;
@@ -56,8 +58,8 @@ export async function ensureContainerDay(worldId:string,day:number,rules:Partner
  try{const row=await env.DB!.prepare('SELECT payload FROM logistics_runtime WHERE id=?').bind(key).first<{payload:string}>(),done:Record<string,number>=row?JSON.parse(row.payload):{};
   const settings=await worldSettings(worldId),inside=regionFilter(settings),allowed=allowedCountries(settings);
   const due=countryAreas().filter(c=>c.name!=='Antarktika'&&(!allowed||allowed.has(c.name))&&done[c.name]!==countryPeriod(day,c.name)).sort((a,b)=>(done[a.name]===undefined?0:1)-(done[b.name]===undefined?0:1)||stableHash(a.name+day)-stableHash(b.name+day));
-  let generated=0,processed=0;if(!due.length)return {generated:0,pending:0};const far=await sampleRegistry(worldId+'/far/'+Math.floor(day)+'/'+gen,1500,inside,rules).catch(()=>[] as Lite[]);
-  for(const c of due){if(processed>=budget||Date.now()-started>timeMs)break;processed++;const period=countryPeriod(day,c.name);
+  let generated=0,processed=0;if(!due.length)return {generated:0,pending:0};const far=await farSample(worldId+'/far/'+Math.floor(day)+'/'+gen,inside,rules);
+  for(const c of due){if(processed>=budget||processed>0&&Date.now()-started>timeMs)break;processed++;const period=countryPeriod(day,c.name);
    try{generated+=await generateCountry(worldId,c,period,gen,day,rules,inside,far);}catch(e){console.error('container country',c.name,e);}
    done[c.name]=period;}
   await env.DB!.batch([env.DB!.prepare('INSERT INTO logistics_runtime(id,updated,payload) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET updated=excluded.updated,payload=excluded.payload').bind(key,Date.now(),JSON.stringify(done)),

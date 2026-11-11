@@ -1,5 +1,5 @@
 'use client';
-import {useMemo,useState} from 'react';
+import {useMemo,useState,useEffect} from 'react';
 import {VEHICLES,type State} from '../../lib/logistics/engine';
 import VehiclePhoto from './vehicle-photo';
 import {useBranding,loadBranding,resizeImage} from './branding-store';
@@ -8,6 +8,7 @@ const MODES:Record<string,string>={truck:'LKW',van:'Transporter',rail:'Züge',sh
 const STATUS:Record<string,string>={pending:'wartet auf Freigabe',approved:'freigegeben'};
 export default function BrandingPanel({worldId,state,companyName}:{worldId:string;state:State;companyName:string}){
  const brand=useBranding(),[primary,setPrimary]=useState<string|null>(null),[secondary,setSecondary]=useState<string|null>(null),[busy,setBusy]=useState(false),[msg,setMsg]=useState(''),[query,setQuery]=useState(''),[mode,setMode]=useState('own');
+ useEffect(()=>{void loadBranding(worldId);const t=setInterval(()=>void loadBranding(worldId),60000);return()=>clearInterval(t);},[worldId]);
  const p=primary??brand?.primary??'#2f6fae',s=secondary??brand?.secondary??'#f2c14e',premium=!!brand?.premium,images=premium||!!brand?.entitlements.includes('customVehicleImages');
  const send=async(body:any,ok:string)=>{setBusy(true);setMsg('');try{const r=await fetch('/api/logistik/branding',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({world:worldId,...body})}),d:any=await r.json().catch(()=>({error:'Keine Antwort.'}));if(!r.ok)throw Error(d.error);await loadBranding(worldId);setMsg(ok);}catch(e:any){setMsg(e.message);}finally{setBusy(false);}};
  const upload=async(file:File|undefined,max:number,body:(img:string)=>any,ok:string)=>{if(!file)return;try{const img=await resizeImage(file,max);await send(body(img),ok);}catch(e:any){setMsg(e.message);}};
@@ -27,7 +28,7 @@ export default function BrandingPanel({worldId,state,companyName}:{worldId:strin
    {!images?<p className="log-help">Eigene Bilder für jedes Fahrzeugmodell (z. B. in deiner Lackierung) gehören zu Premium.</p>:<>
     <p className="log-help">Für jedes Fahrzeugmodell ein eigenes Bild (max. 640 px, wird verkleinert). Es ist sofort für alle Spieler sichtbar und wird anschließend von einem Admin geprüft; bei Ablehnung wird es entfernt.</p>
     <div className="log-trailer-toolbar"><select aria-label="Modelle" value={mode} onChange={e=>setMode(e.target.value)}><option value="own">Meine Flotte</option><option value="custom">Mit eigenem Bild</option><option value="all">Alle Modelle ({VEHICLES.length})</option>{Object.entries(MODES).map(([k,n])=><option key={k} value={k}>{n}</option>)}</select><input placeholder="Modell suchen …" value={query} onChange={e=>setQuery(e.target.value)}/></div>
-    <div className="log-branding-models">{models.map(m=><article key={m.id}><VehiclePhoto id={m.id}/><b>{m.name}</b>{brand?.imageStatus[m.id]&&<small className={'log-image-status '+brand.imageStatus[m.id]}>{STATUS[brand.imageStatus[m.id]]||brand.imageStatus[m.id]}</small>}<input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onChange={e=>void upload(e.target.files?.[0],640,img=>({action:'vehicleImage',model:m.id,image:img}),'Fahrzeugbild gespeichert – sichtbar für alle, Freigabe ausstehend.')}/>{brand?.images[m.id]&&<button className="log-secondary" disabled={busy} onClick={()=>void send({action:'removeVehicleImage',model:m.id},'Standardfoto wiederhergestellt.')}>Standardfoto</button>}</article>)}{!models.length&&<p className="log-muted">Keine Modelle für diesen Filter.</p>}</div></>}
+    <div className="log-branding-models">{models.map(m=><article key={m.id}><VehiclePhoto id={m.id}/><b>{m.name}</b>{brand?.imageStatus[m.id]&&<small className={'log-image-status '+brand.imageStatus[m.id]}>{STATUS[brand.imageStatus[m.id]]||brand.imageStatus[m.id]}</small>}{!brand?.imageStatus[m.id]&&brand?.declined.find(d=>d.model===m.id)&&<small className="log-image-status declined" title={brand.declined.find(d=>d.model===m.id)!.note}>abgelehnt: {brand.declined.find(d=>d.model===m.id)!.note}</small>}<input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onChange={e=>void upload(e.target.files?.[0],640,img=>({action:'vehicleImage',model:m.id,image:img}),'Fahrzeugbild gespeichert – sichtbar für alle, Freigabe ausstehend.')}/>{brand?.images[m.id]&&<button className="log-secondary" disabled={busy} onClick={()=>void send({action:'removeVehicleImage',model:m.id},'Standardfoto wiederhergestellt.')}>Standardfoto</button>}</article>)}{!models.length&&<p className="log-muted">Keine Modelle für diesen Filter.</p>}</div></>}
   </section>
  </section>;
 }

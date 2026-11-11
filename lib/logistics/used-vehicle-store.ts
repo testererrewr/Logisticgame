@@ -9,7 +9,7 @@ export async function ensureRareOffer(world:string,day:number,allowed:(mode:stri
 
 let auctionReady:Promise<unknown>|undefined;
 export const ensureAuctionTable=()=>auctionReady??=env.DB!.prepare('CREATE TABLE IF NOT EXISTS logistics_auction_bids(offer_id TEXT NOT NULL,world_id TEXT NOT NULL,user_id TEXT NOT NULL,amount REAL NOT NULL,depot_id TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(offer_id,user_id))').run().catch(e=>{auctionReady=undefined;throw e;});
-export const isAuction=(o:UsedVehicleOffer)=>o.sellerId.startsWith('rare:');
+export const isAuction=(o:UsedVehicleOffer)=>o.sellerId.startsWith('rare:')||o.sellerId.startsWith('insolvency:');
 export const minBid=(start:number,top:number)=>top>0?Math.ceil((top+Math.max(1000,top*.02))/100)*100:start;
 export async function auctionInfo(world:string,user:string){await ensureAuctionTable();const rows=(await env.DB!.prepare('SELECT offer_id,user_id,amount FROM logistics_auction_bids WHERE world_id=?').bind(world).all<{offer_id:string;user_id:string;amount:number}>()).results;const out=new Map<string,{top:number;count:number;mine:number;leading:boolean}>();
  for(const r of rows){const x=out.get(r.offer_id)||{top:0,count:0,mine:0,leading:false};x.count++;if(r.amount>x.top){x.top=r.amount;x.leading=r.user_id===user;}if(r.user_id===user)x.mine=r.amount;out.set(r.offer_id,x);}return out;}
@@ -21,6 +21,6 @@ export async function settleAuctions(world:string,states:Map<string,import('./en
   for(const b of bids){const st=states.get(b.user_id);if(!st)continue;const offer={...o,price:b.amount};try{buyUsedVehicle(st,newState(),offer,world,b.user_id,b.depot_id);log(st,`🔨 Auktion gewonnen: ${o.vehicle.name} für ${b.amount.toLocaleString('de-DE')} € – steht im Depot bereit.`,'good');Object.assign(o,offer);won=b.user_id;break;}catch(e:any){log(st,`🔨 Auktion ${o.vehicle.name}: Höchstgebot konnte nicht bezahlt/zugestellt werden (${e.message}).`,'warn');}}
   for(const b of bids)if(b.user_id!==won){const st=states.get(b.user_id);if(st)log(st,`🔨 Auktion ${o.vehicle.name} beendet – leider überboten.`,'info');}
   if(!won)o.status='withdrawn';out.push(saveUsedVehicleOffer(o));
-  if(won){try{await ensureSocialTables();out.push(feedStatement(world,won,'special',`🔨 Seltenes Fahrzeug versteigert: ${o.vehicle.name} für ${o.price.toLocaleString('de-DE')} €.`,{day}));}catch{}}}
+  if(won){try{await ensureSocialTables();out.push(feedStatement(world,won,'special',`🔨 ${o.sellerId.startsWith('insolvency:')?'Aus Insolvenzmasse':'Seltenes Fahrzeug'} versteigert: ${o.vehicle.name} für ${o.price.toLocaleString('de-DE')} €.`,{day}));}catch{}}}
  return out;
 }

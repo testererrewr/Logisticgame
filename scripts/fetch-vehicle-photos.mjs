@@ -26,7 +26,7 @@ const SEARCH={
  'classic-mercedes-l3500':['Mercedes-Benz L 3500','Mercedes L3500 Lastwagen'],
  'classic-hanomag-l28':['Hanomag L 28','Hanomag L28 Lastwagen'],
  'classic-magirus-s3500':['Magirus-Deutz S 3500','Magirus Deutz Rundhauber'],
- 'classic-man-19304':['MAN 19.304','MAN 19.304 truck'],
+ 'classic-man-19304':['MAN F8 Lkw','MAN 19.280 truck','MAN F8 truck'],
  'classic-vw-t1-pritsche':['VW T1 Pritsche','Volkswagen Type 2 T1 pickup'],
  'classic-unimog-404':['Unimog 404','Mercedes-Benz Unimog 404 S'],
  'classic-man-kat1':['MAN KAT1 7t','MAN KAT 1 mil gl'],
@@ -52,16 +52,33 @@ const SEARCH={
  'cessna-208b-grand-caravan-cargo':['Cessna 208B Grand Caravan cargo','Cessna 208 FedEx'],
 };
 
+const WIKI={
+ 'classic-man-19304':[['de','MAN F8'],['en','MAN F8'],['de','MAN-Hauber']],
+ 'classic-douglas-dc3':[['en','Douglas C-47 Skytrain'],['de','Douglas DC-3'],['en','Douglas DC-3']],
+ 'classic-rhine-barge':[['de','Europaschiff'],['de','Johann Welker (Schiff)'],['de','Motorgüterschiff']],
+ 'classic-lockheed-l188':[['en','Lockheed L-188 Electra'],['de','Lockheed L-188']],
+};
+const FORCE=new Set(Object.keys(WIKI));
 const gallery=JSON.parse(readFileSync(GALLERY,'utf8'));
 mkdirSync(OUT,{recursive:true});
 const strip=(html='')=>String(html).replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim();
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function api(params){const url=API+'?'+new URLSearchParams({format:'json',origin:'*',...params});for(let i=0;;i++){await sleep(1200);const r=await fetch(url,{headers:{'User-Agent':UA}});if(r.status===429&&i<3){await sleep(15000*(i+1));continue;}if(!r.ok)throw Error('Commons HTTP '+r.status);return r.json();}}
 
+async function wikiLead(list){
+ for(const [lang,title] of list||[]){
+  try{await sleep(1200);const r=await fetch(`https://${lang}.wikipedia.org/w/api.php?`+new URLSearchParams({action:'query',format:'json',prop:'pageimages',piprop:'name',redirects:'1',titles:title}),{headers:{'User-Agent':UA}});if(!r.ok)continue;const d=await r.json(),page=Object.values(d.query?.pages||{})[0],name=page?.pageimage;if(!name)continue;
+   const info=await api({action:'query',titles:'File:'+name,prop:'imageinfo',iiprop:'url|extmetadata|mime',iiurlwidth:'640'});const pg=Object.values(info.query?.pages||{})[0],ii=pg?.imageinfo?.[0];
+   if(!ii||!/^image\/(jpeg|png|webp)$/.test(ii.mime)||!ii.thumburl)continue;const meta=ii.extmetadata||{},license=strip(meta.LicenseShortName?.value);if(!FREE.test(license))continue;
+   return {title:'File:'+name,thumb:ii.thumburl,source:ii.descriptionurl,author:strip(meta.Artist?.value)||'Wikimedia Commons',license,licenseUrl:strip(meta.LicenseUrl?.value)||ii.descriptionurl};
+  }catch{}
+ }
+}
 async function findPhoto(terms){
  for(const term of terms){
   const search=await api({action:'query',list:'search',srnamespace:'6',srlimit:'10',srsearch:term+' filetype:bitmap'});
   for(const hit of search.query?.search||[]){
+   const toks=term.toLowerCase().split(/[^a-z0-9äöü.-]+/).filter(t=>t.length>=3&&!['truck','cargo','ship','the','und','typ','type','freighter','lastwagen'].includes(t));if(toks.length&&!toks.some(t=>hit.title.toLowerCase().includes(t)))continue;
    const info=await api({action:'query',titles:hit.title,prop:'imageinfo',iiprop:'url|extmetadata|mime',iiurlwidth:'640'});
    const page=Object.values(info.query?.pages||{})[0],ii=page?.imageinfo?.[0];
    if(!ii||!/^image\/(jpeg|png|webp)$/.test(ii.mime)||!ii.thumburl)continue;
@@ -73,17 +90,18 @@ async function findPhoto(terms){
 }
 
 let changed=0;
-for(const [id,terms] of Object.entries(SEARCH)){
+for(const id of new Set([...Object.keys(SEARCH),...FORCE])){const terms=SEARCH[id]||[];
  const current=gallery[id];
- if(current&&current.match!=='symbol'&&current.match!=='illustration'&&existsSync(join(ROOT,'public',current.path||'')))continue;
+ if(FORCE.has(id)&&current?.match==='wiki-lead'&&existsSync(join(ROOT,'public',current.path||'')))continue;
+ if(!FORCE.has(id)&&current&&current.match!=='symbol'&&current.match!=='illustration'&&existsSync(join(ROOT,'public',current.path||'')))continue;
  try{
-  const photo=await findPhoto(terms);
+  const lead=await wikiLead(WIKI[id]),photo=lead||await findPhoto(terms);
   if(!photo){console.log(`- ${id}: kein frei lizenziertes Foto gefunden, Symbolbild bleibt.`);continue;}
   const ext=photo.thumb.split('?')[0].split('.').pop().toLowerCase().replace('jpeg','jpg');
   const r=await fetch(photo.thumb,{headers:{'User-Agent':UA}});if(!r.ok)throw Error('Download HTTP '+r.status);
   const file=`${id}.${ext}`;writeFileSync(join(OUT,file),Buffer.from(await r.arrayBuffer()));
   const name=photo.title.replace(/^File:/,'').replace(/\.[a-z]+$/i,'');
-  gallery[id]={path:'/logistics-vehicles/'+file,alt:name,caption:name,depicted:photo.title,sourceUrl:photo.source,originalUrl:photo.thumb,author:photo.author,attribution:'',license:photo.license,licenseUrl:photo.licenseUrl,changes:'Vorschaubild 640 px von Wikimedia Commons.',match:'search',exactModelPhotoAvailable:true};
+  gallery[id]={path:'/logistics-vehicles/'+file,alt:name,caption:name,depicted:photo.title,sourceUrl:photo.source,originalUrl:photo.thumb,author:photo.author,attribution:'',license:photo.license,licenseUrl:photo.licenseUrl,changes:'Vorschaubild 640 px von Wikimedia Commons.',match:lead?'wiki-lead':'search',exactModelPhotoAvailable:true};
   changed++;writeFileSync(GALLERY,JSON.stringify(gallery,null,1));console.log(`+ ${id}: ${photo.title} (${photo.license})`);
   await new Promise(res=>setTimeout(res,600));
  }catch(e){console.log(`! ${id}: ${e.message}`);}
