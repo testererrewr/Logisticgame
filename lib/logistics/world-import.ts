@@ -23,4 +23,4 @@ export async function drainWorldImport(){if(await extractImportActive())return;c
   p.enabled=(await readWorldImport()).enabled;await save(p);}
  }finally{await env.DB!.prepare('DELETE FROM limits WHERE id=? AND expires=?').bind(LOCK,lease).run();}
 }
-export function continueWorldImport(){waitUntil(drainWorldImport().catch(e=>logError('import:world-drain',e,{},'error')));}
+export function continueWorldImport(){return;waitUntil(drainWorldImport().catch(e=>logError('import:world-drain',e,{},'error')));}

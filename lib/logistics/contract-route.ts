@@ -7,3 +7,4 @@ export function contractRouteDraft(s:State,c:Contract){
  const stops:Stop[]=[{siteId:c.siteId,action:'load',good:product,quantity:1e9,...(c.kind==='haulage'?{orderIds:[c.id]}:{})},{siteId:dest?.id||'',action:'unload',good:product,quantity:1e9}];
  return {name:(c.kind==='haulage'?`${source?.name||'Container'} → ${dest?.name||'Ziel'}`:`${source?.name||'Vertrag'} · ${good(product)?.name||'Fracht'}`).slice(0,60),stops};
 }
+export function lineForContract(lines:{id:string;deleted?:boolean;fromOrder?:string;stops:{siteId:string;orderIds?:string[]}[]}[],c:Contract){return lines.find(l=>!l.deleted&&(l.fromOrder===c.id||l.stops.some(st=>st.orderIds?.includes(c.id))||c.kind!=='haulage'&&l.stops.some(st=>st.siteId===c.siteId)&&(!c.destinationId||l.stops.some(st=>st.siteId===c.destinationId))));}
