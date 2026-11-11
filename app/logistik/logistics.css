@@ -380,3 +380,6 @@
 @media(max-width:420px){.log-vehicle-wiki-grid,.log-showcase,.log-badges{grid-template-columns:1fr}}
 .log-line-alert{color:#f87171;font-weight:900;margin-right:4px}
 .log-vehicle-settings{margin:12px 0;border:1px solid #ffffff1a;border-radius:8px;padding:6px 10px}.log-vehicle-settings summary{cursor:pointer;font-size:13px;color:#aab}
+
+.log-news-new{display:inline-block;background:#ef4444;color:#fff;font-weight:800;font-size:.7rem;letter-spacing:.06em;padding:1px 6px;border-radius:999px;margin-right:6px;vertical-align:middle}
+.log-menu-new{margin-left:6px;font-size:.6rem}

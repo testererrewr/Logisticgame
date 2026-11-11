@@ -1,3 +1,4 @@
+import {fuelFactor as worldFuelFactor} from './world-events';
 import {VEHICLES,vehicleCargo,cargoCapacity,priceIndex,type State,type Vehicle,type GoodId} from './engine';
 import {recordFinance} from './finance';
 import {fuelFactor} from './drivers';
@@ -12,7 +13,7 @@ export const ENERGY:Record<EnergyKind,{name:string;unit:string;base:number;per:s
 };
 const round2=(n:number)=>Math.round(n*100)/100;
 
-export function energyPrice(kind:EnergyKind,day:number){const idx=priceIndex(('energy:'+kind) as GoodId,day);return round2(ENERGY[kind].base*(1+(idx-1)*.55)*1000)/1000;}
+export function energyPrice(kind:EnergyKind,day:number){const idx=priceIndex(('energy:'+kind) as GoodId,day);return round2(ENERGY[kind].base*(1+(idx-1)*.55)*(kind==='strom'?1:worldFuelFactor(day))*1000)/1000;}
 export function energyOf(v:Vehicle):EnergyKind|undefined{const e=VEHICLES.find(m=>m.id===v.modelId)?.energy;return e&&e in ENERGY?e as EnergyKind:undefined;}
 export function loadFactor(v:Vehicle){const cargo=vehicleCargo(v);return Math.min(1,cargo.reduce((n,c)=>n+c.quantity/Math.max(cargoCapacity(v,c.good),c.legacyCapacity||0,1),0));}
 

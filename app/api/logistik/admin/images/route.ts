@@ -22,7 +22,9 @@ export async function POST(req:NextRequest){try{
 
  const stmts=items.map(i=>b.decision==='approve'?db().prepare("UPDATE logistics_vehicle_images SET status='approved',reviewed_by=?,reviewed_at=?,note=NULL WHERE world_id=? AND user_id=? AND model_id=? AND updated=?").bind(u!.id,now,i.world,i.user,i.model,i.updated)
   :db().prepare("UPDATE logistics_vehicle_images SET status='declined',image='',reviewed_by=?,reviewed_at=?,note=? WHERE world_id=? AND user_id=? AND model_id=? AND updated=?").bind(u!.id,now,note||'Bild entspricht nicht den Regeln.',i.world,i.user,i.model,i.updated));
- if(!['approve','decline'].includes(b.decision))throw Error('Entscheidung fehlt.');await db().batch(stmts);
+ if(!['approve','decline'].includes(b.decision))throw Error('Entscheidung fehlt.');
+ if(b.decision==='decline'){await db().prepare('CREATE TABLE IF NOT EXISTS logistics_messages(id TEXT PRIMARY KEY,world_id TEXT NOT NULL,from_id TEXT NOT NULL,to_id TEXT NOT NULL,text TEXT NOT NULL,created INTEGER NOT NULL,read INTEGER NOT NULL DEFAULT 0)').run();const {VEHICLES}=await import('../../../../../lib/logistics/engine');for(const i of items)stmts.push(db().prepare('INSERT INTO logistics_messages(id,world_id,from_id,to_id,text,created,read) VALUES(?,?,?,?,?,?,0)').bind(crypto.randomUUID(),i.world,'system',i.user,`Dein Fahrzeugbild für ${VEHICLES.find(m=>m.id===i.model)?.name||i.model} wurde abgelehnt und entfernt. Grund: ${note||'Bild entspricht nicht den Regeln.'}`,now));}
+ await db().batch(stmts);
  await db().prepare('INSERT INTO admin_audit(id,actor,action,target,created) VALUES(?,?,?,?,?)').bind(crypto.randomUUID(),u!.id,'vehicle-image-'+b.decision,JSON.stringify(items.map(i=>i.user+':'+i.model)).slice(0,1000),now).run().catch(()=>{});
  return reply({ok:true,count:items.length});
 }catch(e:any){await logError('api:admin/images',e,{url:req.url});return reply({error:e.message},422);}}

@@ -3,7 +3,7 @@ import {useCallback,useEffect,useMemo,useState} from 'react';
 import {activeNews,type NewsItem} from '../../lib/logistics/world-events';
 import {openProfile} from './profile-dialog';
 
-const KICKER:Record<string,string>={price:'MÄRKTE',fair:'MESSEN & EVENTS',construction:'VERKEHR',strike:'STREIK',flavor:'BRANCHE',achievement:'AUS DER WELT',special:'AUS DER WELT',alliance:'ALLIANZEN',project:'WELTPROJEKT',history:'WELTGESCHICHTE'};
+const KICKER:Record<string,string>={price:'MÄRKTE',fair:'MESSEN & EVENTS',construction:'VERKEHR',strike:'STREIK',flavor:'BRANCHE',border:'GRENZEN',harvest:'LANDWIRTSCHAFT',fuel:'ENERGIE',achievement:'AUS DER WELT',special:'AUS DER WELT',alliance:'ALLIANZEN',project:'WELTPROJEKT',history:'WELTGESCHICHTE'};
 type Feed={id:string;kind:string;text:string;day:number;user_id:string|null;name:string;congrats:number;mine:number|null};
 type Item={news?:NewsItem;feed?:Feed;id:string};
 export default function NewsCarousel({day,worldId}:{day:number;worldId?:string}){
