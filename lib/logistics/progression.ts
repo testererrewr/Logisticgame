@@ -7,7 +7,7 @@ import {continentOf,ISLAND_GROUPS,COUNTRY_TOTAL} from './stamps-data';
 export interface Snapshot {day:number;earned:number;spent:number;eh:number;km:number;contracts:number;byType:Record<string,number>}
 export interface DailyReport {day:number;income:number;costs:number;profit:number;eh:number;km:number;contracts:number;cash:number;topGood?:string;topGoodEh?:number;vehicles:number;challengeDone?:string[];achievements?:string[]}
 export interface Challenge {id:string;kind:'eh'|'km'|'contracts'|'revenue'|'type';title:string;target:number;prize:number;freight?:string}
-export interface PickupWarning {day:number;contractId:string;siteId:string;siteName:string;good:string;daily:number;stock:number}
+export interface PickupWarning {day:number;contractId:string;siteId:string;siteName:string;good:string;daily:number;stock:number;picked?:number}
 export interface Progress {stamps?:Record<string,number>;islands?:Record<string,number>;collection?:Record<string,number>;pickups?:PickupWarning[];v:1;last:Snapshot;totals:{km:number;contracts:number;challenges:number};weekIndex:number;weekStart:Snapshot;weekSize:number;weekDone:string[];achievements:Record<string,number>;reports:DailyReport[]}
 
 const WEEK=7;
@@ -97,7 +97,9 @@ export function progressDay(s:State){const p=ensureProgress(s),day=Math.floor(s.
 }
 
 function checkPickups(s:State,p:Progress,day:number){const prev=day-1,list:PickupWarning[]=[];
- for(const c of s.contracts){if(c.kind!=='supply'||c.cancelled||c.startDay>prev||c.endDay<day||(c.loadedToday||0)>0.001)continue;const stock=s.inventory[c.siteId]?.[c.good!]||0;if(stock<Math.max(1,c.daily*.5))continue;const site=s.sites.find(x=>x.id===c.siteId);list.push({day:prev,contractId:c.id,siteId:c.siteId,siteName:site?.name||'Betrieb',good:good(c.good!)?.name||String(c.good),daily:c.daily,stock:Math.round(stock)});}
+ for(const c of s.contracts){if(c.kind!=='supply'||c.cancelled||c.startDay>prev||c.endDay<day||(c.loadedToday||0)>=c.daily*.95)continue;const stock=s.inventory[c.siteId]?.[c.good!]||0;if(stock<Math.max(1,c.daily*.5))continue;const site=s.sites.find(x=>x.id===c.siteId);list.push({day:prev,contractId:c.id,siteId:c.siteId,siteName:site?.name||'Betrieb',good:good(c.good!)?.name||String(c.good),daily:c.daily,stock:Math.round(stock),picked:Math.round(c.loadedToday||0)});}
  p.pickups=[...list,...(p.pickups||[]).filter(w=>w.day>=prev-2)].slice(0,200);
- if(list.length)log(s,`📬 ${list.length===1?'Eine gebuchte Fracht wurde':list.length+' gebuchte Frachten wurden'} gestern nicht abgeholt – Details im Postfach.`,'warn');
+ if(list.length)log(s,`📬 ${list.length===1?'Eine gebuchte Fracht wurde':list.length+' gebuchte Frachten wurden'} gestern nicht vollständig abgeholt – Details im Postfach.`,'warn');
 }
+
+export function liveSnapshot(s:State):Snapshot{const p=s.progress;if(!p)return snapshot(s);const odo=sumKm(s),prev=(p as any).odo??odo;return {day:s.day,earned:s.earned,spent:s.spent,eh:sumEh(s),km:p.totals.km+Math.max(0,odo-prev),contracts:p.totals.contracts+s.contracts.filter(c=>c.completedDay!==undefined&&c.completedDay>=p.last.day&&!(c as any).counted).length,byType:byType(s)};}

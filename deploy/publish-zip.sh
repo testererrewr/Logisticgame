@@ -13,7 +13,7 @@ unzip -q "$ZIP" -d "$tmp"
 src="$tmp"; [[ -d "$tmp/Logisticgame" ]] && src="$tmp/Logisticgame"
 cp -a "$src"/. "$REPO"/
 echo "==> Fahrzeugfotos von Wikimedia Commons ergänzen (falls noch fehlend)"
-(cd "$REPO" && timeout 180 node scripts/fetch-vehicle-photos.mjs) || echo "(Fotoimport übersprungen)"
+(cd "$REPO" && timeout 900 node scripts/fetch-vehicle-photos.mjs) || echo "(Fotoimport übersprungen)"
 git add -A
 if git diff --cached --quiet; then echo "Keine Änderungen gegenüber GitHub."; else
   git -c user.name="testererrewr" -c user.email="testererrewr@users.noreply.github.com" commit -qm "Update $(basename "$ZIP" .zip)"

@@ -832,7 +832,7 @@
    "bulk"
   ],
   "capacity": 1.5,
-  "price": 78000,
+  "price": 390000,
   "cost": 120,
   "speed": 55,
   "icon": "🚚",
@@ -852,7 +852,7 @@
    "bulk"
   ],
   "capacity": 3.5,
-  "price": 96000,
+  "price": 480000,
   "cost": 160,
   "speed": 70,
   "icon": "🚚",
@@ -872,7 +872,7 @@
    "bulk"
   ],
   "capacity": 2.5,
-  "price": 72000,
+  "price": 360000,
   "cost": 140,
   "speed": 68,
   "icon": "🚚",
@@ -893,7 +893,7 @@
    "heavy"
   ],
   "capacity": 5,
-  "price": 118000,
+  "price": 590000,
   "cost": 190,
   "speed": 65,
   "icon": "🚚",
@@ -914,7 +914,7 @@
    "container"
   ],
   "capacity": 9,
-  "price": 88000,
+  "price": 440000,
   "cost": 210,
   "speed": 80,
   "icon": "🚚",
@@ -933,7 +933,7 @@
    "general"
   ],
   "capacity": 0.75,
-  "price": 64000,
+  "price": 320000,
   "cost": 70,
   "speed": 95,
   "icon": "🚐",
@@ -953,7 +953,7 @@
    "heavy"
   ],
   "capacity": 1.5,
-  "price": 58000,
+  "price": 290000,
   "cost": 110,
   "speed": 85,
   "icon": "🚚",
@@ -974,7 +974,7 @@
    "container"
   ],
   "capacity": 7,
-  "price": 92000,
+  "price": 460000,
   "cost": 230,
   "speed": 90,
   "icon": "🚚",
@@ -994,7 +994,7 @@
    "liquid"
   ],
   "capacity": 3,
-  "price": 69000,
+  "price": 345000,
   "cost": 150,
   "speed": 80,
   "icon": "🚚",
@@ -1014,7 +1014,7 @@
    "liquid"
   ],
   "capacity": 4,
-  "price": 74000,
+  "price": 370000,
   "cost": 160,
   "speed": 82,
   "icon": "🚚",
@@ -1033,7 +1033,7 @@
    "general"
   ],
   "capacity": 4,
-  "price": 165000,
+  "price": 825000,
   "cost": 260,
   "speed": 120,
   "icon": "🚚",
@@ -1053,7 +1053,7 @@
    "heavy"
   ],
   "capacity": 6,
-  "price": 128000,
+  "price": 640000,
   "cost": 240,
   "speed": 105,
   "icon": "🚚",
@@ -1070,7 +1070,7 @@
   "mode": "rail",
   "types": [],
   "capacity": 0,
-  "price": 1800000,
+  "price": 4500000,
   "cost": 2600,
   "speed": 120,
   "icon": "🚂",
@@ -1087,7 +1087,7 @@
   "mode": "rail",
   "types": [],
   "capacity": 0,
-  "price": 2100000,
+  "price": 5250000,
   "cost": 2300,
   "speed": 65,
   "icon": "🚂",
@@ -1108,7 +1108,7 @@
    "container"
   ],
   "capacity": 500,
-  "price": 2400000,
+  "price": 6000000,
   "cost": 900,
   "speed": 18,
   "icon": "🚢",
@@ -1130,7 +1130,7 @@
    "liquid"
   ],
   "capacity": 1350,
-  "price": 3100000,
+  "price": 7750000,
   "cost": 1100,
   "speed": 16,
   "icon": "🚢",
@@ -1153,7 +1153,7 @@
    "container"
   ],
   "capacity": 2.7,
-  "price": 3600000,
+  "price": 9000000,
   "cost": 900,
   "speed": 300,
   "icon": "✈️",
@@ -1173,7 +1173,7 @@
    "pharma"
   ],
   "capacity": 2,
-  "price": 4200000,
+  "price": 10500000,
   "cost": 950,
   "speed": 245,
   "icon": "✈️",
@@ -1194,7 +1194,7 @@
    "pharma"
   ],
   "capacity": 1.5,
-  "price": 1400000,
+  "price": 3500000,
   "cost": 520,
   "speed": 190,
   "icon": "✈️",
@@ -1216,7 +1216,7 @@
    "container"
   ],
   "capacity": 12,
-  "price": 6800000,
+  "price": 17000000,
   "cost": 2600,
   "speed": 600,
   "icon": "✈️",

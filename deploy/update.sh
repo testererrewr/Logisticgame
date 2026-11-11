@@ -11,6 +11,7 @@ as_app() { runuser -u logistik -- env HOME=/opt/logistik bash -c "cd '$APP' && $
 if [[ "${1:-}" != "--no-pull" ]]; then
   echo "==> Hole neuen Stand von GitHub"
   as_app "git pull --ff-only"
+  exec bash "$APP/deploy/update.sh" --no-pull
 fi
 
 echo "==> Abhängigkeiten installieren"

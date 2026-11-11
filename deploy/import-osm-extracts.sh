@@ -92,7 +92,10 @@ FILTER=(nwr/shop nwr/craft nwr/industrial nwr/forestry nwr/farm nwr/building=war
   nwr/amenity=restaurant,cafe,fast_food,pub,bar,hospital,clinic,pharmacy,doctors,dentist,veterinary,recycling,fuel,marketplace,social_facility,nursing_home
   nwr/landuse=farmyard,quarry,industrial,forest nwr/man_made=works,mineshaft,adit,petroleum_well,water_works)
 
-n=0; ok=0; failed=0; START=$(date +%s)
+ok=0; START=$(date +%s)
+for pass in 1 2 3; do
+n=0; failed=0
+[[ $pass -gt 1 ]] && { NEU=0; log "Wiederholungsrunde $pass für fehlgeschlagene Regionen (nach 5 Minuten Pause) …"; sleep 300; }
 while IFS=$'\t' read -r id url; do
   n=$((n+1)); mark="$WORK/fertig/$id.ok"
   if [[ -f "$mark" && $NEU -eq 0 ]]; then continue; fi
@@ -123,6 +126,8 @@ while IFS=$'\t' read -r id url; do
   log "  fertig in $(( $(date +%s)-t0 )) s · +$((after-before)) neue Betriebe · Register: $after · Fortschritt $done_n/$TOTAL"
   log "  $(storage)"
 done < "$WORK/regionen.txt"
+[[ $failed -eq 0 ]] && break
+done
 
 log "Durchlauf beendet: $ok Regionen importiert, $failed fehlgeschlagen, $(ls "$WORK/fertig" | wc -l)/$TOTAL insgesamt fertig."
 log "$(storage)"

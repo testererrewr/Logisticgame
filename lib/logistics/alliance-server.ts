@@ -69,8 +69,9 @@ export function ensureAllianceExtras(){return extra??=db().batch([
 ]).then(()=>undefined).catch(e=>{extra=undefined;throw e;});}
 const ehOf=(s:State)=>Object.values(s.deliveryStats||{}).reduce((n,x)=>n+(x||0),0);
 
-export const weeklyTarget=(members:number)=>Math.max(40000,25000*members);
-export const weeklyReward=(members:number)=>60000+10000*Math.min(10,members);
+const wh=(a:string,w:number,k:string)=>{let h=2166136261;for(const c of a+'/'+w+'/'+k){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;};
+export const weeklyTarget=(allianceId:string,week:number)=>150000+Math.round((wh(allianceId,week,'t')%450000)/10000)*10000;
+export const weeklyReward=(allianceId:string,week:number)=>Math.round((weeklyTarget(allianceId,week)*(.6+(wh(allianceId,week,'r')%60)/100))/1000)*1000;
 export async function settleAllianceWeekly(worldId:string,states:Map<string,State>,day:number){
  await ensureAllianceTables();await ensureAllianceExtras();const out:D1PreparedStatement[]=[],week=weekOf(day);
  const map=await allianceMap(worldId);if(!map.size)return out;const byAlliance=new Map<string,string[]>();for(const [u,a] of map)(byAlliance.get(a)??byAlliance.set(a,[]).get(a)!).push(u);
@@ -78,7 +79,7 @@ export async function settleAllianceWeekly(worldId:string,states:Map<string,Stat
  {const last=rows.filter(r=>r.week===week-1&&r.progress>0).sort((a,b)=>b.progress-a.progress)[0];if(last){await ensureSocialTables();const a=await db().prepare('SELECT name,tag FROM logistics_alliances WHERE id=?').bind(last.alliance_id).first<{name:string;tag:string}>();if(a)out.push(feedStatement(worldId,null,'alliance',`[${a.tag}] ${a.name} gewinnt die Allianz-Wochenwertung (Woche ${week}) mit ${Math.round(last.progress).toLocaleString('de-DE')} EH.`,{important:true,day,id:'weekwin:'+worldId+':'+(week-1)}));}}
  for(const r of rows)if(r.week<week&&r.status==='active'){out.push(db().prepare("UPDATE logistics_alliance_weekly SET status='failed' WHERE alliance_id=? AND week=?").bind(r.alliance_id,r.week));for(const u of byAlliance.get(r.alliance_id)||[]){const st=states.get(u);if(st)log(st,`Allianz-Wochenziel verpasst (${Math.round(r.progress).toLocaleString('de-DE')} / ${Math.round(r.target).toLocaleString('de-DE')} EH).`,'warn');}}
  for(const [aid,members] of byAlliance){const r=rows.find(x=>x.alliance_id===aid&&x.week===week);
-  if(!r){const base:Record<string,number>={};for(const u of members){const st=states.get(u);if(st)base[u]=ehOf(st);}out.push(db().prepare("INSERT OR IGNORE INTO logistics_alliance_weekly(alliance_id,world_id,week,target,progress,reward,baselines,contributions,status) VALUES(?,?,?,?,0,?,?,'{}','active')").bind(aid,worldId,week,weeklyTarget(members.length),weeklyReward(members.length),JSON.stringify(base)));continue;}
+  if(!r){const base:Record<string,number>={};for(const u of members){const st=states.get(u);if(st)base[u]=ehOf(st);}out.push(db().prepare("INSERT OR IGNORE INTO logistics_alliance_weekly(alliance_id,world_id,week,target,progress,reward,baselines,contributions,status) VALUES(?,?,?,?,0,?,?,'{}','active')").bind(aid,worldId,week,weeklyTarget(aid,week),weeklyReward(aid,week),JSON.stringify(base)));continue;}
   const base:Record<string,number>=JSON.parse(r.baselines||'{}'),contrib:Record<string,number>=JSON.parse(r.contributions||'{}');let changed=false;
   for(const u of members){const st=states.get(u);if(!st)continue;const cur=ehOf(st);if(base[u]===undefined){base[u]=cur;changed=true;}const c=Math.round(Math.max(contrib[u]||0,cur-base[u]));if(c!==contrib[u]){contrib[u]=c;changed=true;}}
   const progress=Object.values(contrib).reduce((a,b)=>a+b,0);let status=r.status;
