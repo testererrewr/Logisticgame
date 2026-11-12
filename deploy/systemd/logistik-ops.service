@@ -1,0 +1,6 @@
+[Unit]
+Description=Weltverbund Logistik – Aufträge aus der Verwaltung
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /opt/logistik/app/deploy/ops-watch.sh

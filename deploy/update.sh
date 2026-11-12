@@ -47,7 +47,7 @@ install -m 644 "$APP"/deploy/systemd/*.service "$APP"/deploy/systemd/*.timer /et
 systemctl daemon-reload
 systemctl enable "$SERVICE" >/dev/null 2>&1
 systemctl restart "$SERVICE"
-if [[ "$SERVICE" == "logistik" ]]; then systemctl enable --now logistik-tick.timer logistik-backup.timer logistik-watchdog.timer >/dev/null; fi
+if [[ "$SERVICE" == "logistik" ]]; then systemctl enable --now logistik-tick.timer logistik-backup.timer logistik-watchdog.timer logistik-ops.timer logistik-dbcare.timer >/dev/null; fi
 if [[ "$SERVICE" == "logistik" && -d /opt/logistik/app-test ]]; then systemctl enable --now logistik-rollout.timer >/dev/null 2>&1 || true; fi
 if [[ "$SERVICE" == logistik-node@* ]]; then n="${SERVICE#logistik-node@}"; systemctl enable --now "logistik-node-tick@$n.timer" "logistik-node-agent@$n.timer" >/dev/null 2>&1 || true; fi
 

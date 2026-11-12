@@ -40,7 +40,7 @@ Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (Bereitstellung des Spiels) und lit.
 
 Notwendig: ein Sitzungs-Cookie für die Anmeldung, das Cookie „lgx_inst“ für Testwelten und Einstellungen im lokalen Speicher deines Browsers (§ 25 Abs. 2 TDDDG).
 
-Statistik (nur mit Einwilligung, § 25 Abs. 1 TDDDG, Art. 6 Abs. 1 lit. a DSGVO): Eine zufällige Kennung im lokalen Speicher, mit der wir zählen, welche Bereiche des Spiels genutzt werden. Die Kennung wird auf dem Server nur gehasht gespeichert, die Auswertung erfolgt ausschließlich auf unserem eigenen Server, ohne Drittanbieter. Du kannst die Einwilligung jederzeit unter „Cookie-Einstellungen“ widerrufen.
+Statistik (nur mit Einwilligung, § 25 Abs. 1 TDDDG, Art. 6 Abs. 1 lit. a DSGVO): Eine zufällige Kennung im lokalen Speicher, mit der wir zählen, welche Bereiche des Spiels genutzt werden. Dazu werden Zeitzone, Browsersprache, Gerätetyp (Handy/Tablet/Desktop), Uhrzeit und die Herkunftsseite (nur Domain) übermittelt und ausschließlich als Tagessummen gespeichert. Die Kennung wird auf dem Server nur gehasht gespeichert, die Auswertung erfolgt ausschließlich auf unserem eigenen Server, ohne Drittanbieter. Du kannst die Einwilligung jederzeit unter „Cookie-Einstellungen“ widerrufen.
 
 ## 4. Hosting
 

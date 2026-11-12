@@ -1,0 +1,9 @@
+[Unit]
+Description=Weltverbund Logistik – Verwaltungsaufträge jede Minute prüfen
+
+[Timer]
+OnCalendar=*-*-* *:*:20
+Persistent=false
+
+[Install]
+WantedBy=timers.target

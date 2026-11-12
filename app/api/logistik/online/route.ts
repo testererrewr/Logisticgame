@@ -1,3 +1,4 @@
+import {allowAction,TOO_FAST} from '../../../../lib/logistics/rate-limit';
 import {installD1Retry} from '../../../../lib/d1-retry';
 import {hostedWorlds,hostedHere,ownsWorld,isTestWorld,instanceRole,hostedElsewhere} from '../../../../lib/logistics/world-hosting';
 installD1Retry();
@@ -30,7 +31,7 @@ import {feedFromStates,ensureSocialTables,feedStatement} from '../../../../lib/l
 import {activeSupplyRows,attachSupplySites,settleSupplyContracts,supplySitesFor,type SupplyRow} from '../../../../lib/logistics/supply-contracts';
 import {settleAllianceStock} from '../../../../lib/logistics/alliance-stock';
 import {buildingSitesFor,settleAllianceBuildings,settleAllianceMarket} from '../../../../lib/logistics/alliance-buildings';
-import {recordActiveUser} from '../analytics/route';
+import {referralJoinBonus,referralActivity,settlePendingRewards} from '../../../../lib/logistics/referrals';
 import {allianceMap,allySites,allianceSitesFor,settleAllianceOrders,settleAllianceWeekly,settleAllianceHelp,settleAllianceDuels,ensureAllianceSocial,chronicle,hqLevel} from '../../../../lib/logistics/alliance-server';
 import {seasonFinalStatements} from '../../../../lib/logistics/season-server';
 import {logError} from '../../../../lib/logistics/error-log';
@@ -149,6 +150,7 @@ async function settleWorldNow(id:string,budgetMs:number):Promise<World>{
   try{statements.push(...await settleAuctions(id,advanced,next));}catch(e){await logError('settle:auctions',e,{world:id},'error');}
   try{statements.push(...await settleAllianceDuels(id,next));}catch(e){await logError('settle:alliance-duels',e,{world:id},'error');}
   try{statements.push(...await settleAllianceHelp(id,advanced,next));}catch(e){await logError('settle:alliance-help',e,{world:id},'error');}
+  try{statements.push(...await settlePendingRewards(id,advanced));}catch(e){await logError('settle:rewards',e,{world:id},'error');}
   try{statements.push(...await settleAllianceMarket(id,advanced));}catch(e){await logError('settle:alliance-market',e,{world:id},'error');}
   try{statements.push(...await settleAllianceBuildings(id,advanced,await allianceMap(id),world.day,next,p=>countryAt(p)));}catch(e){await logError('settle:alliance-buildings',e,{world:id},'error');}
   try{statements.push(...await settleAllianceStock(id,advanced));}catch(e){await logError('settle:alliance-stock',e,{world:id},'error');}
@@ -176,8 +178,8 @@ async function join(world:World,u:User,name:string){
  const duplicate=await db().prepare('SELECT user_id FROM logistics_world_companies WHERE world_id=? AND lower(name)=lower(?)').bind(world.id,name.trim()).first();if(duplicate)throw Error('Dieser Speditionsname ist in der Welt bereits vergeben.');
  const count=await db().prepare('SELECT count(*) AS n FROM logistics_world_companies WHERE world_id=?').bind(world.id).first<{n:number}>();
  {const cfg=parseSettings(world.settings);if((count?.n||0)>=cfg.maxPlayers)throw Error(`Diese Welt ist voll (${cfg.maxPlayers} Speditionen).`);if(cfg.private&&cfg.ownerId!==u.id&&!(cfg.members||[]).includes(u.id)&&!['owner','admin'].includes(u.role))throw Error('Diese Welt ist privat.');}
- const start=companyAtDay(world.day,name.trim()),cfg=parseSettings(world.settings);start.cash=cfg.startCash;
- await commit(world,[],[db().prepare('INSERT OR IGNORE INTO logistics_world_companies(world_id,user_id,name,state,revision,updated) VALUES(?,?,?,?,0,?)').bind(world.id,u.id,name.trim(),JSON.stringify(start),Date.now())]);
+ const start=companyAtDay(world.day,name.trim()),cfg=parseSettings(world.settings);start.cash=cfg.startCash;const refStmt=await referralJoinBonus(u.id,start);
+ await commit(world,[],[...(refStmt?[refStmt]:[]),db().prepare('INSERT OR IGNORE INTO logistics_world_companies(world_id,user_id,name,state,revision,updated) VALUES(?,?,?,?,0,?)').bind(world.id,u.id,name.trim(),JSON.stringify(start),Date.now())]);
 }
 function geometrySignature(s:State){let h=2166136261;const add=(t:string)=>{for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619);}};for(const r of s.roadRoutes||[])add(r.fromId+'>'+r.toId+':'+r.path.length+';');for(const l of s.lines){add('|'+l.id);for(const r of l.legs||[])add(r.fromId+'>'+r.toId+':'+r.path.length+';');}return (h>>>0).toString(36)+'.'+(s.roadRoutes?.length||0)+'.'+s.lines.length;}
 async function snapshot(u:User,worldId:string,geo=''){
@@ -238,7 +240,7 @@ export async function GET(req:NextRequest){const ctx:Record<string,unknown>={},t
   const site=await db().prepare("SELECT payload FROM logistics_runtime WHERE id='site-settings'").first<{payload:string}>().catch(()=>null);let siteCfg:any={};try{siteCfg=JSON.parse(site?.payload||'{}');}catch{}
   return reply({lobbyBanner:siteCfg.lobbyBanner&&(!siteCfg.lobbyBanner.until||siteCfg.lobbyBanner.until>Date.now())?siteCfg.lobbyBanner:null,ordersEnabled:!!siteCfg.ordersEnabled,user:u.name,worlds:rows.results.filter(w=>{const st=parseSettings(w.settings);if(st.private&&!['owner','admin'].includes(u.role)&&st.ownerId!==u.id&&!(st.members||[]).includes(u.id)&&!w.joined)return false;return ['owner','admin'].includes(u.role)||w.status!=='draft'||st.ownerId===u.id;}).map(w=>({...w,external:!hostedHere(w.id,(w as any).host_url,new URL(req.url).origin)?(w as any).host_url||null:null,testWorld:isTestWorld(w.settings),mine:mine.get(w.id)||null,settings:settingsSummary(parseSettings(w.settings)),day:clockTarget(w,Date.now())})),singleplayerEnabled:false,isAdmin:['owner','admin'].includes(u.role)});
  }
- void recordActiveUser(u.id);
+ void referralActivity(u.id);
  await settleWorld(id);if(!await readCompany(id,u.id))return reply({error:'Bitte zuerst dieser Welt beitreten.'},403);
  const out=await snapshot(u,id,(req.nextUrl.searchParams.get('geo')||'').slice(0,60));slow('online-GET',t0,ctx);return reply(out);
  }catch(e:any){await logError('online:GET',e,{...ctx,url:req.nextUrl.search});return reply({error:e.message||'Welt nicht erreichbar.'},503);}}
@@ -263,7 +265,7 @@ async function enforceWorldRules(cmd:OnlineCommand,state:State,cfg:ReturnType<ty
 }
 export async function POST(req:NextRequest){const ctx:Record<string,unknown>={},t0=Date.now();try{
  const raw=await req.text();if(raw.length>1000000)return reply({error:'Aktion zu groß.'},413);
- const u=await currentUser(req);if(!u||u.status!=='active')return reply({error:'Anmeldung erforderlich.'},401);ctx.user=u.id;
+ const u=await currentUser(req);if(!u||u.status!=='active')return reply({error:'Anmeldung erforderlich.'},401);if(u&&!allowAction('online:'+u.id,4,15))return NextResponse.json({error:TOO_FAST},{status:429});ctx.user=u.id;
  if(!sameOrigin(req))return reply({error:'Ungültiger Ursprung.'},403);
  if(!req.headers.get('content-type')?.includes('application/json'))return reply({error:'JSON erwartet.'},415);
  const body=JSON.parse(raw),cmd=body.command as OnlineCommand|{type:'createWorld';name:string;tickMs:number}|{type:'joinWorld';name:string};

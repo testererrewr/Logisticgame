@@ -1,3 +1,4 @@
+import {allowAction,TOO_FAST} from '../../../../lib/logistics/rate-limit';
 import {NextRequest,NextResponse} from 'next/server';
 import {env} from 'cloudflare:workers';
 import {currentUser} from '../online/route';
@@ -24,7 +25,7 @@ export async function GET(req:NextRequest){try{
 }catch(e:any){await logError('api:community',e,{url:req.url});return reply({error:e.message||'Nicht verfügbar.'},503);}}
 
 export async function POST(req:NextRequest){try{
- const u=await currentUser(req);if(!u||u.status!=='active')return reply({error:'Bitte anmelden.'},401);if(!sameOrigin(req))return reply({error:'Ungültiger Ursprung.'},403);await ensureCommunityTables();
+ const u=await currentUser(req);if(!u||u.status!=='active')return reply({error:'Bitte anmelden.'},401);if(u&&!allowAction('community:'+u.id,1,5))return NextResponse.json({error:TOO_FAST},{status:429});if(!sameOrigin(req))return reply({error:'Ungültiger Ursprung.'},403);await ensureCommunityTables();
  const b=await req.json() as any,now=Date.now(),action=String(b.action||'');
  if(['letterApprove','letterReject','reportStatus','reportMessage','letterDelete'].includes(action)){if(!admin(u))return reply({error:'Nur für Administratoren.'},403);
   if(action==='letterApprove'||action==='letterReject'){await db().prepare('UPDATE logistics_letters SET status=?,reviewed_by=? WHERE id=?').bind(action==='letterApprove'?'approved':'rejected',u.id,String(b.id||'')).run();return reply({ok:true});}

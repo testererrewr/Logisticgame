@@ -7,12 +7,12 @@ async function call(world:string,body?:any){const r=await fetch('/api/logistik/a
 export function AllianceBuildMenu({worldId,center,onBuilt}:{worldId:string;center:[number,number];onBuilt?:()=>void}){
  const [a,setA]=useState<any>(null),[kind,setKind]=useState(''),[name,setName]=useState(''),[msg,setMsg]=useState(''),[busy,setBusy]=useState(false);
  const load=useCallback(()=>call(worldId).then(d=>setA(d.detail||null)).catch(()=>setA(null)),[worldId]);useEffect(()=>{load();},[load]);
- const b=a?.buildings;if(!a)return null;if(!b?.types)return <section className="log-trailer-box"><h3>🤝 Allianzgebäude</h3><p className="log-muted">Allianzgebäude werden geladen …</p></section>;if(!b.canBuild)return <section className="log-trailer-box"><h3>🤝 Allianzgebäude [{a.tag}]</h3><p className="log-muted">Bauen dürfen {b.buildRole==='officer'?'Owner und Admins':'nur der Owner'} deiner Allianz.</p></section>;const type=b.types.find((t:any)=>t.kind===kind);
+ const b=a?.buildings;if(!a)return null;if(!b?.types)return null;if(!b.canBuild)return null;const type=b.types.find((t:any)=>t.kind===kind);
  const build=async()=>{setBusy(true);setMsg('');try{await call(worldId,{action:'build',kind,lat:center[0],lon:center[1],name});setMsg('Gebaut.');setKind('');setName('');await load();onBuilt?.();}catch(e:any){setMsg(e.message);}finally{setBusy(false);}};
- return <section className="log-trailer-box"><h3>🤝 Allianzgebäude [{a.tag}]</h3><small className="log-muted">Allianzkasse: {eur(a.treasury||0)}</small>
+ return <details className="log-trailer-box log-alliance-build"><summary><b>🤝 Allianzgebäude [{a.tag}]</b> <small className="log-muted">Kasse {eur(a.treasury||0)}</small></summary>
   <div className="log-build-list">{b.types.map((t:any)=><button key={t.kind} className={kind===t.kind?'active':''} onClick={()=>setKind(kind===t.kind?'':t.kind)}><span>{t.icon}</span><b>{t.name}</b><small>{t.price?eur(t.price):'gratis'}</small></button>)}</div>
   {type&&<div className="log-trailer-toolbar"><input placeholder={type.name+' (Name)'} value={name} maxLength={60} onChange={e=>setName(e.target.value)}/><button className="log-primary" disabled={busy||(a.treasury||0)<type.price} onClick={()=>void build()}>An Kartenmitte bauen · {type.price?eur(type.price):'gratis'}</button><small className="log-muted">Karte so verschieben, dass der Bauplatz in der Mitte liegt ({center[0].toFixed(3)}, {center[1].toFixed(3)}).</small></div>}
-  {msg&&<p>{msg}</p>}</section>;}
+  {msg&&<p>{msg}</p>}</details>;}
 
 export function AllianceBuildingsTab({worldId,a,busy,act}:{worldId:string;a:any;busy:boolean;act:(b:any,done?:()=>void)=>Promise<void>|void}){
  const b=a.buildings||{},list:any[]=b.list||[],[role,setRole]=useState(b.buildRole||'leader'),[fee,setFee]=useState(String(b.fee||0));

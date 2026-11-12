@@ -1,3 +1,4 @@
+import {allowAction,TOO_FAST} from '../../../../lib/logistics/rate-limit';
 import {NextRequest,NextResponse} from 'next/server';
 import {env} from 'cloudflare:workers';
 import {currentUser} from '../online/route';
@@ -23,7 +24,7 @@ export async function GET(req:NextRequest){try{
 }catch(e:any){await logError('api:supply',e,{url:req.url});return reply({error:e.message||'Nicht verfügbar.'},503);}}
 
 export async function POST(req:NextRequest){try{
- const u=await currentUser(req);if(!u||u.status!=='active')return reply({error:'Bitte anmelden.'},401);if(!sameOrigin(req))return reply({error:'Ungültiger Ursprung.'},403);await ensureSupplyTable();
+ const u=await currentUser(req);if(!u||u.status!=='active')return reply({error:'Bitte anmelden.'},401);if(u&&!allowAction('supply:'+u.id,2,8))return NextResponse.json({error:TOO_FAST},{status:429});if(!sameOrigin(req))return reply({error:'Ungültiger Ursprung.'},403);await ensureSupplyTable();
  const b=await req.json() as any,world=String(b.world||''),action=String(b.action||''),now=Date.now();const me=await company(world,u.id);if(!me)throw Error('Bitte zuerst der Welt beitreten.');const myName=me.name||me.uname;
  if(action==='create'){const g=String(b.good||''),daily=Math.round(Number(b.daily)*10)/10,price=Math.round(Number(b.price)*100)/100,days=Math.round(Number(b.days)),siteId=String(b.siteId||'');
   if(!good(g as any)||g==='containers')throw Error('Ein Gut auswählen.');if(!(daily>=1&&daily<=50000))throw Error('Tagesmenge: 1–50.000 EH.');if(!(price>=.1&&price<=10000))throw Error('Preis: 0,10–10.000 € je EH.');if(!(days>=1&&days<=90))throw Error('Laufzeit: 1–90 Tage.');const minP=supplyMinPrice(g as any);if(price<minP)throw Error('Mindestpreis für '+good(g as any).name+': '+minP.toLocaleString('de-DE',{style:'currency',currency:'EUR'})+' je EH (Einkaufspreis + 10 %).');

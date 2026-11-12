@@ -1,3 +1,4 @@
+import {allowAction,TOO_FAST} from '../../../../lib/logistics/rate-limit';
 import {logError} from '../../../../lib/logistics/error-log';
 import {NextRequest,NextResponse} from 'next/server';
 import {env} from 'cloudflare:workers';
@@ -25,7 +26,7 @@ export async function GET(req:NextRequest){try{
 }catch(e:any){await logError('api:messages',e,{url:req.url});return reply({error:e.message||'Nachrichten nicht verfügbar.'},503);}}
 
 export async function POST(req:NextRequest){try{
- const u=await currentUser(req);if(!u||u.status!=='active')return reply({error:'Bitte anmelden.'},401);if(!sameOrigin(req))return reply({error:'Ungültiger Ursprung.'},403);
+ const u=await currentUser(req);if(!u||u.status!=='active')return reply({error:'Bitte anmelden.'},401);if(u&&!allowAction('msg:'+u.id,1,6))return NextResponse.json({error:TOO_FAST},{status:429});if(!sameOrigin(req))return reply({error:'Ungültiger Ursprung.'},403);
  const body=await req.json() as any,world=String(body.world||'').slice(0,100);if(!await inWorld(world,u.id))return reply({error:'Bitte der Welt beitreten.'},403);await ensure();
  if(body.action==='read'){await db().prepare('UPDATE logistics_messages SET read=1 WHERE world_id=? AND to_id=? AND from_id=? AND read=0').bind(world,u.id,String(body.with||'')).run();return reply({ok:true});}
  if(body.action==='delete'){const id=String(body.id||'');await db().batch([db().prepare('UPDATE logistics_messages SET del_to=1,read=1 WHERE id=? AND world_id=? AND to_id=?').bind(id,world,u.id),db().prepare('UPDATE logistics_messages SET del_from=1 WHERE id=? AND world_id=? AND from_id=?').bind(id,world,u.id)]);return reply({ok:true});}

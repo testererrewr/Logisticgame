@@ -11,7 +11,7 @@ const eur=(n:number)=>n.toLocaleString('de-DE',{style:'currency',currency:curren
 export default function SinceLastVisit({worldId,state}:{worldId:string;state:State|null}){
  const [diff,setDiff]=useState<{prev:Snap;now:Snap;events:State['events'];ach:string[]}|null>(null),checked=useRef('');
  useEffect(()=>{if(!state||checked.current===worldId)return;checked.current=worldId;let prev:Snap|null=null;try{prev=JSON.parse(localStorage.getItem(key(worldId))||'null');}catch{}
-  const now=snap(state);if(prev&&now.day-prev.day>=.25)setDiff({prev,now,events:state.events.filter(e=>e.day>prev!.day&&(IMPORTANT.test(e.text)||e.type==='warn'&&!LINE_NOISE.test(e.text))).slice(0,10),ach:now.ach.filter(a=>!prev!.ach?.includes(a))});
+  const now=snap(state);if(prev&&now.day-prev.day>=.25)setDiff({prev,now,events:state.events.filter(e=>e.day>prev!.day&&(!e.text.startsWith('🎯')||e.day>=Math.floor(state.day))&&(IMPORTANT.test(e.text)||e.type==='warn'&&!LINE_NOISE.test(e.text))).slice(0,10),ach:now.ach.filter(a=>!prev!.ach?.includes(a))});
   try{localStorage.setItem(key(worldId),JSON.stringify(now));}catch{}},[state,worldId]);
  const latest=useRef(state);latest.current=state;
  useEffect(()=>{const save=()=>{const s=latest.current;if(!s)return;try{localStorage.setItem(key(worldId),JSON.stringify(snap(s)));}catch{}};const t=setInterval(save,60000);window.addEventListener('beforeunload',save);document.addEventListener('visibilitychange',save);return()=>{clearInterval(t);window.removeEventListener('beforeunload',save);document.removeEventListener('visibilitychange',save);save();};},[worldId]);

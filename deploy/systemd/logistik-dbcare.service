@@ -1,0 +1,6 @@
+[Unit]
+Description=Weltverbund Logistik – nächtliche Datenbank-Pflege
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /opt/logistik/app/deploy/db-maintenance.sh

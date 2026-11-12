@@ -1,3 +1,4 @@
+import {allowAction,TOO_FAST} from '../../../../lib/logistics/rate-limit';
 import {NextRequest,NextResponse} from 'next/server';
 import {env} from 'cloudflare:workers';
 import {currentUser} from '../online/route';
@@ -24,7 +25,7 @@ export async function GET(req:NextRequest){try{
 }catch(e:any){await logError('api:orders',e,{url:req.url});return reply({error:e.message||'Nicht verfügbar.'},503);}}
 
 export async function POST(req:NextRequest){try{
- const u=await currentUser(req);if(!u||u.status!=='active')return reply({error:'Bitte anmelden.'},401);if(!sameOrigin(req))return reply({error:'Ungültiger Ursprung.'},403);await ensure();await ensureWorldSettingsColumn();
+ const u=await currentUser(req);if(!u||u.status!=='active')return reply({error:'Bitte anmelden.'},401);if(u&&!allowAction('orders:'+u.id,1,5))return NextResponse.json({error:TOO_FAST},{status:429});if(!sameOrigin(req))return reply({error:'Ungültiger Ursprung.'},403);await ensure();await ensureWorldSettingsColumn();
  const b=await req.json() as any,now=Date.now(),action=String(b.action||'');
  if(action==='order'){const sc=await db().prepare("SELECT payload FROM logistics_runtime WHERE id='site-settings'").first<{payload:string}>().catch(()=>null);if(!JSON.parse(sc?.payload||'{}').ordersEnabled&&!isAdmin(u))throw Error('Bestellungen sind derzeit nicht möglich.');const open=await db().prepare("SELECT count(*) AS n FROM logistics_server_orders WHERE user_id=? AND status IN ('pending','quoted')").bind(u.id).first<{n:number}>();if((open?.n||0)>=3)throw Error('Du hast bereits 3 offene Anfragen.');
   await db().prepare("INSERT INTO logistics_server_orders(id,user_id,config,status,created,updated) VALUES(?,?,?,'pending',?,?)").bind(crypto.randomUUID(),u.id,JSON.stringify(cleanConfig(b.config)),now,now).run();return reply({ok:true,message:'Anfrage gesendet. Du bekommst hier einen Preisvorschlag.'});}
