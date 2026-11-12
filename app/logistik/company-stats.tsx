@@ -1,9 +1,10 @@
 'use client';
+import {currencyCode} from '../../lib/logistics/currency';
 import {useMemo,useState} from 'react';
 import {GOODS,VEHICLES,type State} from '../../lib/logistics/engine';
 import {linePnl} from '../../lib/logistics/finance';
 
-const eur=(n:number)=>n.toLocaleString('de-DE',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+const eur=(n:number)=>n.toLocaleString('de-DE',{style:'currency',currency:currencyCode(),maximumFractionDigits:0});
 const num=(n:number)=>Math.round(n).toLocaleString('de-DE');
 type Series={name:string;color:string;values:number[]};
 

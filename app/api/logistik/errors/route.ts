@@ -19,7 +19,7 @@ export async function POST(req:NextRequest){try{
 
 export async function GET(req:NextRequest){try{
  const u=await currentUser(req);if(!isAdmin(u))return reply({error:'Nur für Administratoren.'},403);
- const p=req.nextUrl.searchParams;return reply(await readErrorLog({level:p.get('level')||undefined,source:p.get('source')||undefined,query:p.get('q')||undefined,limit:Number(p.get('limit'))||200}));
+ const p=req.nextUrl.searchParams;return reply(await readErrorLog({level:p.get('level')||undefined,source:p.get('source')||undefined,query:p.get('q')||undefined,world:p.get('world')||undefined,user:p.get('user')||undefined,limit:Number(p.get('limit'))||200}));
 }catch(e:any){return reply({error:e.message||'Fehlerprotokoll nicht lesbar.'},503);}}
 
 export async function DELETE(req:NextRequest){try{

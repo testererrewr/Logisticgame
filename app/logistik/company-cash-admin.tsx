@@ -1,6 +1,7 @@
 'use client';
+import {currencyCode} from '../../lib/logistics/currency';
 import {useEffect,useRef,useState} from 'react';
-const money=(n:number)=>n.toLocaleString('de-DE',{style:'currency',currency:'EUR'});
+const money=(n:number)=>n.toLocaleString('de-DE',{style:'currency',currency:currencyCode()});
 export default function CompanyCashAdmin({worlds}:{worlds:{id:string;name:string}[]}){const [world,setWorld]=useState(''),[query,setQuery]=useState(''),[offset,setOffset]=useState(0),[rows,setRows]=useState<any[]>([]),[total,setTotal]=useState(0),[busy,setBusy]=useState(false),[error,setError]=useState(''),[message,setMessage]=useState(''),[refresh,setRefresh]=useState(0);
  useEffect(()=>{const c=new AbortController(),timer=setTimeout(()=>{void fetch('/api/logistik/admin/companies?'+new URLSearchParams({world,q:query,offset:String(offset)}),{cache:'no-store',signal:c.signal}).then(async r=>{const d=await r.json() as any;if(!r.ok)throw Error(d.error);setRows(d.companies);setTotal(d.total);}).catch(e=>{if(!c.signal.aborted)setError(e.message);});},200);return()=>{c.abort();clearTimeout(timer);};},[world,query,offset,refresh]);
  async function book(row:any,amount:number,reason:string,requestId:string){setBusy(true);setError('');setMessage('');try{const r=await fetch('/api/logistik/admin/companies',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({worldId:row.world_id,userId:row.user_id,amount,reason,requestId})}),d=await r.json() as any;if(!r.ok)throw Error(d.error);setMessage(`${row.name}: ${amount>0?'Gutschrift':'Abzug'} ${money(Math.abs(amount))} gebucht. Neuer Kontostand: ${money(d.cash)}.`);setRefresh(n=>n+1);return true;}catch(e:any){setError(e.message);return false;}finally{setBusy(false);}}

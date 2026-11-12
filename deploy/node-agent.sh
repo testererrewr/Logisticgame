@@ -8,7 +8,8 @@ say(){ echo "[$(date '+%F %T')] $*" | tee -a "$LOG"; }
 api(){ curl -fsS -m 300 "$@"; }
 findDb(){ find "$STATE_DIR" -name '*.sqlite' ! -name 'metadata.sqlite' 2>/dev/null | head -1; }
 ver="$(git -C "$APP" rev-parse --short HEAD 2>/dev/null || echo '?')"
-resp="$(api -X POST -H 'Content-Type: application/json' --data "{\"token\":\"$LOGISTIK_NODE_TOKEN\",\"version\":\"$ver\",\"port\":$PORT,\"worlds\":\"$LOGISTIK_WORLDS\"}" "$LOGISTIK_MAIN_URL/api/logistik/node?action=heartbeat")" || { say "Hauptserver nicht erreichbar"; exit 0; }
+payload="$(NODE_LOAD="$(cut -d' ' -f1 /proc/loadavg)" NODE_MEM="$(free -m | awk '/^Mem/{print $3"/"$2" MB"}')" NODE_DISK="$(df -h --output=avail "${STATE_DIR:-/}" 2>/dev/null | tail -1 | tr -d ' ')" NODE_ACTIVE="$(systemctl is-active "$SVC" 2>/dev/null)" NODE_LOGS="$(tail -n 15 "$LOG" 2>/dev/null; journalctl -u "$SVC" -p err -n 10 --no-pager -o short-iso 2>/dev/null)" NODE_VER="$ver" node -e 'const e=process.env;process.stdout.write(JSON.stringify({token:e.LOGISTIK_NODE_TOKEN,version:e.NODE_VER,port:Number(e.PORT)||0,worlds:e.LOGISTIK_WORLDS||"",metrics:{load:e.NODE_LOAD,mem:e.NODE_MEM,disk:e.NODE_DISK,service:e.NODE_ACTIVE},logs:(e.NODE_LOGS||"").split("\n").filter(Boolean).slice(-25)}))')"
+resp="$(api -X POST -H 'Content-Type: application/json' --data "$payload" "$LOGISTIK_MAIN_URL/api/logistik/node?action=heartbeat")" || { say "Hauptserver nicht erreichbar"; exit 0; }
 field(){ node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{const v=process.argv[1].split(".").reduce((o,k)=>o?.[k],JSON.parse(d));process.stdout.write(v==null?"":String(v));}catch{}})' "$1" <<<"$resp"; }
 setWorlds(){ if grep -q '^LOGISTIK_WORLDS=' "$ENVF"; then sed -i "s#^LOGISTIK_WORLDS=.*#LOGISTIK_WORLDS=$1#" "$ENVF"; else echo "LOGISTIK_WORLDS=$1" >> "$ENVF"; fi; LOGISTIK_WORLDS="$1"; }
 addWorld(){ local cur="${LOGISTIK_WORLDS//keine/}"; [[ ",$cur," == *",$1,"* ]] && return; setWorlds "$(echo "$cur,$1" | sed 's/^,//; s/,$//')"; }

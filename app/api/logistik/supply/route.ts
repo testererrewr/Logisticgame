@@ -4,9 +4,9 @@ import {currentUser} from '../online/route';
 import {sameOrigin} from '../../../../lib/same-origin';
 import {logError} from '../../../../lib/logistics/error-log';
 import {decodeCompany} from '../../../../lib/logistics/company-codec';
-import {good} from '../../../../lib/logistics/engine';
+import {good,GOODS} from '../../../../lib/logistics/engine';
 import {SHARED_KINDS} from '../../../../lib/logistics/alliance-server';
-import {ensureSupplyTable,invalidateSupplyCache,SUPPLY_PENALTY,SUPPLY_MAX_MISSES} from '../../../../lib/logistics/supply-contracts';
+import {ensureSupplyTable,invalidateSupplyCache,SUPPLY_PENALTY,SUPPLY_MAX_MISSES,supplyMinPrice} from '../../../../lib/logistics/supply-contracts';
 import {sendSystemMessage} from '../../../../lib/logistics/system-message';
 const db=()=>env.DB!;
 const reply=(d:unknown,status=200)=>NextResponse.json(d,{status,headers:{'Cache-Control':'no-store'}});
@@ -19,14 +19,14 @@ export async function GET(req:NextRequest){try{
  const mine=(await db().prepare("SELECT * FROM logistics_supply_contracts WHERE world_id=? AND (requester_id=? OR supplier_id=?) ORDER BY CASE WHEN status IN ('active','open','cancel_req','cancel_sup') THEN 0 ELSE 1 END,created DESC LIMIT 60").bind(world,u.id,u.id).all<any>()).results;
  const open=(await db().prepare("SELECT * FROM logistics_supply_contracts WHERE world_id=? AND status='open' AND requester_id<>? AND (target_id IS NULL OR target_id=?) ORDER BY created DESC LIMIT 60").bind(world,u.id,u.id).all<any>()).results;
  const strip=(r:any)=>{const {site,...rest}=r;let lat=0,lon=0,kind='';try{const p=JSON.parse(site);lat=p.lat;lon=p.lon;kind=p.kind;}catch{}return {...rest,lat,lon,kind,goodName:good(r.good)?.name||r.good,role:r.requester_id===u.id?'requester':r.supplier_id===u.id?'supplier':'offer'};};
- return reply({day:await dayOf(world),mine:mine.map(strip),open:open.map(strip),penalty:SUPPLY_PENALTY,maxMisses:SUPPLY_MAX_MISSES});
+ return reply({day:await dayOf(world),mine:mine.map(strip),open:open.map(strip),penalty:SUPPLY_PENALTY,maxMisses:SUPPLY_MAX_MISSES,minPrices:Object.fromEntries(GOODS.filter(g=>g.id!=='containers').map(g=>[g.id,supplyMinPrice(g.id)]))});
 }catch(e:any){await logError('api:supply',e,{url:req.url});return reply({error:e.message||'Nicht verfügbar.'},503);}}
 
 export async function POST(req:NextRequest){try{
  const u=await currentUser(req);if(!u||u.status!=='active')return reply({error:'Bitte anmelden.'},401);if(!sameOrigin(req))return reply({error:'Ungültiger Ursprung.'},403);await ensureSupplyTable();
  const b=await req.json() as any,world=String(b.world||''),action=String(b.action||''),now=Date.now();const me=await company(world,u.id);if(!me)throw Error('Bitte zuerst der Welt beitreten.');const myName=me.name||me.uname;
  if(action==='create'){const g=String(b.good||''),daily=Math.round(Number(b.daily)*10)/10,price=Math.round(Number(b.price)*100)/100,days=Math.round(Number(b.days)),siteId=String(b.siteId||'');
-  if(!good(g as any)||g==='containers')throw Error('Ein Gut auswählen.');if(!(daily>=1&&daily<=50000))throw Error('Tagesmenge: 1–50.000 EH.');if(!(price>=.1&&price<=10000))throw Error('Preis: 0,10–10.000 € je EH.');if(!(days>=1&&days<=90))throw Error('Laufzeit: 1–90 Tage.');
+  if(!good(g as any)||g==='containers')throw Error('Ein Gut auswählen.');if(!(daily>=1&&daily<=50000))throw Error('Tagesmenge: 1–50.000 EH.');if(!(price>=.1&&price<=10000))throw Error('Preis: 0,10–10.000 € je EH.');if(!(days>=1&&days<=90))throw Error('Laufzeit: 1–90 Tage.');const minP=supplyMinPrice(g as any);if(price<minP)throw Error('Mindestpreis für '+good(g as any).name+': '+minP.toLocaleString('de-DE',{style:'currency',currency:'EUR'})+' je EH (Einkaufspreis + 10 %).');
   const st=await decodeCompany(me.state),site=st.sites.find(p=>p.id===siteId&&p.owned&&SHARED_KINDS.includes(p.kind));if(!site)throw Error('Einen eigenen Bahnhof, Hafen, Flughafen, Depot oder ein Lager als Zielgebäude wählen.');
   let target:string|null=null;if(b.target){const t=await db().prepare('SELECT user_id FROM logistics_world_companies WHERE world_id=? AND user_id=?').bind(world,String(b.target)).first<{user_id:string}>();if(!t||t.user_id===u.id)throw Error('Spedition nicht gefunden.');target=t.user_id;}
   const n=await db().prepare("SELECT count(*) AS n FROM logistics_supply_contracts WHERE world_id=? AND requester_id=? AND status IN ('open','active','cancel_req','cancel_sup')").bind(world,u.id).first<{n:number}>();if((n?.n||0)>=10)throw Error('Höchstens 10 laufende Lieferverträge als Auftraggeber.');

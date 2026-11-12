@@ -1,12 +1,13 @@
 'use client';
+import {currencyCode} from '../../lib/logistics/currency';
 import {useEffect,useRef,useState} from 'react';
 import type {State} from '../../lib/logistics/engine';
 import {ACHIEVEMENTS} from '../../lib/logistics/progression';
 interface Snap {day:number;cash:number;earned:number;spent:number;eh:number;at:number;ach:string[]}
-const IMPORTANT=/^(🏅|🎯|🔨|🤝|💎|🛂|🏝️|🆘|🏛️|📬|⚔️|🏰|💶|🏦|🎉)/u,LINE_NOISE=/geladen|entladen|wartet|Fahrt|Linie|verkauft/i;
+const IMPORTANT=/^(🏅|🎯|🔨|🤝|💎|🛂|🏝️|🆘|🏛️|📬|⚔️|🏰|💶|🏦|🎉)/u,LINE_NOISE=/geladen|entladen|wartet|Fahrt|Linie|verkauft|verladebereit|noch nicht bereit/i;
 const key=(w:string)=>'log-lastvisit:'+w;
 const snap=(s:State):Snap=>({day:s.day,cash:s.cash,earned:s.earned,spent:s.spent,eh:Object.values(s.deliveryStats||{}).reduce((n,x)=>n+(x||0),0),at:Date.now(),ach:Object.keys(s.progress?.achievements||{})});
-const eur=(n:number)=>n.toLocaleString('de-DE',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+const eur=(n:number)=>n.toLocaleString('de-DE',{style:'currency',currency:currencyCode(),maximumFractionDigits:0});
 export default function SinceLastVisit({worldId,state}:{worldId:string;state:State|null}){
  const [diff,setDiff]=useState<{prev:Snap;now:Snap;events:State['events'];ach:string[]}|null>(null),checked=useRef('');
  useEffect(()=>{if(!state||checked.current===worldId)return;checked.current=worldId;let prev:Snap|null=null;try{prev=JSON.parse(localStorage.getItem(key(worldId))||'null');}catch{}

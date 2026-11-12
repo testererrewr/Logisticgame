@@ -37,7 +37,7 @@ function nearestDepot(s:State,v:Vehicle,point?:Coords):{depot?:Site;km:number}{c
 export function ensureMaintenance(v:Vehicle){if(v.lastServiceKm===undefined){const km=v.odometerKm||0;v.lastServiceKm=km-(km%SERVICE_INTERVAL_KM);}v.riskCheckedKm??=v.odometerKm||0;}
 
 function freeze(v:Vehicle,dt:number){if(v.departDay!==undefined)v.departDay+=dt;if(v.etaDay!==undefined)v.etaDay+=dt;}
-function towCost(v:Vehicle,km:number){return round2((220+4.8*km)*Math.min(1.5,Math.max(.7,scale(v))));}
+function towCost(v:Vehicle,km:number){return round2((900+14*km)*Math.min(1.5,Math.max(.7,scale(v))));}
 function mobileCost(v:Vehicle,km:number){return round2((140+1.3*km)*Math.min(1.4,Math.max(.7,scale(v))));}
 function repairCost(v:Vehicle,level:DamageLevel){return round2(DAMAGES[level].repair*scale(v));}
 

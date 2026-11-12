@@ -1,6 +1,6 @@
 'use client';
 import {useCallback,useEffect,useMemo,useState} from 'react';
-import {activeNews,type NewsItem} from '../../lib/logistics/world-events';
+import {activeNews,newsDay,type NewsItem} from '../../lib/logistics/world-events';
 import {openProfile} from './profile-dialog';
 
 const KICKER:Record<string,string>={price:'MÄRKTE',fair:'MESSEN & EVENTS',construction:'VERKEHR',strike:'STREIK',flavor:'BRANCHE',border:'GRENZEN',harvest:'LANDWIRTSCHAFT',fuel:'ENERGIE',achievement:'AUS DER WELT',special:'AUS DER WELT',alliance:'ALLIANZEN',project:'WELTPROJEKT',history:'WELTGESCHICHTE'};
@@ -19,10 +19,10 @@ export default function NewsCarousel({day,worldId}:{day:number;worldId?:string})
   <header><b>Der Logistik-Kurier</b><span>Ausgabe Spieltag {Math.floor(day)} · {items.length} Meldungen</span></header>
   <div className="log-newspaper-body">
    <button className="log-news-arrow" aria-label="Vorherige Meldung" onClick={()=>go(-1)}>‹</button>
-   {it.news?(()=>{const n=it.news,left=Math.max(0,n.until-day);return <article key={it.id}>
+   {it.news?(()=>{const n=it.news,left=Math.max(0,n.until-newsDay(day));return <article key={it.id}>
     <small className={'log-news-kicker '+n.kind}>{KICKER[n.kind]}{n.city?' · '+n.city:n.country?' · '+n.country:''}</small>
     <h3>{n.headline}</h3><p>{n.text}</p>
-    {n.kind!=='flavor'&&<small className="log-news-meta">{n.day===Math.floor(day)?'Heute erschienen':`Erschienen an Tag ${n.day}`} · gilt noch {left<1?Math.round(left*24)+' Std.':Math.ceil(left)+' Tage'}</small>}
+    {n.kind!=='flavor'&&<small className="log-news-meta">{n.day===Math.floor(newsDay(day))?'Heute erschienen':`Erschienen am ${new Date(Date.UTC(2026,0,1)+(n.day-1)*864e5).toLocaleDateString('de-DE')}`} · gilt noch {left<1?Math.round(left*24)+' Std.':Math.ceil(left)+' Tage'}</small>}
    </article>;})():(()=>{const f=it.feed!;return <article key={it.id}>
     <small className="log-news-kicker fair">{KICKER[f.kind]||'AUS DER WELT'}</small>
     <h3>{f.kind==='achievement'?'🏅 ':f.kind==='special'?'💎 ':''}{f.text}</h3>

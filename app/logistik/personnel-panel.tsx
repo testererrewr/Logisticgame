@@ -1,4 +1,5 @@
 'use client';
+import {currencyCode} from '../../lib/logistics/currency';
 import {useCallback,useEffect,useMemo,useState} from 'react';
 import {VEHICLES,type State} from '../../lib/logistics/engine';
 import {CREW_ROLES,LEVEL_HOURS,WAGE_STEP,levelOf,levelProgress,roleOfModel,crewNeeded,wageFor,type CrewRole,type Driver} from '../../lib/logistics/drivers';
@@ -9,7 +10,7 @@ type Commit=(fn:(s:State)=>void,success?:string,command?:OnlineAction)=>void;
 type Send=(command:OnlineCommand,success?:string,onSuccess?:(data:any)=>void)=>void;
 const ROLES=Object.keys(CREW_ROLES) as CrewRole[];
 const SOURCE:Record<string,string>={neu:'Neu auf dem Markt','gekündigt':'Gekündigt','aufgelöst':'Aus aufgelöster Spedition'};
-const euro=(n:number)=>n.toLocaleString('de-DE',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+const euro=(n:number)=>n.toLocaleString('de-DE',{style:'currency',currency:currencyCode(),maximumFractionDigits:0});
 export function Stars({xp}:{xp:number}){const l=levelOf(xp);return <span className="log-level" title={`Stufe ${l} · ${Math.round(xp)} Fahrstunden${l<5?` · nächste Stufe ab ${LEVEL_HOURS[l]} h`:''}`}>{'★'.repeat(l)}<span className="log-level-off">{'★'.repeat(5-l)}</span></span>;}
 export default function PersonnelPanel({state,worldId,commit,send,busy}:{state:State;worldId:string;commit:Commit;send:Send;busy:boolean}){
  const [tab,setTab]=useState<'team'|'markt'>('team'),[market,setMarket]=useState<any[]>([]),[enabled,setEnabled]=useState(true),[error,setError]=useState('');

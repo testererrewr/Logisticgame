@@ -1,5 +1,5 @@
 import {env} from 'cloudflare:workers';
-import {log,good,stock,purgeOrderCargo,mergeSites,type GoodId,type State} from './engine';
+import {log,good,stock,credit,debit,purgeOrderCargo,mergeSites,type GoodId,type State} from './engine';
 import {allianceMap,chronicle} from './alliance-server';
 import {registryByIds} from './partner-registry';
 
@@ -13,7 +13,7 @@ export const ensureConvoyTable=()=>ready??=db().batch([
  db().prepare("CREATE TABLE IF NOT EXISTS logistics_alliance_convoys(id TEXT PRIMARY KEY,alliance_id TEXT NOT NULL,world_id TEXT NOT NULL,source_id TEXT NOT NULL,destination_id TEXT NOT NULL,source_name TEXT NOT NULL DEFAULT '',destination_name TEXT NOT NULL DEFAULT '',good TEXT NOT NULL,quantity REAL NOT NULL,fee REAL NOT NULL,deadline REAL NOT NULL,status TEXT NOT NULL DEFAULT 'active',created_day REAL NOT NULL,km REAL NOT NULL DEFAULT 0,loaded TEXT NOT NULL DEFAULT '{}',delivered TEXT NOT NULL DEFAULT '{}')"),
  db().prepare('CREATE INDEX IF NOT EXISTS logistics_alliance_convoys_world ON logistics_alliance_convoys(world_id,status)'),
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_convoy_month(world_id TEXT NOT NULL,alliance_id TEXT NOT NULL,month INTEGER NOT NULL,eh REAL NOT NULL DEFAULT 0,convoys INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(world_id,alliance_id,month))'),
-]).catch(e=>{ready=undefined;throw e;});
+]).then(async()=>{const cols=(await db().prepare('PRAGMA table_info(logistics_alliances)').all<{name:string}>()).results;if(!cols.some(c=>c.name==='convoy_share'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN convoy_share INTEGER NOT NULL DEFAULT 10').run().catch(()=>{});}).catch(e=>{ready=undefined;throw e;});
 
 const hash=(t:string)=>{let h=2166136261;for(const c of t){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;};
 const sum=(o:Record<string,number>)=>Object.values(o).reduce((a,b)=>a+(b||0),0);
@@ -26,7 +26,7 @@ export async function convoyOffers(worldId:string,allianceId:string,day:number):
  for(const [country,list] of by){const n=2+hash(allianceId+'/'+period+'/'+country)%4;
   for(const {r,h} of list.map(r=>({r,h:hash(allianceId+'/'+period+'/'+r.id)})).sort((a,b)=>a.h-b.h).slice(0,n)){
    const km=Math.round(Number(r.distance_km)||0),x=(h%10000)/10000,quantity=Math.min(1000000,Math.max(15000,Math.round((15000+Math.pow(x,2.5)*985000)/1000)*1000)),days=Math.max(7,Math.ceil(km/500)+Math.ceil(quantity/40000)+3);
-   out.push({key:period+':'+r.id,offerId:r.id,source_id:r.source_id,destination_id:r.destination_id,sourceName:r.sn,destinationName:r.dn,sourceCity:r.source_city||'',destinationCity:r.destination_city||'',sourceCountry:country,good:r.good||'containers',goodName:good((r.good||'containers') as GoodId)?.name||r.good,quantity,fee:Math.round(Number(r.fee)*1.15*100)/100,days,km} as ConvoyOffer);}}
+   out.push({key:period+':'+r.id,offerId:r.id,source_id:r.source_id,destination_id:r.destination_id,sourceName:r.sn,destinationName:r.dn,sourceCity:r.source_city||'',destinationCity:r.destination_city||'',sourceCountry:country,good:r.good||'containers',goodName:good((r.good||'containers') as GoodId)?.name||r.good,quantity,fee:Math.round(Number(r.fee)*1.6*100)/100,days,km} as ConvoyOffer);}}
  return out.sort((a,b)=>a.sourceCountry!.localeCompare(b.sourceCountry!,'de')||b.quantity-a.quantity);
 }
 
@@ -61,14 +61,16 @@ export async function prepareConvoys(worldId:string,states:Map<string,State>,day
 
 export async function settleConvoys(worldId:string,states:Map<string,State>,day:number,ctx:ConvoyCtx|null){
  if(!ctx)return [];const out:D1PreparedStatement[]=[],map=await allianceMap(worldId);
+ const ids=[...new Set(ctx.rows.map(r=>r.alliance_id))],shares=new Map<string,number>(),taxes=new Map<string,number>();if(ids.length)for(const r of (await db().prepare('SELECT id,convoy_share FROM logistics_alliances WHERE id IN (SELECT value FROM json_each(?))').bind(JSON.stringify(ids)).all<{id:string;convoy_share:number}>()).results)shares.set(r.id,Math.max(0,Math.min(90,Number(r.convoy_share)||0)));
  for(const c of ctx.rows){const loaded=ctx.loaded.get(c.id)!,delivered:Record<string,number>=JSON.parse(c.delivered||'{}'),pool=ctx.pool.get(c.id)||0;let changed=ctx.changed.has(c.id);
-  for(const [u,st] of states){if(map.get(u)!==c.alliance_id)continue;const k=st.contracts.find(x=>x.id===c.id);if(!k)continue;const after=st.consignments?.[c.source_id]?.[c.id]||0,took=Math.max(0,pool-after);if(took>0){loaded[u]=(loaded[u]||0)+took;changed=true;}if((k.delivered||0)!==(delivered[u]||0)){const inc=(k.delivered||0)-(delivered[u]||0);if(inc>0)out.push(db().prepare('INSERT INTO logistics_convoy_month(world_id,alliance_id,month,eh,convoys) VALUES(?,?,?,?,0) ON CONFLICT(world_id,alliance_id,month) DO UPDATE SET eh=eh+excluded.eh').bind(worldId,c.alliance_id,monthOf(day),inc));delivered[u]=k.delivered||0;changed=true;}}
+  for(const [u,st] of states){if(map.get(u)!==c.alliance_id)continue;const k=st.contracts.find(x=>x.id===c.id);if(!k)continue;const after=st.consignments?.[c.source_id]?.[c.id]||0,took=Math.max(0,pool-after);if(took>0){loaded[u]=(loaded[u]||0)+took;changed=true;}if((k.delivered||0)!==(delivered[u]||0)){const inc=(k.delivered||0)-(delivered[u]||0);if(inc>0){const share=shares.get(c.alliance_id)||0,cut=Math.round(inc*c.fee*share)/100;if(cut>0){if(st.cash>=cut)debit(st,cut,'Allianz-Abgaben');else{st.cash-=cut;st.spent+=cut;}taxes.set(c.alliance_id,(taxes.get(c.alliance_id)||0)+cut);}}if(inc>0)out.push(db().prepare('INSERT INTO logistics_convoy_month(world_id,alliance_id,month,eh,convoys) VALUES(?,?,?,?,0) ON CONFLICT(world_id,alliance_id,month) DO UPDATE SET eh=eh+excluded.eh').bind(worldId,c.alliance_id,monthOf(day),inc));delivered[u]=k.delivered||0;changed=true;}}
   const done=sum(delivered);let status='active';
   if(done>=c.quantity-.5)status='completed';else if(day>=c.deadline)status='expired';
   if(status!=='active'){for(const [u,st] of states){if(!st.contracts.some(x=>x.id===c.id))continue;dropCopy(st,c);log(st,status==='completed'?`🚚 Konvoi abgeschlossen: ${Math.round(done).toLocaleString('de-DE')} EH nach ${c.destination_name} geliefert – danke für deinen Beitrag (${Math.round(delivered[u]||0).toLocaleString('de-DE')} EH).`:`🚚 Konvoi nach ${c.destination_name} abgelaufen – ${Math.round(done).toLocaleString('de-DE')} von ${Math.round(c.quantity).toLocaleString('de-DE')} EH geliefert.`,status==='completed'?'good':'warn');}
    if(status==='completed')out.push(db().prepare('INSERT INTO logistics_convoy_month(world_id,alliance_id,month,eh,convoys) VALUES(?,?,?,0,1) ON CONFLICT(world_id,alliance_id,month) DO UPDATE SET convoys=convoys+1').bind(worldId,c.alliance_id,monthOf(day)));
    out.push(chronicle(c.alliance_id,day,status==='completed'?`🚚 Konvoi ${c.source_name} → ${c.destination_name} geschafft: ${Math.round(done).toLocaleString('de-DE')} EH.`:`🚚 Konvoi ${c.source_name} → ${c.destination_name} verpasst (${Math.round(done).toLocaleString('de-DE')} / ${Math.round(c.quantity).toLocaleString('de-DE')} EH).`));changed=true;}
   if(changed)out.push(db().prepare('UPDATE logistics_alliance_convoys SET loaded=?,delivered=?,status=? WHERE id=?').bind(JSON.stringify(loaded),JSON.stringify(delivered),status,c.id));}
+ for(const [aid,t] of taxes)if(t>0)out.push(db().prepare('UPDATE logistics_alliances SET treasury=treasury+? WHERE id=?').bind(Math.round(t*100)/100,aid));
  return out;
 }
 

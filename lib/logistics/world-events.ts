@@ -42,7 +42,11 @@ export function newsOfDay(d:number):NewsItem[]{d=Math.floor(d);const st=store.ge
  {const c=take(CITIES);out.push({id:`${d}-x`,day:d,until:d+1,kind:'flavor',city:c.n,country:c.c,headline:pick(r,[`Rekordumschlag in ${c.n}`,`Neue Umgehungsstraße bei ${c.n} eröffnet`,`Logistikpreis für Spedition aus ${c.c}`,`${c.n} plant neues Güterverkehrszentrum`,`Fahrermangel: Branche wirbt um Nachwuchs`]),text:pick(r,['Branchenvertreter sehen weiter Wachstum im Güterverkehr.','Experten rechnen mit stabilen Frachtraten in den kommenden Wochen.','Die Stimmung in der Logistik bleibt gut.'])});}
  cache.set(d,out);if(cache.size>60)cache.delete(cache.keys().next().value!);return out;}
 
-export function activeNews(day:number){const d=Math.floor(day),out:NewsItem[]=[];for(let k=0;k<=7;k++)for(const n of newsOfDay(d-k))if(n.until>day||n.kind==='flavor'&&k===0)out.push(n);return out;}
+let realClock=false;
+export function enableRealNewsClock(on=true){realClock=on;}
+export const newsNow=()=>(Date.now()-Date.UTC(2026,0,1))/864e5+1;
+export const newsDay=(day:number)=>realClock?newsNow():day;
+export function activeNews(day:number){day=newsDay(day);const d=Math.floor(day),out:NewsItem[]=[];for(let k=0;k<=7;k++)for(const n of newsOfDay(d-k))if(n.until>day||n.kind==='flavor'&&k===0)out.push(n);return out;}
 const km=(a:[number,number],b:[number,number])=>{const p=Math.PI/180,dl=(b[0]-a[0])*p,dn=(b[1]-a[1])*p,h=Math.sin(dl/2)**2+Math.cos(a[0]*p)*Math.cos(b[0]*p)*Math.sin(dn/2)**2;return 12742*Math.asin(Math.min(1,Math.sqrt(h)));};
 
 let resolver:((p:[number,number])=>string)|null=null;const resolved=new Map<string,string>();

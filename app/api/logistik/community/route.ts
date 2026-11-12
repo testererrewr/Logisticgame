@@ -44,7 +44,7 @@ export async function POST(req:NextRequest){try{
   return reply({ok:true,message:'Danke, die Meldung ist bei der Spielleitung.'});}
  if(action==='bug'){const text=String(b.text||'').trim();if(text.length<10)throw Error('Bitte das Problem kurz beschreiben (mind. 10 Zeichen).');
   const recent=await db().prepare("SELECT count(*) AS n FROM logistics_reports WHERE kind='bug' AND reporter_id=? AND created>?").bind(u.id,now-3600000).first<{n:number}>();if((recent?.n||0)>=5)throw Error('Bitte etwas warten, bevor du weitere Probleme meldest.');
-  await db().prepare("INSERT INTO logistics_reports(id,world_id,kind,reporter_id,target_id,reason,text,context,status,created,updated) VALUES(?,?,'bug',?,'','Problem',?,?,'open',?,?)").bind(crypto.randomUUID(),world,u.id,text.slice(0,3000),String(b.context||'').slice(0,4000),now,now).run();
+  await db().prepare("INSERT INTO logistics_reports(id,world_id,kind,reporter_id,target_id,reason,text,context,status,created,updated) VALUES(?,?,'bug',?,'',?,?,?,'open',?,?)").bind(crypto.randomUUID(),world,u.id,['Problem','Idee','Lob','Sonstiges'].includes(b.reason)?b.reason:'Problem',text.slice(0,3000),String(b.context||'').slice(0,4000),now,now).run();
   return reply({ok:true,message:'Danke! Das Problem wurde gemeldet.'});}
  throw Error('Unbekannte Aktion.');
 }catch(e:any){await logError('api:community',e,{url:req.url},'warn');return reply({error:e.message||'Fehler.'},422);}}

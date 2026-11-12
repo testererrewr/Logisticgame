@@ -1,9 +1,10 @@
 'use client';
+import {currencyCode} from '../../lib/logistics/currency';
 import {useMemo,useState} from 'react';
 import {good,kmBetween,freeStock,type GoodId,type State} from '../../lib/logistics/engine';
 import {useProjects} from './seasonal-store';
 import ProductImage from './product-image';
-const eur=(n:number)=>n.toLocaleString('de-DE',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+const eur=(n:number)=>n.toLocaleString('de-DE',{style:'currency',currency:currencyCode(),maximumFractionDigits:0});
 function Deliver({p,state,send}:{p:any;state:State;send:(cmd:any,msg?:string,done?:(d:any)=>void)=>void}){
  const sites=useMemo(()=>state.sites.filter(s=>s.owned).map(s=>({s,km:kmBetween([s.lat,s.lon],[p.lat,p.lon])})).filter(x=>x.km<=p.radiusKm).sort((a,b)=>a.km-b.km),[state.sites,p]);
  const [siteId,setSiteId]=useState(''),[g,setG]=useState(''),[qty,setQty]=useState('');const site=siteId||sites[0]?.s.id||'';

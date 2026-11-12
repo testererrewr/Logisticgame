@@ -10,7 +10,7 @@ export function ensureAllianceTables(){return ready??=(async()=>{await db().batc
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_alliance_invites(alliance_id TEXT NOT NULL,user_id TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(alliance_id,user_id))'),
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_alliance_posts(id TEXT PRIMARY KEY,alliance_id TEXT NOT NULL,user_id TEXT NOT NULL,text TEXT NOT NULL,created INTEGER NOT NULL)'),
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_alliance_orders(id TEXT PRIMARY KEY,alliance_id TEXT NOT NULL,world_id TEXT NOT NULL,good TEXT NOT NULL,destination_id TEXT NOT NULL,destination_name TEXT NOT NULL,quantity REAL NOT NULL,delivered REAL NOT NULL DEFAULT 0,reward REAL NOT NULL,deadline_day REAL NOT NULL,status TEXT NOT NULL,created INTEGER NOT NULL,baselines TEXT NOT NULL DEFAULT \'{}\',contributions TEXT NOT NULL DEFAULT \'{}\')'),
-]);const cols=(await db().prepare('PRAGMA table_info(logistics_alliances)').all<{name:string}>()).results;if(!cols.some(c=>c.name==='share_storage'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN share_storage INTEGER NOT NULL DEFAULT 1').run().catch(()=>{});if(!cols.some(c=>c.name==='logo'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN logo TEXT').run().catch(()=>{});if(!cols.some(c=>c.name==='logo_updated'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN logo_updated INTEGER').run().catch(()=>{});})().catch(e=>{ready=undefined;throw e;});}
+]);const cols=(await db().prepare('PRAGMA table_info(logistics_alliances)').all<{name:string}>()).results;if(!cols.some(c=>c.name==='share_storage'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN share_storage INTEGER NOT NULL DEFAULT 1').run().catch(()=>{});if(!cols.some(c=>c.name==='logo'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN logo TEXT').run().catch(()=>{});if(!cols.some(c=>c.name==='capacity'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN capacity REAL NOT NULL DEFAULT 0').run().catch(()=>{});if(!cols.some(c=>c.name==='logo_updated'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN logo_updated INTEGER').run().catch(()=>{});})().catch(e=>{ready=undefined;throw e;});}
 
 export const STORAGE_KINDS=['warehouse','warehouseSmall','warehouseMedium','warehouseXL','hub'];
 export const SHARED_KINDS=['railStation','railDepot','port','inlandPort','shipDepot','airport','regionalAirport','airDepot','depot',...STORAGE_KINDS];
@@ -28,6 +28,7 @@ export async function allianceSitesFor(worldId:string,userId:string,own:State){
  const key=worldId+':'+userId,hit=cache.get(key);if(hit&&Date.now()-hit.at<120000)return hit.sites.filter(p=>!own.sites.some(x=>x.id===p.id));
  const map=await allianceMap(worldId),aid=map.get(userId);let sites:Site[]=[];
  if(aid){const ids=[...map].filter(([u,a])=>a===aid&&u!==userId).map(([u])=>u);if(ids.length){const rows=(await db().prepare("SELECT c.user_id,COALESCE(NULLIF(c.name,''),'Spedition') AS name,c.state FROM logistics_world_companies c WHERE c.world_id=? AND c.user_id IN (SELECT value FROM json_each(?))").bind(worldId,JSON.stringify(ids)).all<{user_id:string;name:string;state:string}>()).results;const partners=[];for(const r of rows){try{partners.push({id:r.user_id,name:r.name,state:await decodeCompany(r.state)});}catch{}}sites=allySites(own,partners,map.storage.get(aid)!==false);}}
+ if(aid){try{const tag=(await db().prepare('SELECT tag FROM logistics_alliances WHERE id=?').bind(aid).first<{tag:string}>())?.tag||'Allianz',known=new Set([...own.sites.map(p=>p.id),...sites.map(p=>p.id)]);sites.push(...(await buildingSitesFor(worldId,aid,tag)).filter(p=>!known.has(p.id)));}catch{}}
  cache.set(key,{at:Date.now(),sites});if(cache.size>2000)cache.clear();return sites;
 }
 export function invalidateAllianceCache(){cache.clear();}
@@ -36,9 +37,9 @@ export function stripAllianceSites(s:State){s.sites=s.sites.filter(p=>!(p as Sit
 export interface AllianceOffer {key:string;good:GoodId;quantity:number;reward:number;days:number}
 const mix=(t:string)=>{let h=2166136261;for(const c of t){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return()=>{h^=h>>>15;h=Math.imul(h,2246822507);h^=h>>>13;h=Math.imul(h,3266489909);h^=h>>>16;return (h>>>0)/4294967296;};};
 
-export function allianceOffers(allianceId:string,day:number,members:number):AllianceOffer[]{
+export function allianceOffers(allianceId:string,day:number,members:number,capacity=0):AllianceOffer[]{
  const d=Math.floor(day),rnd=mix(allianceId+':'+d),pool=GOODS.filter(g=>!g.seasonal&&g.id!=='containers'&&g.sale>0),out:AllianceOffer[]=[];
- for(let i=0;i<3&&pool.length;i++){const g=pool.splice(Math.floor(rnd()*pool.length),1)[0];const days=4+Math.floor(rnd()*7);const quantity=Math.max(10000,Math.round((6000+rnd()*14000)*Math.max(1,Math.sqrt(members))*days/7/100)*100);const reward=Math.round(quantity*salePrice(g.id,d)*(.45+rnd()*.35));out.push({key:d+'-'+i,good:g.id,quantity,reward,days});}
+ for(let i=0;i<3&&pool.length;i++){const g=pool.splice(Math.floor(rnd()*pool.length),1)[0];const days=4+Math.floor(rnd()*7);const quantity=Math.max(10000,Math.round(Math.max((6000+rnd()*14000)*Math.max(1,Math.sqrt(members)),capacity*(.25+rnd()*.25))*days/7/100)*100);const reward=Math.round(quantity*salePrice(g.id,d)*(.45+rnd()*.35));out.push({key:d+'-'+i,good:g.id,quantity,reward,days});}
  return out;
 }
 interface OrderRow {id:string;alliance_id:string;good:string;quantity:number;delivered:number;reward:number;deadline_day:number;baselines:string;contributions:string;destination_name:string}
@@ -51,14 +52,15 @@ export async function settleAllianceOrders(worldId:string,states:Map<string,Stat
   const base:Record<string,number>=JSON.parse(o.baselines||'{}'),contrib:Record<string,number>=JSON.parse(o.contributions||'{}');
   for(const [user,aid] of map){if(aid!==o.alliance_id)continue;const st=states.get(user);if(!st)continue;const cur=st.deliveryStats?.[o.good]||0;if(base[user]===undefined)base[user]=cur;contrib[user]=Math.round(Math.max(contrib[user]||0,cur-base[user])*100)/100;}
   const delivered=Math.min(o.quantity,Math.round(Object.values(contrib).reduce((a,b)=>a+b,0)*100)/100);let status='active';
-  if(delivered>=o.quantity-1e-6){status='completed';const lvl=(await hqLevels(worldId)).get(o.alliance_id)||0,reward=o.reward*(1+hqBonus(lvl).orders);await ensureAllianceSocial();out.push(chronicle(o.alliance_id,day,`📦 Allianz-Auftrag erfüllt: ${o.destination_name}.`));const total=Object.values(contrib).reduce((a,b)=>a+b,0)||1;for(const [user,c] of Object.entries(contrib)){const st=states.get(user);if(!st||c<=0)continue;const pay=Math.round(reward*c/total*100)/100;credit(st,pay,'Allianz-Aufträge');log(st,`Allianz-Auftrag ${o.destination_name} erfüllt · Anteil ${Math.round(c/total*100)} % · +${pay.toLocaleString('de-DE',{style:'currency',currency:'EUR'})}`,'good');}}
+  if(delivered>=o.quantity-1e-6){status='completed';const lvl=(await hqLevels(worldId)).get(o.alliance_id)||0,reward=o.reward*(1+hqBonus(lvl).orders);await ensureAllianceSocial();out.push(chronicle(o.alliance_id,day,`📦 Allianz-Auftrag erfüllt: ${o.destination_name}.`));out.push(db().prepare('UPDATE logistics_alliances SET treasury=treasury+? WHERE id=?').bind(Math.round(reward*.15),o.alliance_id));const total=Object.values(contrib).reduce((a,b)=>a+b,0)||1;for(const [user,c] of Object.entries(contrib)){const st=states.get(user);if(!st||c<=0)continue;const pay=Math.round(reward*c/total*100)/100;credit(st,pay,'Allianz-Aufträge');log(st,`Allianz-Auftrag ${o.destination_name} erfüllt · Anteil ${Math.round(c/total*100)} % · +${pay.toLocaleString('de-DE',{style:'currency',currency:'EUR'})}`,'good');}}
   else if(day>o.deadline_day){status='failed';for(const [user] of Object.entries(contrib)){const st=states.get(user);if(st)log(st,`Allianz-Auftrag ${o.destination_name} nicht rechtzeitig erfüllt (${delivered}/${o.quantity} EH).`,'warn');}}
   if(status!=='active'||delivered!==o.delivered||o.baselines!==JSON.stringify(base))out.push(db().prepare('UPDATE logistics_alliance_orders SET delivered=?,baselines=?,contributions=?,status=? WHERE id=?').bind(delivered,JSON.stringify(base),JSON.stringify(contrib),status,o.id));
  }
  return out;
 }
 
-import {weekOf} from './progression';
+import {weekOf,weekBaseOf} from './progression';
+import {buildingSitesFor} from './alliance-buildings';
 import {ensureSocialTables,feedStatement} from './social-server';
 let extra:Promise<void>|undefined;
 export function ensureAllianceExtras(){return extra??=db().batch([
@@ -71,6 +73,7 @@ const ehOf=(s:State,good?:string)=>good?(s.deliveryStats as any)?.[good]||0:Obje
 const WEEKLY_GOODS=['wheat','corn','milk','timber','lumber','steel','flour','bread','potatoes','vegetables','beef','pork','cheese','cement','gravel','sand','coal','paper','furniture','diesel','water','beer','animalFeed','sugar','containers','spareParts','fertilizer','glass','textiles'];
 export const weeklyGood=(allianceId:string,week:number)=>wh(allianceId,week,'g')%100<35?WEEKLY_GOODS[wh(allianceId,week,'w')%WEEKLY_GOODS.length]:null;
 
+const capacityCache=new Map<string,number>();
 const wh=(a:string,w:number,k:string)=>{let h=2166136261;for(const c of a+'/'+w+'/'+k){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;};
 export const weeklyTarget=(allianceId:string,week:number)=>150000+Math.round((wh(allianceId,week,'t')%450000)/10000)*10000;
 export const weeklyReward=(allianceId:string,week:number)=>Math.round((weeklyTarget(allianceId,week)*(.6+(wh(allianceId,week,'r')%60)/100))/1000)*1000;
@@ -81,11 +84,14 @@ export async function settleAllianceWeekly(worldId:string,states:Map<string,Stat
  {const last=rows.filter(r=>r.week===week-1&&r.progress>0).sort((a,b)=>b.progress-a.progress)[0];if(last){await ensureSocialTables();const a=await db().prepare('SELECT name,tag FROM logistics_alliances WHERE id=?').bind(last.alliance_id).first<{name:string;tag:string}>();if(a)out.push(feedStatement(worldId,null,'alliance',`[${a.tag}] ${a.name} gewinnt die Allianz-Wochenwertung (Woche ${week}) mit ${Math.round(last.progress).toLocaleString('de-DE')} EH.`,{important:true,day,id:'weekwin:'+worldId+':'+(week-1)}));}}
  for(const r of rows)if(r.week<week&&r.status==='active'){out.push(db().prepare("UPDATE logistics_alliance_weekly SET status='failed' WHERE alliance_id=? AND week=?").bind(r.alliance_id,r.week));for(const u of byAlliance.get(r.alliance_id)||[]){const st=states.get(u);if(st)log(st,`Allianz-Wochenziel verpasst (${Math.round(r.progress).toLocaleString('de-DE')} / ${Math.round(r.target).toLocaleString('de-DE')} EH).`,'warn');}}
  for(const [aid,members] of byAlliance){const r=rows.find(x=>x.alliance_id===aid&&x.week===week);
-  if(!r){const good=weeklyGood(aid,week),base:Record<string,any>={};if(good)base.__good=good;for(const u of members){const st=states.get(u);if(st)base[u]=ehOf(st,good||undefined);}const target=good?Math.round(weeklyTarget(aid,week)*.3/1000)*1000:weeklyTarget(aid,week);out.push(db().prepare("INSERT OR IGNORE INTO logistics_alliance_weekly(alliance_id,world_id,week,target,progress,reward,baselines,contributions,status) VALUES(?,?,?,?,0,?,?,'{}','active')").bind(aid,worldId,week,target,weeklyReward(aid,week),JSON.stringify(base)));continue;}
+  const cap=members.reduce((n,u)=>{const st=states.get(u);return n+(st?weekBaseOf(st).eh:0);},0),sized=(good:string|null)=>{const f=2+(wh(aid,week,'s')%100)/100,t=good?Math.max(weeklyTarget(aid,week)*.3,cap*.3*f):Math.max(weeklyTarget(aid,week),cap*f),target=Math.round(t/1000)*1000;return {target,reward:Math.max(weeklyReward(aid,week),Math.round(target*(.6+(wh(aid,week,'r')%60)/100)/Math.sqrt(Math.max(1,members.length))/1000)*1000)};};
+  if(Math.abs(cap-(capacityCache.get(aid)??-1))>Math.max(1000,cap*.05)){capacityCache.set(aid,cap);out.push(db().prepare('UPDATE logistics_alliances SET capacity=? WHERE id=?').bind(Math.round(cap),aid));}
+  if(!r){const good=weeklyGood(aid,week),base:Record<string,any>={__v:3};if(good)base.__good=good;for(const u of members){const st=states.get(u);if(st)base[u]=ehOf(st,good||undefined);}const {target,reward}=sized(good);out.push(db().prepare("INSERT OR IGNORE INTO logistics_alliance_weekly(alliance_id,world_id,week,target,progress,reward,baselines,contributions,status) VALUES(?,?,?,?,0,?,?,'{}','active')").bind(aid,worldId,week,target,reward,JSON.stringify(base)));continue;}
+  if(r.status==='active'&&(JSON.parse(r.baselines||'{}').__v||0)<3){const b=JSON.parse(r.baselines||'{}');b.__v=3;const {target,reward}=sized(b.__good||null);r.target=Math.max(r.target,target);r.reward=Math.max(r.reward,reward);r.baselines=JSON.stringify(b);out.push(db().prepare('UPDATE logistics_alliance_weekly SET target=?,reward=?,baselines=? WHERE alliance_id=? AND week=?').bind(r.target,r.reward,r.baselines,aid,week));}
   const base:Record<string,any>=JSON.parse(r.baselines||'{}'),contrib:Record<string,number>=JSON.parse(r.contributions||'{}'),good:string|undefined=base.__good;let changed=false;
   for(const u of members){const st=states.get(u);if(!st)continue;const cur=ehOf(st,good);if(base[u]===undefined){base[u]=cur;changed=true;}const c=Math.round(Math.max(contrib[u]||0,cur-base[u]));if(c!==contrib[u]){contrib[u]=c;changed=true;}}
   const progress=Object.values(contrib).reduce((a,b)=>a+b,0);let status=r.status;
-  if(r.status==='active'&&progress>=r.target){status='completed';const lvl=(await hqLevels(worldId)).get(aid)||0,reward=Math.round(r.reward*(1+hqBonus(lvl).weekly));out.push(chronicle(aid,day,`🎯 Wochenziel ${week+1} erreicht (${Math.round(progress).toLocaleString('de-DE')} EH) – ${reward.toLocaleString('de-DE')} € für jedes Mitglied.`));for(const u of members){const st=states.get(u);if(!st)continue;credit(st,reward,'Allianz-Aufträge');log(st,`🤝 Allianz-Wochenziel erreicht! Prämie für jedes Mitglied: ${reward.toLocaleString('de-DE',{style:'currency',currency:'EUR'})}${lvl?` (inkl. +${lvl*10} % Hauptquartier-Bonus)`:''}`,'good');}}
+  if(r.status==='active'&&progress>=r.target){status='completed';const lvl=(await hqLevels(worldId)).get(aid)||0,reward=Math.round(r.reward*(1+hqBonus(lvl).weekly));out.push(db().prepare('UPDATE logistics_alliances SET treasury=treasury+? WHERE id=?').bind(Math.round(reward*Math.max(1,members.length)*.15),aid));out.push(chronicle(aid,day,`🎯 Wochenziel ${week+1} erreicht (${Math.round(progress).toLocaleString('de-DE')} EH) – ${reward.toLocaleString('de-DE')} € für jedes Mitglied.`));for(const u of members){const st=states.get(u);if(!st)continue;credit(st,reward,'Allianz-Aufträge');log(st,`🤝 Allianz-Wochenziel erreicht! Prämie für jedes Mitglied: ${reward.toLocaleString('de-DE',{style:'currency',currency:'EUR'})}${lvl?` (inkl. +${lvl*10} % Hauptquartier-Bonus)`:''}`,'good');}}
   if(changed||status!==r.status)out.push(db().prepare('UPDATE logistics_alliance_weekly SET progress=?,baselines=?,contributions=?,status=? WHERE alliance_id=? AND week=?').bind(progress,JSON.stringify(base),JSON.stringify(contrib),status,aid,week));}
  return out;
 }
@@ -107,7 +113,7 @@ export async function settleAllianceHelp(worldId:string,states:Map<string,State>
 
 export const HQ_LEVELS=[0,250000,1000000,3000000,8000000,20000000];
 export const hqLevel=(funds:number)=>HQ_LEVELS.reduce((l,t,i)=>funds>=t?i:l,0);
-export const hqBonus=(level:number)=>({weekly:.1*level,orders:.05*level});
+export const hqBonus=(level:number)=>({weekly:0,orders:.05*level});
 let social:Promise<unknown>|undefined;
 export function ensureAllianceSocial(){return social??=(async()=>{await ensureAllianceTables();await db().batch([
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_alliance_chronicle(id TEXT PRIMARY KEY,alliance_id TEXT NOT NULL,day REAL NOT NULL,text TEXT NOT NULL,created INTEGER NOT NULL)'),

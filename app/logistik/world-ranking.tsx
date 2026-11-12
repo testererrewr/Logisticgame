@@ -1,4 +1,5 @@
 'use client';
+import {currencyCode} from '../../lib/logistics/currency';
 import {useEffect,useState} from 'react';
 import {openProfile} from './profile-dialog';
 
@@ -7,7 +8,7 @@ const COLUMNS:{key:keyof Row;label:string;money?:boolean;unit?:string}[]=[
  {key:'value',label:'Firmenwert',money:true},{key:'revenue30',label:'Umsatz 30 Tage',money:true},{key:'profit30',label:'Gewinn 30 Tage',money:true},
  {key:'vehicles',label:'Fahrzeuge'},{key:'transported',label:'Transportiert',unit:'EH'},{key:'orders',label:'Aufträge erledigt'},{key:'buildings',label:'Gebäude'},{key:'lines',label:'Linien'},{key:'cash',label:'Kontostand',money:true},
 ];
-const money=(n:number)=>n.toLocaleString('de-DE',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+const money=(n:number)=>n.toLocaleString('de-DE',{style:'currency',currency:currencyCode(),maximumFractionDigits:0});
 
 function WorldHistory({worldId}:{worldId:string}){const [rows,setRows]=useState<any[]|null>(null);useEffect(()=>{fetch('/api/logistik/social?history=1&world='+encodeURIComponent(worldId),{cache:'no-store'}).then(r=>r.json()).then((d:any)=>setRows(d.history||[])).catch(()=>setRows([]));},[worldId]);
  if(!rows)return <p>Wird geladen …</p>;return <div className="log-history"><p className="log-help">Die großen Momente dieser Welt: erste Erfolge, Allianz-Gründungen, Wochensieger, vollendete Weltprojekte und Saisonenden.</p>{rows.length?<ol>{rows.map(r=><li key={r.id}><small>Tag {Math.floor(r.day)}</small><span>{r.text}</span></li>)}</ol>:<p className="log-muted">Die Geschichte dieser Welt wird gerade erst geschrieben …</p>}</div>;}

@@ -1,5 +1,5 @@
 'use client';
-import {useState} from 'react';
+import {useCallback,useEffect,useState} from 'react';
 import {TRAILERS,FREIGHT_NAMES,MAX_FLEET_PURCHASE,purchaseTrailers,euro,type State} from '../../lib/logistics/engine';
 import {sellTrailers,trailerDealerValue} from '../../lib/logistics/vehicle-sales';
 import type {OnlineAction} from '../../lib/logistics/online-actions';
@@ -9,9 +9,9 @@ const maker_=(t:{id:string;name:string})=>({krone:'Krone',schmitz:'Schmitz Cargo
 const km=(n:number)=>Math.round(n||0).toLocaleString('de-DE')+' km';
 const eh=(n:number)=>(Math.round((n||0)*10)/10).toLocaleString('de-DE')+' EH';
 
-export default function TrailerYard({state,commit,busy}:{state:State;busy?:boolean;commit:(fn:(s:State)=>void,message?:string,cmd?:OnlineAction)=>boolean}){
+export default function TrailerYard({state,commit,busy,worldId}:{worldId?:string;state:State;busy?:boolean;commit:(fn:(s:State)=>void,message?:string,cmd?:OnlineAction)=>boolean}){
  const depots=state.sites.filter(p=>p.owned&&p.kind==='depot');
- const [depotId,setDepotId]=useState(''),[counts,setCounts]=useState<Record<string,number>>({}),[picked,setPicked]=useState<string[]>([]),[filter,setFilter]=useState('all'),[tab,setTab]=useState<'stock'|'buy'>('stock'),[type,setType]=useState('all'),[maker,setMaker]=useState('all'),[minCap,setMinCap]=useState(0),[maxPrice,setMaxPrice]=useState(0),[sort,setSort]=useState('price'),[stockType,setStockType]=useState('all');
+ const [depotId,setDepotId]=useState(''),[counts,setCounts]=useState<Record<string,number>>({}),[picked,setPicked]=useState<string[]>([]),[filter,setFilter]=useState('all'),[tab,setTab]=useState<'stock'|'buy'|'used'>('stock'),[type,setType]=useState('all'),[maker,setMaker]=useState('all'),[minCap,setMinCap]=useState(0),[maxPrice,setMaxPrice]=useState(0),[sort,setSort]=useState('price'),[stockType,setStockType]=useState('all');
  const semis=TRAILERS.filter(t=>t.mount==='semi'),makers=[...new Set(semis.map(maker_))].sort();
  const offers=semis.filter(t=>(type==='all'||t.types.includes(type as any))&&(maker==='all'||maker_(t)===maker)&&t.capacity>=minCap&&(!maxPrice||t.price<=maxPrice)).sort((a,b)=>sort==='price'?a.price-b.price:sort==='priceDesc'?b.price-a.price:sort==='capacity'?b.capacity-a.capacity:a.name.localeCompare(b.name,'de'));
  const depot=depots.find(d=>d.id===depotId)||depots[0];
@@ -21,7 +21,8 @@ export default function TrailerYard({state,commit,busy}:{state:State;busy?:boole
  const sell=(ids:string[])=>{if(!ids.length)return;const value=(state.trailers||[]).filter(t=>ids.includes(t.id)).reduce((n,t)=>n+trailerDealerValue(t),0);if(!confirm(ids.length+' Auflieger für '+euro(value)+' an den Händler verkaufen?'))return;if(commit(s=>{sellTrailers(s,ids);},ids.length+' Auflieger verkauft.',{type:'sellTrailers',trailerUnitIds:ids}))setPicked([]);};
  const toggle=(id:string)=>setPicked(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id]);
  return <div className="log-trailer-yard">
-  <nav className="log-subtabs"><button className={tab==='stock'?'active':''} onClick={()=>setTab('stock')}>Meine Auflieger ({(state.trailers||[]).length})</button><button className={tab==='buy'?'active':''} onClick={()=>setTab('buy')}>Auflieger kaufen ({semis.length})</button></nav>
+  <nav className="log-subtabs"><button className={tab==='stock'?'active':''} onClick={()=>setTab('stock')}>Meine Auflieger ({(state.trailers||[]).length})</button><button className={tab==='buy'?'active':''} onClick={()=>setTab('buy')}>Auflieger kaufen ({semis.length})</button>{worldId&&<button className={tab==='used'?'active':''} onClick={()=>setTab('used')}>Gebrauchtmarkt</button>}</nav>
+  {tab==='used'&&worldId&&<UsedTrailers worldId={worldId} state={state} commit={commit} busy={!!busy} depots={depots}/>}
   {tab==='stock'&&<section>
    <h2>Abgestellte Auflieger <small>{(state.trailers||[]).length} im Depot · {attached} an Zugmaschinen</small></h2>
    
@@ -40,3 +41,17 @@ export default function TrailerYard({state,commit,busy}:{state:State;busy?:boole
   </section>}
  </div>;
 }
+
+function UsedTrailers({worldId,state,commit,busy,depots}:{worldId:string;state:State;commit:(fn:(s:State)=>void,message?:string,cmd?:OnlineAction)=>boolean;busy:boolean;depots:State['sites']}){
+ const [offers,setOffers]=useState<any[]>([]),[err,setErr]=useState(''),[depotId,setDepotId]=useState(''),[sel,setSel]=useState(''),[price,setPrice]=useState(0),[type,setType]=useState('all'),[sort,setSort]=useState('price');
+ const load=useCallback(()=>fetch('/api/logistik/used-trailers?world='+encodeURIComponent(worldId),{cache:'no-store'}).then(r=>r.json()).then(d=>{if(d.error)setErr(d.error);else{setOffers(d.offers||[]);setErr('');}}).catch(()=>setErr('Gebrauchtmarkt nicht erreichbar.')),[worldId]);
+ useEffect(()=>{load();const t=setInterval(()=>{if(!document.hidden)load();},20000);return ()=>clearInterval(t);},[load]);
+ const depot=depots.find(d=>d.id===depotId)||depots[0],mine=(state.trailers||[]),pick=mine.find(t=>t.id===sel);
+ const list=offers.filter(o=>type==='all'||TRAILERS.find(x=>x.id===o.trailer.specId)?.types.includes(type as any)).sort((a,b)=>sort==='price'?a.price-b.price:sort==='km'?(a.trailer.odometerKm||0)-(b.trailer.odometerKm||0):b.created-a.created);
+ const run=(cmd:any,fn:(s:State)=>void,msg:string)=>{if(commit(fn,msg,cmd as OnlineAction))setTimeout(load,1500);};
+ return <section><h2>Gebrauchte Auflieger</h2>{err&&<p className="log-muted">{err}</p>}
+  <div className="log-trailer-toolbar"><select aria-label="Frachtart" value={type} onChange={e=>setType(e.target.value)}><option value="all">Alle Frachtarten</option>{Object.entries(FREIGHT_NAMES).map(([id,n])=><option key={id} value={id}>{n}</option>)}</select><select aria-label="Sortierung" value={sort} onChange={e=>setSort(e.target.value)}><option value="price">Preis aufsteigend</option><option value="km">Kilometer aufsteigend</option><option value="new">Neueste zuerst</option></select>
+   <label>Abstellen in<select value={depot?.id||''} onChange={e=>setDepotId(e.target.value)}>{!depots.length&&<option value="">Zuerst ein LKW-Depot bauen</option>}{depots.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}</select></label><span className="log-muted">{list.length} Angebote</span></div>
+  <div className="log-ranking-scroll"><table className="log-exchange-table"><thead><tr><th>Auflieger</th><th>Kapazität</th><th>Laufleistung</th><th>Neupreis</th><th>Preis</th><th>Anbieter</th><th></th></tr></thead><tbody>{list.map(o=>{const spec=TRAILERS.find(x=>x.id===o.trailer.specId);return <tr key={o.id}><td>{spec?.name||o.trailer.specId}</td><td>{spec?.capacity} EH</td><td>{km(o.trailer.odometerKm)}</td><td>{spec?euro(spec.price):'–'}</td><td><b>{euro(o.price)}</b></td><td>{o.seller_name}</td><td>{o.own?<button className="log-secondary" disabled={busy||!depot} onClick={()=>depot&&run({type:'withdrawUsedTrailer',offerId:o.id,depotId:depot.id},()=>{},'Angebot zurückgezogen.')}>Zurückziehen</button>:<button className="log-primary" disabled={busy||!depot||state.cash<o.price} onClick={()=>depot&&run({type:'buyUsedTrailer',offerId:o.id,depotId:depot.id},()=>{},'Auflieger gekauft.')}>Kaufen</button>}</td></tr>;})}</tbody></table></div>{!list.length&&<p className="log-muted">Gerade keine gebrauchten Auflieger im Angebot.</p>}
+  <h3>Eigenen Auflieger anbieten</h3>{mine.length?<div className="log-trailer-toolbar"><select value={sel} onChange={e=>{setSel(e.target.value);const t=mine.find(x=>x.id===e.target.value);setPrice(t?Math.round(trailerDealerValue(t)*1.2):0);}}><option value="">Abgestellten Auflieger wählen</option>{mine.map(t=><option key={t.id} value={t.id}>{TRAILERS.find(x=>x.id===t.specId)?.name||t.specId} · {km(t.odometerKm)}</option>)}</select><label>Preis (€)<input type="number" min={1} value={price||''} onChange={e=>setPrice(Math.round(e.target.valueAsNumber||0))}/></label>{pick&&<small className="log-muted">Händlerwert {euro(trailerDealerValue(pick))}</small>}<button className="log-primary" disabled={busy||!pick||!(price>0)} onClick={()=>pick&&run({type:'offerUsedTrailer',trailerId:pick.id,price},s=>{s.trailers=(s.trailers||[]).filter(x=>x.id!==pick.id);},'Auflieger angeboten.')}>Anbieten</button></div>:<p className="log-muted">Nur abgestellte Auflieger können angeboten werden.</p>}
+ </section>;}

@@ -1,4 +1,5 @@
 import {fuelFactor as worldFuelFactor} from './world-events';
+import {recordEventImpact} from './finance';
 import {VEHICLES,vehicleCargo,cargoCapacity,priceIndex,type State,type Vehicle,type GoodId} from './engine';
 import {recordFinance} from './finance';
 import {fuelFactor} from './drivers';
@@ -25,7 +26,7 @@ export function chargeFuel(s:State,v:Vehicle){
  const km=odo-v.fuelBilledKm;if(km<.5)return;v.fuelBilledKm=odo;
  if(s.fuelOff)return;const kind=energyOf(v);if(!kind)return;
  const amount=km/100*consumptionPer100(v)*fuelFactor(s,v),cost=round2(amount*energyPrice(kind,s.day));if(cost<=0)return;
- recordFinance(s,cost,false,'Treibstoff & Energie');s.cash-=cost;s.spent+=cost;
+ recordFinance(s,cost,false,'Treibstoff & Energie');s.cash-=cost;s.spent+=cost;if(kind!=='strom'){const wf=worldFuelFactor(s.day);if(wf!==1)recordEventImpact(s,-(cost-cost/wf));}
  v.fuelUsed=round2((v.fuelUsed||0)+amount);v.fuelCost=round2((v.fuelCost||0)+cost);
 }
 export function energyTable(day:number){return (Object.keys(ENERGY) as EnergyKind[]).map(k=>{const now=energyPrice(k,day),prev=energyPrice(k,day-1);return {kind:k,...ENERGY[k],now,change:(now-prev)/prev*100,history:Array.from({length:30},(_,i)=>energyPrice(k,day-29+i))};});}

@@ -2,7 +2,7 @@ import {answerQuiz,claimDailyTask} from './daily';
 import {sellVehicle,sellFleet,sellTrailers} from './vehicle-sales';
 import {requestService,cancelService,resolveIncident,ackIncidents,setBreakdownPolicy,type BreakdownOption,type BreakdownPolicy} from './maintenance';
 import type {UnloadPlanEntry} from './engine';
-import {requestManualDeparture} from './engine';
+import {requestManualDeparture,credit,log} from './engine';
 import {queueTerminalTransfer} from './terminal-transfer';
 import {assignDriver} from './drivers';
 import {extendContracts} from './engine';
@@ -53,6 +53,8 @@ export type OnlineAction=
  |{type:'setPlate';vehicleId:string;plate:string}
  |{type:'setContainerOrders';vehicleId:string;orderIds:string[]|null}
  |{type:'setReturnLine';vehicleId:string;lineId:string}
+ |{type:'companyOptions';afterOrder:'depot'|'stay'}
+ |{type:'tutorial';action:'start'|'skip'|'claim'}
  |{type:'assign';vehicleId:string;lineId:string}
  |{type:'assignDriver';driverId:string;vehicleId:string|null}
  |{type:'assignFleet';vehicleIds:string[];lineId:string}
@@ -63,6 +65,9 @@ export type CooperationAction=
  |{type:'offerUsedFleet';vehicleIds:string[];percent:number}
  |{type:'buyUsedVehicle';offerId:string;depotId:string}
  |{type:'withdrawUsedVehicle';offerId:string;depotId:string}
+ |{type:'offerUsedTrailer';trailerId:string;price:number}
+ |{type:'buyUsedTrailer';offerId:string;depotId:string}
+ |{type:'withdrawUsedTrailer';offerId:string;depotId:string}
  |{type:'acceptContainer';offerId:string}
  |{type:'tradeOffer';receiverId:string;siteId:string;good:GoodId;quantity:number;price:number}
  |{type:'acceptTrade';offerId:string}
@@ -76,10 +81,21 @@ export type CooperationAction=
  |{type:'allianceDonate';amount:number;target?:'hq'|'treasury'}
  |{type:'projectDeliver';projectId:string;siteId:string;good:GoodId;quantity:number};
 export type OnlineCommand=OnlineAction|CooperationAction;
+export const TUTORIAL_REWARD=50000;
+export const TUTORIAL_STEPS:{id:string;title:string;hint:string;tab:string;done:(s:State)=>boolean}[]=[
+ {id:'depot',title:'Depot bauen',hint:'Im Baumenü ein Straßendepot wählen und auf der Karte platzieren.',tab:'bauen',done:s=>s.sites.some(p=>p.owned&&p.kind==='depot')},
+ {id:'vehicle',title:'Fahrzeug kaufen',hint:'Unter Fahrzeuge einen LKW oder Transporter für dein Depot kaufen.',tab:'fahrzeuge',done:s=>s.vehicles.length>0},
+ {id:'order',title:'Auftrag annehmen',hint:'In der Auftragsbörse einen Auftrag in der Nähe deines Depots annehmen.',tab:'auftraege',done:s=>s.contracts.some(c=>c.kind==='haulage')},
+ {id:'line',title:'Linie anlegen',hint:'Unter Verträge beim Auftrag „Route aus Vertrag erstellen“ wählen und dein Fahrzeug zuweisen.',tab:'vertraege',done:s=>s.lines.some(l=>!l.deleted)&&s.vehicles.some(v=>!!v.lineId)},
+ {id:'deliver',title:'Erste Lieferung',hint:'Warte, bis dein Fahrzeug die erste Ladung abliefert.',tab:'karte',done:s=>s.contracts.some(c=>c.kind==='haulage'&&c.delivered>0)||Object.values(s.deliveryStats||{}).some(v=>(v||0)>0)},
+];
+export function tutorialAction(s:State,action:string){const t:any=(s as any).tutorial;if(action==='start'){if(t?.done)throw Error('Tutorial bereits abgeschlossen.');(s as any).tutorial={active:true};return;}if(action==='skip'){(s as any).tutorial={...(t||{}),active:false,skipped:true};return;}if(action==='claim'){if(t?.done)throw Error('Belohnung bereits erhalten.');if(!TUTORIAL_STEPS.every(x=>x.done(s)))throw Error('Noch nicht alle Schritte erledigt.');credit(s,TUTORIAL_REWARD,'Prämien & Erfolge');log(s,'🎓 Tutorial abgeschlossen · '+TUTORIAL_REWARD.toLocaleString('de-DE')+' € Startprämie','good');(s as any).tutorial={done:true,active:false};}}
 export function applyAction(state:State,command:OnlineAction,verifiedSites?:Site[]):State{
  const s=structuredClone(state);
  switch(command.type){
  case 'sellVehicle':sellVehicle(s,command.vehicleId);break;
+ case 'tutorial':tutorialAction(s,command.action);break;
+ case 'companyOptions':(s as any).afterOrder=command.afterOrder==='stay'?'stay':'depot';break;
  case 'manualGo':requestManualDeparture(s,command.vehicleId,command.goods,command.orderIds,command.sourceIds,command.unload);break;
  case 'sellFleet':sellFleet(s,command.vehicleIds);break;
  case 'assignDepot':assignDepot(s,command.vehicleIds,command.depotId);break;

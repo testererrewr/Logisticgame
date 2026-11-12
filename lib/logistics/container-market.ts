@@ -11,6 +11,12 @@ import {factoryPartner,dailyContainerCount,stableHash} from './business-rules';
 import {applyRules} from './partner-rules-store';
 import type {PartnerRules} from './business-rules';
 import {kmBetween,good,profile,RECIPES,type Site,type GoodId} from './engine';
+import {ISLAND_GROUPS,continentOf} from './stamps-data';
+import {onIsland} from './islands';
+const ISLAND_COUNTRIES=new Set([...ISLAND_GROUPS.flatMap(g=>g.countries),'Island','Malta','Zypern','Färöer','Mauritius','Seychellen','Malediven','Kap Verde','Komoren','São Tomé und Príncipe','Madagaskar','Sri Lanka','Fidschi','Bahrain','Singapur','Brunei','Osttimor','Neuseeland','Grönland']);
+const TROPICAL:Record<string,string[]>={coffeeBeans:['Südamerika','Afrika','Asien','Nordamerika'],cocoa:['Afrika','Südamerika'],cotton:['Asien','Afrika','Nordamerika','Südamerika'],rubber:['Asien','Afrika'],rice:['Asien'],cutFlowers:['Afrika','Südamerika','Europa']};
+export function geoFeeFactor(g:GoodId,from:{lat:number;lon:number;country:string},to:{lat:number;lon:number;country:string}){let f=1;const island=(p:{lat:number;lon:number;country:string})=>ISLAND_COUNTRIES.has(p.country)||onIsland(p.lat,p.lon);if(island(to))f*=1.35;else if(island(from))f*=1.15;
+ const ca=continentOf(from.country),cb=continentOf(to.country);if(ca&&cb&&ca!==cb&&kmBetween([from.lat,from.lon],[to.lat,to.lon])>=2000)f*=1.2;const src=TROPICAL[g];if(src&&cb&&!src.includes(cb))f*=1.4;return f;}
 import type {ContainerOffer} from './order-accept';
 export type {ContainerOffer} from './order-accept';
 export const GOODS_ORDER_SHARE=.35,RUSH_SHARE=.03,RUSH_FEE=1.6;
@@ -68,13 +74,13 @@ export async function ensureContainerDay(worldId:string,day:number,rules:Partner
  }finally{await env.DB!.prepare('DELETE FROM logistics_runtime WHERE id=?').bind(lockId).run().catch(()=>{});}
 }
 async function generateCountry(worldId:string,c:CountryArea,period:number,gen:number,day:number,rules:PartnerRules,inside:((lat:number,lon:number)=>boolean)|null,far:Lite[]){
- const seed=worldId+'/'+c.name+'/'+Math.round(period*24)+'/'+gen,count=Math.max(6,Math.min(45,Math.round(Math.sqrt(c.area)*3))),stripes:number[][]=[];
+ const seed=worldId+'/'+c.name+'/'+Math.round(period*24)+'/'+gen,count=Math.max(6,Math.min(160,Math.round(Math.sqrt(c.area)*8))),total=Math.min(40000,Math.max(2500,Math.round(c.area*450))),stripes:number[][]=[];
  for(let i=0;i<count;i++){const h=(k:string)=>(stableHash(seed+'/stripe/'+i+'/'+k)%100000)/100000;let pick=h('box')*c.area,box=c.boxes[0];for(const b of c.boxes){if(pick<b.area){box=b;break;}pick-=b.area;}const height=Math.max(.02,(box.maxY-box.minY)/count*.6),lat=box.minY+h('y')*Math.max(0,box.maxY-box.minY-height);stripes.push([lat,lat+height,box.minX,box.maxX]);}
- const rows=(await stripeRows(stripes,Math.ceil(4000/count))).filter((r,i,a)=>a.findIndex(x=>x.id===r.id)===i&&!rules.items[r.id]?.hidden&&(!inside||inside(r.lat,r.lon)));
+ const rows=(await stripeRows(stripes,Math.ceil(total/count))).filter((r,i,a)=>a.findIndex(x=>x.id===r.id)===i&&!rules.items[r.id]?.hidden&&(!inside||inside(r.lat,r.lon)));
  await env.DB!.prepare("DELETE FROM logistics_container_offers WHERE world_id=? AND source_country=? AND status='open' AND accepted_by IS NULL AND day<? AND id NOT LIKE 'hol:%'").bind(worldId,c.name,period).run();
  if(!rows.length)return 0;
- const own=rows.filter(r=>inCountry(c.name,[r.lat,r.lon])),wanted=Math.max(3,Math.min(600,Math.round(own.length*.3)));
- const picked=own.filter(p=>factoryPartner(p)||stableHash(p.id+'/'+seed+'/pick')%100<35).slice(0,wanted);if(!picked.length)return 0;
+ const own=rows.filter(r=>inCountry(c.name,[r.lat,r.lon])),wanted=Math.max(3,Math.min(9000,Math.round(own.length*.5)));
+ const picked=own.filter(p=>factoryPartner(p)||stableHash(p.id+'/'+seed+'/pick')%100<55).slice(0,wanted);if(!picked.length)return 0;
  const payloads=await withPayload(picked.map(p=>p.id)),sources:Lite[]=picked.map(p=>({...(payloads.get(p.id)||p),city:p.city}) as Lite);
  const targets=[...rows,...far],grid=new Map<string,Lite[]>(),cell=(lat:number,lon:number)=>Math.floor(lat)+':'+Math.floor(lon);for(const t of targets){const k=cell(t.lat,t.lon);(grid.get(k)??grid.set(k,[]).get(k)!).push(t);}
  const near=(p:Site,radiusDeg:number)=>{const out:Lite[]=[];const r=Math.ceil(radiusDeg);for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){const list=grid.get((Math.floor(p.lat)+dy)+':'+(Math.floor(p.lon)+dx));if(list)out.push(...list);}return out;};
@@ -85,7 +91,7 @@ async function generateCountry(worldId:string,c:CountryArea,period:number,gen:nu
    let destination:Lite|undefined;for(let retry=0;retry<(g==='containers'?4:25);retry++){const x=pool[stableHash(seed+'/'+p.id+'/'+slot+'/'+retry)%pool.length];if(g==='containers'||wantsGood(x,g)||x.kind==='warehouse'){destination=x;break;}}destination??=pool[stableHash(seed+'/'+p.id+'/'+slot)%pool.length];
    const id=worldId+':'+pid+':'+gen+':'+p.id+':'+slot,km=kmBetween([p.lat,p.lon],[destination.lat,destination.lon]),a=loc(p,c.name),b=loc(destination);
    const special=g==='containers'&&stableHash(id+'/special')%1000<SPECIAL_SHARE*1000?SPECIAL_CARGO[stableHash(id+'/special-kind')%SPECIAL_CARGO.length].id:null,quantity=special?10+stableHash(id+'/special-q')%31:containerQuantity(id,factoryPartner(p),km),rush=!special&&km<=3000&&quantity<=2000&&stableHash(id+'/rush')%100<RUSH_SHARE*100,terms=containerTerms(km);
-   offers.push({id,world_id:worldId,day:period,source_id:p.id,destination_id:destination.id,slot,source_country:a.country,destination_country:b.country,source_city:a.city,destination_city:b.city,distance_km:Math.round(km*10)/10,good:g,quantity,fee:special?Math.round(orderFee(km,g)*SPECIAL_FEE*100)/100:rush?Math.round(orderFee(km,g)*RUSH_FEE*100)/100:orderFee(km,g),special,deadline:period+ORDER_PERIOD_DAYS+(rush?Math.max(2,Math.ceil(terms.days*.45)):terms.days),status:'open',accepted_by:null,rush:rush?1:0});}}
+   offers.push({id,world_id:worldId,day:period,source_id:p.id,destination_id:destination.id,slot,source_country:a.country,destination_country:b.country,source_city:a.city,destination_city:b.city,distance_km:Math.round(km*10)/10,good:g,quantity,fee:Math.round((special?orderFee(km,g)*SPECIAL_FEE:rush?orderFee(km,g)*RUSH_FEE:orderFee(km,g))*geoFeeFactor(g,{lat:p.lat,lon:p.lon,country:a.country},{lat:destination.lat,lon:destination.lon,country:b.country})*100)/100,special,deadline:period+ORDER_PERIOD_DAYS+(rush?Math.max(2,Math.ceil(terms.days*.45)):terms.days),status:'open',accepted_by:null,rush:rush?1:0});}}
  for(let i=0;i<offers.length;i+=250)await env.DB!.prepare(`INSERT OR IGNORE INTO logistics_container_offers(special,rush,good,id,world_id,day,source_id,destination_id,slot,source_country,destination_country,source_city,destination_city,distance_km,quantity,fee,deadline,status) SELECT json_extract(value,'$.special'),COALESCE(json_extract(value,'$.rush'),0),COALESCE(json_extract(value,'$.good'),'containers'),json_extract(value,'$.id'),json_extract(value,'$.world_id'),json_extract(value,'$.day'),json_extract(value,'$.source_id'),json_extract(value,'$.destination_id'),json_extract(value,'$.slot'),json_extract(value,'$.source_country'),json_extract(value,'$.destination_country'),json_extract(value,'$.source_city'),json_extract(value,'$.destination_city'),json_extract(value,'$.distance_km'),json_extract(value,'$.quantity'),json_extract(value,'$.fee'),json_extract(value,'$.deadline'),'open' FROM json_each(?)`).bind(JSON.stringify(offers.slice(i,i+250))).run();
  return offers.length;
 }

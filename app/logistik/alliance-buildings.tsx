@@ -1,0 +1,34 @@
+'use client';
+import {useCallback,useEffect,useState} from 'react';
+import {GOODS} from '../../lib/logistics/engine';
+const eur=(n:number)=>Math.round(n).toLocaleString('de-DE')+' €';
+async function call(world:string,body?:any){const r=await fetch('/api/logistik/alliance'+(body?'':'?world='+encodeURIComponent(world)),body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({world,...body})}:{cache:'no-store'});const d=await r.json().catch(()=>({error:'Keine Antwort.'}));if(!r.ok)throw Error(d.error||'Fehler');return d;}
+
+export function AllianceBuildMenu({worldId,center,onBuilt}:{worldId:string;center:[number,number];onBuilt?:()=>void}){
+ const [a,setA]=useState<any>(null),[kind,setKind]=useState(''),[name,setName]=useState(''),[msg,setMsg]=useState(''),[busy,setBusy]=useState(false);
+ const load=useCallback(()=>call(worldId).then(d=>setA(d.detail||null)).catch(()=>setA(null)),[worldId]);useEffect(()=>{load();},[load]);
+ const b=a?.buildings;if(!a||!b?.canBuild)return null;const type=b.types.find((t:any)=>t.kind===kind);
+ const build=async()=>{setBusy(true);setMsg('');try{await call(worldId,{action:'build',kind,lat:center[0],lon:center[1],name});setMsg('Gebaut.');setKind('');setName('');await load();onBuilt?.();}catch(e:any){setMsg(e.message);}finally{setBusy(false);}};
+ return <section className="log-trailer-box"><h3>🤝 Allianzgebäude [{a.tag}]</h3><small className="log-muted">Allianzkasse: {eur(a.treasury||0)}</small>
+  <div className="log-build-list">{b.types.map((t:any)=><button key={t.kind} className={kind===t.kind?'active':''} onClick={()=>setKind(kind===t.kind?'':t.kind)}><span>{t.icon}</span><b>{t.name}</b><small>{eur(t.price)}</small></button>)}</div>
+  {type&&<div className="log-trailer-toolbar"><input placeholder={type.name+' (Name)'} value={name} maxLength={60} onChange={e=>setName(e.target.value)}/><button className="log-primary" disabled={busy||(a.treasury||0)<type.price} onClick={()=>void build()}>An Kartenmitte bauen · {eur(type.price)}</button><small className="log-muted">Karte so verschieben, dass der Bauplatz in der Mitte liegt ({center[0].toFixed(3)}, {center[1].toFixed(3)}).</small></div>}
+  {msg&&<p>{msg}</p>}</section>;}
+
+export function AllianceBuildingsTab({worldId,a,busy,act}:{worldId:string;a:any;busy:boolean;act:(b:any,done?:()=>void)=>Promise<void>|void}){
+ const b=a.buildings||{},list:any[]=b.list||[],[role,setRole]=useState(b.buildRole||'leader'),[fee,setFee]=useState(String(b.fee||0));
+ const icon=(k:string)=>(b.types||[]).find((t:any)=>t.kind===k)?.icon||'🏢',label=(k:string)=>(b.types||[]).find((t:any)=>t.kind===k)?.name||k;
+ return <section><h3>🏗️ Allianzgebäude</h3><p className="log-help">Bauen im Baumenü, bezahlt aus der Allianzkasse. Hauptquartier: +2,5 % auf Einnahmen im Land. Lager, Häfen, Flughäfen und Bahnhöfe nutzen alle Mitglieder.</p>
+  {list.length?<div className="log-ranking-scroll"><table className="log-exchange-table"><thead><tr><th>Gebäude</th><th>Typ</th><th>Land</th><th></th></tr></thead><tbody>{list.map(x=><tr key={x.id}><td>{icon(x.kind)} {x.name}</td><td>{label(x.kind)}</td><td>{x.country||'–'}</td><td>{b.canBuild&&<button className="log-secondary" disabled={busy} onClick={()=>{if(confirm(x.name+' abreißen? Das Geld wird nicht erstattet.'))void act({action:'demolish',id:x.id});}}>Abreißen</button>}</td></tr>)}</tbody></table></div>:<p className="log-muted">Noch keine Allianzgebäude.</p>}
+  {a.role==='leader'&&<div className="log-trailer-box"><h4>Einstellungen</h4><div className="log-trailer-toolbar"><label>Bauen dürfen<select value={role} onChange={e=>setRole(e.target.value)}><option value="leader">Nur Owner</option><option value="officer">Owner und Admins</option></select></label><label>Nutzungsgebühr je Gebäude und Tag (€)<input type="number" min={0} value={fee} onChange={e=>setFee(e.target.value)}/></label><button className="log-primary" disabled={busy} onClick={()=>void act({action:'buildSettings',buildRole:role,fee:Number(fee)||0})}>Speichern</button></div><small className="log-muted">Pro Tag und genutztem Gebäude, geht in die Allianzkasse. 0 = gratis.</small></div>}
+ </section>;}
+
+export function AllianceMarket({worldId,siteId,stockOf}:{worldId:string;siteId:string;stockOf:Record<string,number>}){
+ const [offers,setOffers]=useState<any[]>([]),[g,setG]=useState(''),[qty,setQty]=useState(''),[price,setPrice]=useState(''),[msg,setMsg]=useState(''),[busy,setBusy]=useState(false);
+ const load=useCallback(()=>fetch('/api/logistik/alliance?world='+encodeURIComponent(worldId)+'&market='+encodeURIComponent(siteId),{cache:'no-store'}).then(r=>r.json()).then(d=>setOffers(d.offers||[])).catch(()=>{}),[worldId,siteId]);
+ useEffect(()=>{load();const t=setInterval(()=>{if(!document.hidden)load();},20000);return ()=>clearInterval(t);},[load]);
+ const act=async(body:any)=>{setBusy(true);setMsg('');try{await call(worldId,body);setMsg(body.action==='marketBuy'?'Kauf angefragt – wird beim nächsten Spieltakt gebucht.':'Gespeichert.');await load();}catch(e:any){setMsg(e.message);}finally{setBusy(false);}};
+ const mine=Object.entries(stockOf).filter(([,q])=>q>0.009);
+ return <section className="log-trailer-box"><h3>🛒 Marktplatz im Allianzlager</h3>
+  {offers.length?<table className="log-exchange-table"><thead><tr><th>Ware</th><th>Menge</th><th>€/EH</th><th>Anbieter</th><th></th></tr></thead><tbody>{offers.map(o=><tr key={o.id}><td>{o.goodName}</td><td>{o.qty} EH</td><td>{Number(o.price).toLocaleString('de-DE',{minimumFractionDigits:2})}</td><td>{o.seller_name}</td><td>{o.status==='buying'?<small className="log-muted">⏳ verkauft</small>:o.own?<button className="log-secondary" disabled={busy} onClick={()=>void act({action:'marketCancel',id:o.id})}>Zurückziehen</button>:<button className="log-primary" disabled={busy} onClick={()=>void act({action:'marketBuy',id:o.id})}>Kaufen · {eur(o.qty*o.price)}</button>}</td></tr>)}</tbody></table>:<p className="log-muted">Keine Angebote in diesem Lager.</p>}
+  {mine.length>0&&<div className="log-trailer-toolbar"><select value={g} onChange={e=>setG(e.target.value)}><option value="">Eigene Ware anbieten …</option>{mine.map(([id,q])=><option key={id} value={id}>{GOODS.find(x=>x.id===id)?.name||id} · {Math.round(q*100)/100} EH</option>)}</select><input type="number" min={1} placeholder="EH" value={qty} onChange={e=>setQty(e.target.value)}/><input type="number" min={0.01} step={0.01} placeholder="€ je EH" value={price} onChange={e=>setPrice(e.target.value)}/><button className="log-primary" disabled={busy||!g||!(Number(qty)>0)||!(Number(price)>0)} onClick={()=>void act({action:'marketOffer',buildingId:siteId.replace(/^ab-/,''),good:g,qty:Number(qty),price:Number(price)})}>Anbieten</button></div>}
+  {msg&&<p>{msg}</p>}</section>;}

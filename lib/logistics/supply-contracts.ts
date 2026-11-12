@@ -3,7 +3,8 @@ import {good,credit,debit,log,stock,freeStock,storageCapacity,type GoodId,type S
 import {systemMessageStatement,ensureMessageTable} from './system-message';
 
 const db=()=>env.DB!;
-export const SUPPLY_PENALTY=.25;
+export const SUPPLY_PENALTY=.8;
+export const supplyMinPrice=(g:GoodId)=>Math.ceil((good(g)?.purchase||0)*1.1*100)/100;
 export const SUPPLY_MAX_MISSES=5;
 export interface SupplyRow {id:string;world_id:string;requester_id:string;requester_name:string;supplier_id:string|null;supplier_name:string|null;target_id:string|null;site_id:string;site_name:string;site:string;good:string;daily:number;price:number;days:number;start_day:number;end_day:number;day_key:number;today:number;delivered:number;paid:number;penalties:number;misses:number;blocked:number;status:string;note:string;created:number}
 let ready:Promise<unknown>|undefined;
@@ -45,7 +46,7 @@ export async function settleSupplyContracts(worldId:string,states:Map<string,Sta
    if(status==='active'){const want=r2(Math.min(r.daily-done,freeStock(sup,r.site_id,g),room(req,r.site_id)));const afford=r.price>0?Math.floor(req.cash/r.price*100)/100:Infinity,move=r2(Math.min(want,afford));
     if(want>.009&&afford<want-.009&&!blocked){blocked=1;log(req,`⚠️ Liefervertrag ${name}: Konto reicht nicht, um die Ware zu bezahlen.`,'warn');msg(r.supplier_id,`📦 ${r.requester_name} kann den Liefervertrag ${name} gerade nicht bezahlen – heute keine Vertragsstrafe.`);}
     if(move>.009){const pay=r2(move*r.price);sup.inventory[r.site_id]![g]=r2(stock(sup,r.site_id,g)-move);req.inventory[r.site_id]??={};req.inventory[r.site_id][g]=r2(stock(req,r.site_id,g)+move);if(pay>0){debit(req,pay,'Lieferverträge');credit(sup,pay,'Lieferverträge');}done=r2(done+move);delivered=r2(delivered+move);paid=r2(paid+pay);}}
-   else if(status==='cancel_req'||status==='cancel_sup'){const fee=r2(dayValue*(status==='cancel_sup'?SUPPLY_PENALTY*2:SUPPLY_PENALTY));const [payer,payee]=status==='cancel_sup'?[sup,req]:[req,sup];charge(payer,fee,'Vertragsstrafen');credit(payee,fee,'Vertragsstrafen');penalties=r2(penalties+(status==='cancel_sup'?fee:0));
+   else if(status==='cancel_req'||status==='cancel_sup'){const fee=r2(dayValue*(status==='cancel_sup'?.5:.25));const [payer,payee]=status==='cancel_sup'?[sup,req]:[req,sup];charge(payer,fee,'Vertragsstrafen');credit(payee,fee,'Vertragsstrafen');penalties=r2(penalties+(status==='cancel_sup'?fee:0));
     const who=status==='cancel_sup'?r.supplier_name:r.requester_name;msg(r.requester_id,`📦 Liefervertrag ${name} nach ${r.site_name} wurde von ${who} gekündigt · Ablöse ${eur(fee)} ${status==='cancel_sup'?'erhalten':'gezahlt'}.`);msg(r.supplier_id,`📦 Liefervertrag ${name} nach ${r.site_name} wurde von ${who} gekündigt · Ablöse ${eur(fee)} ${status==='cancel_sup'?'gezahlt':'erhalten'}.`);status='cancelled';}}
   if(status!==r.status||day_key!==r.day_key||done!==r.today||delivered!==r.delivered||penalties!==r.penalties||misses!==r.misses||blocked!==r.blocked)out.push(db().prepare('UPDATE logistics_supply_contracts SET status=?,day_key=?,today=?,delivered=?,paid=?,penalties=?,misses=?,blocked=? WHERE id=?').bind(status,day_key,done,delivered,paid,penalties,misses,blocked,r.id));
   if(status!==r.status)invalidateSupplyCache();}

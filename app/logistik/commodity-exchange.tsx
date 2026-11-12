@@ -1,7 +1,8 @@
 'use client';
+import {currencyCode} from '../../lib/logistics/currency';
 import {useMemo,useState} from 'react';
 import {GOODS,FREIGHT_NAMES,salePrice,type GoodId} from '../../lib/logistics/engine';
-const euro=(n:number)=>n.toLocaleString('de-DE',{style:'currency',currency:'EUR',minimumFractionDigits:2,maximumFractionDigits:2});
+const euro=(n:number)=>n.toLocaleString('de-DE',{style:'currency',currency:currencyCode(),minimumFractionDigits:2,maximumFractionDigits:2});
 import ProductImage from './product-image';
 
 import {energyTable} from '../../lib/logistics/fuel';

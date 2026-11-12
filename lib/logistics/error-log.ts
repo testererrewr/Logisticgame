@@ -24,15 +24,17 @@ export async function logError(source:string,e:unknown,context:Record<string,unk
   const top=stack.split('\n').slice(0,3).join('|').replace(/:\d+:\d+/g,'');const id=hash(source+'|'+name+'|'+message.replace(/\d+(\.\d+)?/g,'#')+'|'+top);
   const ctx=clip(JSON.stringify(context,(k,v)=>typeof v==='string'&&v.length>500?v.slice(0,500)+'…':v),3000);
   await db().prepare('INSERT INTO logistics_error_log(id,first,last,count,level,source,name,message,stack,context,user_id,world_id) VALUES(?,?,?,1,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET last=excluded.last,count=count+1,message=excluded.message,stack=excluded.stack,context=excluded.context,user_id=COALESCE(excluded.user_id,user_id),world_id=COALESCE(excluded.world_id,world_id)')
-   .bind(id,now,now,lvl,clip(source,80),name,message,stack,ctx,context.user?String(context.user):null,context.world?String(context.world):null).run();
+   .bind(id,now,now,lvl,clip(source,80),name,message,stack,ctx,context.user?String(context.user):context.userId?String(context.userId):null,context.world?String(context.world):context.worldId?String(context.worldId):null).run();
   if(Math.random()<.02)await db().prepare('DELETE FROM logistics_error_log WHERE id IN (SELECT id FROM logistics_error_log ORDER BY last DESC LIMIT -1 OFFSET 3000)').run();
  }catch(inner){console.error('[logistik:error-log] Protokoll konnte nicht geschrieben werden',inner,e);}
 }
-export async function readErrorLog(filter:{level?:string;source?:string;query?:string;limit?:number}={}){
+export async function readErrorLog(filter:{level?:string;source?:string;query?:string;limit?:number;world?:string;user?:string}={}){
  await ensureErrorLog();const where:string[]=[],args:unknown[]=[];
- if(filter.level&&['error','warn','info'].includes(filter.level)){where.push('level=?');args.push(filter.level);}
- if(filter.source){where.push('source LIKE ?');args.push(filter.source+'%');}
- if(filter.query){where.push('(message LIKE ? OR stack LIKE ? OR context LIKE ?)');const q='%'+filter.query.slice(0,100)+'%';args.push(q,q,q);}
+ if(filter.level&&['error','warn','info'].includes(filter.level)){where.push('e.level=?');args.push(filter.level);}
+ if(filter.source){where.push('e.source LIKE ?');args.push(filter.source+'%');}
+ if(filter.world){where.push('(e.world_id=? OR e.context LIKE ?)');args.push(filter.world,'%'+filter.world+'%');}
+ if(filter.user){where.push('(e.user_id IN (SELECT id FROM users WHERE id=? OR lower(name) LIKE lower(?)) OR e.context LIKE ?)');args.push(filter.user,'%'+filter.user+'%','%'+filter.user+'%');}
+ if(filter.query){where.push('(e.message LIKE ? OR e.stack LIKE ? OR e.context LIKE ?)');const q='%'+filter.query.slice(0,100)+'%';args.push(q,q,q);}
  const rows=(await db().prepare(`SELECT e.*,u.name AS user_name,w.name AS world_name FROM logistics_error_log e LEFT JOIN users u ON u.id=e.user_id LEFT JOIN logistics_worlds w ON w.id=e.world_id ${where.length?'WHERE '+where.join(' AND '):''} ORDER BY last DESC LIMIT ?`).bind(...args,Math.max(1,Math.min(500,filter.limit||200))).all()).results;
  const stats=(await db().prepare("SELECT level,count(*) AS n,sum(count) AS total,max(last) AS last FROM logistics_error_log GROUP BY level").all()).results;
  return {rows,stats};
