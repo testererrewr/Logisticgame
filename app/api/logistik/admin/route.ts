@@ -4,6 +4,7 @@ import {ensureAllianceTables} from '../../../../lib/logistics/alliance-server';
 import {ensureBrandingTables,setEntitlement} from '../../../../lib/logistics/branding-server';
 import {validateSettings,parseSettings,settingsSummary} from '../../../../lib/logistics/world-settings';
 import {ensureWorldSettingsColumn} from '../../../../lib/logistics/world-region-server';
+import {newWorldImport} from '../../../../lib/logistics/world-import-plan';
 import {readWorldImport,worldImportStatus,setWorldImportEnabled,continueWorldImport,retryWorldImport} from '../../../../lib/logistics/world-import';
 import {NextRequest,NextResponse} from 'next/server';
 import {env} from 'cloudflare:workers';
@@ -13,21 +14,34 @@ const db=()=>env.DB!;
 const reply=(data:unknown,status=200)=>NextResponse.json(data,{status,headers:{'Cache-Control':'no-store'}});
 const slow=new Map<string,{at:number;value:any;running?:boolean}>();
 function slowCached(key:string,ttl:number,load:()=>Promise<any>){const hit=slow.get(key);if(!hit||(!hit.running&&Date.now()-hit.at>ttl)){const entry={at:hit?.at||0,value:hit?.value,running:true};slow.set(key,entry);void load().then(v=>slow.set(key,{at:Date.now(),value:v})).catch(()=>slow.set(key,{at:Date.now(),value:entry.value}));}return slow.get(key)?.value;}
-export async function GET(req:NextRequest){try{
+let coreReady=false;
+export async function GET(req:NextRequest){try{const t0=Date.now();
  const u=await currentUser(req);if(!u||u.status!=='active'||!['owner','admin'].includes(u.role))return reply({error:'Nur für Administratoren.'},403);
- continueWorldImport();await ensureWorldSettingsColumn();
- const [worlds,users,runtime,areas,partners]=await db().batch([
-  db().prepare('SELECT w.*,(SELECT count(*) FROM logistics_world_companies c WHERE c.world_id=w.id) AS companies FROM logistics_worlds w ORDER BY created DESC'),
+ if(!coreReady){await ensureWorldSettingsColumn();await ensureBrandingTables();await readWorldImport();coreReady=true;}
+ const rt=(id:string)=>db().prepare('SELECT id,updated,payload FROM logistics_runtime WHERE id=?').bind(id);
+ const [worlds,users,runtime,areas,partners,ro,site,ops,moves,nodes,ents,imp]=await db().batch([
+  db().prepare('SELECT w.id,w.name,w.description,w.status,w.day,w.time_scale,w.created,w.settings,w.host_url,(SELECT count(*) FROM logistics_world_companies c WHERE c.world_id=w.id) AS companies FROM logistics_worlds w ORDER BY created DESC'),
   db().prepare('SELECT id,name,email,role,status,created FROM users ORDER BY created DESC LIMIT 100'),
   db().prepare("SELECT * FROM logistics_runtime WHERE id='simulation'"),
   db().prepare('SELECT * FROM logistics_loaded_areas ORDER BY rowid DESC LIMIT 40'),
   db().prepare('SELECT max(rowid) AS n FROM logistics_partner_registry'),
- ]);const {instanceRole}=await import('../../../../lib/logistics/world-hosting');const ro=await db().prepare("SELECT id,updated,payload FROM logistics_runtime WHERE id IN ('rollout-request','rollout-status','version:stable','version:test','version:all')").all<{id:string;updated:number;payload:string}>().catch(()=>({results:[] as any[]}));
+  db().prepare("SELECT id,updated,payload FROM logistics_runtime WHERE id IN ('rollout-request','rollout-status','version:stable','version:test','version:all')"),
+  rt('site-settings'),
+  db().prepare("SELECT id,updated,payload FROM logistics_runtime WHERE id IN ('ops-status','ops-backups','ops-request')"),
+  db().prepare("SELECT id,payload FROM logistics_runtime WHERE id>='move:' AND id<'move:￿'"),
+  db().prepare("SELECT payload FROM logistics_runtime WHERE id>='node:' AND id<'node:￿'"),
+  db().prepare('SELECT user_id,feature FROM logistics_entitlements'),
+  rt('world-import-v10'),
+ ]);
+ const {instanceRole}=await import('../../../../lib/logistics/world-hosting');const roRows=ro.results as {id:string;updated:number;payload:string}[];
  const orderStatus:Record<string,any>=slowCached('orders',60000,async()=>{const out:Record<string,any>={};const CM=await import('../../../../lib/logistics/container-market');for(const w of (worlds.results as any[]).filter(w=>w.status==='running').slice(0,20)){const st=await CM.containerGenerationStatus(w.id,w.day).catch(()=>null);const open=await db().prepare("SELECT count(*) AS n FROM logistics_container_offers WHERE world_id=? AND status='open' AND day<=? AND day>?").bind(w.id,w.day,w.day-5).first<{n:number}>().catch(()=>null);out[w.id]={...(st||{}),open:open?.n||0,lastError:CM.lastGenError.get(w.id)||null};}return out;})||{};
- let nodesInfo:any=null;try{const T=await import('../../../../lib/logistics/world-transfer');const mv=(await db().prepare("SELECT id,payload FROM logistics_runtime WHERE id>='move:' AND id<'move:\uffff'").all<{id:string;payload:string}>()).results.map(r=>({world:r.id.slice(5),...JSON.parse(r.payload)}));nodesInfo={nodes:(await T.listNodes()).map(({token,...n})=>n),moves:mv};}catch{}
- const siteRow=await db().prepare("SELECT payload FROM logistics_runtime WHERE id='site-settings'").first<{payload:string}>().catch(()=>null);let siteSettings:any={};try{siteSettings=JSON.parse(siteRow?.payload||'{}');}catch{}
- const opsRows=(await db().prepare("SELECT id,updated,payload FROM logistics_runtime WHERE id IN ('ops-status','ops-backups','ops-request')").all<{id:string;updated:number;payload:string}>().catch(()=>({results:[]}))).results,opsOf=(k:string)=>{const r=opsRows.find(x=>x.id===k);if(!r)return null;try{return {...JSON.parse(r.payload),updated:r.updated};}catch{return null;}};
- return reply({ops:{status:opsOf('ops-status'),backups:opsOf('ops-backups'),request:opsOf('ops-request')},siteSettings,orderStatus,servers:nodesInfo,rollout:{versions:{stable:ro.results.find(r=>r.id==='version:stable'||r.id==='version:all')||null,test:ro.results.find(r=>r.id==='version:test')||null},instance:instanceRole(),request:ro.results.find(r=>r.id==='rollout-request')||null,status:ro.results.find(r=>r.id==='rollout-status')||null},worldImport:worldImportStatus(await readWorldImport()),entitlements:await (async()=>{await ensureBrandingTables();return (await db().prepare('SELECT user_id,feature FROM logistics_entitlements').all()).results;})(),worlds:worlds.results.map((w:any)=>({...w,settings:settingsSummary(parseSettings(w.settings))})),users:users.results,runtime:runtime.results[0]||null,areas:areas.results,partnerCount:(partners.results[0] as any)?.n||0,registryKinds:slowCached('registry',900000,()=>db().prepare('SELECT kind,sum(n) AS n FROM logistics_partner_grid WHERE level=0 GROUP BY kind ORDER BY n DESC').all().then(r=>r.results))||[],role:u.role});
+ const parse=(v:any)=>{try{return JSON.parse(v);}catch{return null;}};
+ const nodesInfo={nodes:(nodes.results as any[]).map(r=>parse(r.payload)).filter(Boolean).map(({token,...n}:any)=>n),moves:(moves.results as any[]).map(r=>({world:r.id.slice(5),...parse(r.payload)}))};
+ const siteSettings=parse((site.results[0] as any)?.payload||'{}')||{};
+ const opsRows=ops.results as any[],opsOf=(k:string)=>{const r=opsRows.find(x=>x.id===k);if(!r)return null;const v=parse(r.payload);return v?{...v,updated:r.updated}:null;};
+ const impRow=(imp.results[0] as any)?.payload;const importState=impRow?{...newWorldImport(),...parse(impRow)}:await readWorldImport();
+ const ms=Date.now()-t0;if(ms>5000)void logError('perf:admin',Error(`Verwaltung lud ${(ms/1000).toFixed(1)} s`),{},'warn');
+ return reply({ops:{status:opsOf('ops-status'),backups:opsOf('ops-backups'),request:opsOf('ops-request')},siteSettings,orderStatus,servers:nodesInfo,rollout:{versions:{stable:roRows.find(r=>r.id==='version:stable'||r.id==='version:all')||null,test:roRows.find(r=>r.id==='version:test')||null},instance:instanceRole(),request:roRows.find(r=>r.id==='rollout-request')||null,status:roRows.find(r=>r.id==='rollout-status')||null},worldImport:worldImportStatus(importState as any),entitlements:ents.results,worlds:worlds.results.map((w:any)=>({...w,settings:settingsSummary(parseSettings(w.settings))})),users:users.results,runtime:runtime.results[0]||null,areas:areas.results,partnerCount:(partners.results[0] as any)?.n||0,registryKinds:slowCached('registry',900000,()=>db().prepare('SELECT kind,sum(n) AS n FROM logistics_partner_grid WHERE level=0 GROUP BY kind ORDER BY n DESC').all().then(r=>r.results))||[],role:u.role});
  }catch(e:any){await logError('api:admin',e,{url:req.url});return reply({error:e.message},422);}}
 export async function POST(req:NextRequest){try{
  const raw=await req.text();if(raw.length>50000)return reply({error:'Anfrage zu groß.'},413);
