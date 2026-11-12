@@ -624,3 +624,5 @@ html:has(.log-lobby)::-webkit-scrollbar,body:has(.log-lobby)::-webkit-scrollbar,
 .log-lobby-brand>span{color:#fff}
 .log-world-grid .log-world{display:flex!important;flex-direction:column;align-items:stretch!important;text-align:left!important;grid-template-columns:none!important}.log-world-grid .log-world>div{width:100%;text-align:left}
 .log-world-grid .log-world-summary{display:grid!important;grid-template-columns:auto 1fr;gap:.35rem .8rem;margin:.8rem 0 0}.log-world-grid .log-world-summary>div{display:contents}.log-world-grid .log-world-summary dt{color:#8fa4b5;font-size:12px}.log-world-grid .log-world-summary dd{margin:0;font-size:13px;font-weight:700;color:#e9f0f5}
+.log-lobby-subpage{max-width:60rem;margin:0 auto;padding-bottom:3rem}.log-lobby-subpage .log-page-hero{padding-top:2.4rem}
+a.log-lang-switch{text-decoration:none;display:inline-block}

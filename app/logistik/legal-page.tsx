@@ -7,15 +7,16 @@ import {useSite,DiscordButton} from './site-config-client';
 import {SiteNav} from './site-nav';
 import {currentLanguage} from '../../lib/i18n';
 
-export const SITE_PAGES=['agb','impressum','datenschutz','neuigkeiten','bildnachweise','roadmap','premium','passwort-neu','konto-bestaetigen'];
-const TITLE:Record<string,[string,string]>={agb:['AGB & Rücktrittsrecht','RECHTLICHES'],impressum:['Impressum','RECHTLICHES'],datenschutz:['Datenschutzerklärung','RECHTLICHES'],neuigkeiten:['Was ist neu','UPDATES'],bildnachweise:['Bildnachweise','RECHTLICHES'],roadmap:['Roadmap','WAS ALS NÄCHSTES KOMMT'],premium:['Premium','UNTERSTÜTZE DAS SPIEL'],'passwort-neu':['Neues Passwort','KONTO'],'konto-bestaetigen':['E-Mail bestätigen','KONTO']};
+export const SITE_PAGES=['agb','impressum','datenschutz','bildnachweise','passwort-neu','konto-bestaetigen'];
+export const LOBBY_PAGES=['roadmap','premium','neuigkeiten'];
+export const TITLE:Record<string,[string,string]>={agb:['AGB & Rücktrittsrecht','RECHTLICHES'],impressum:['Impressum','RECHTLICHES'],datenschutz:['Datenschutzerklärung','RECHTLICHES'],neuigkeiten:['Was ist neu','UPDATES'],bildnachweise:['Bildnachweise','RECHTLICHES'],roadmap:['Roadmap','WAS ALS NÄCHSTES KOMMT'],premium:['Premium','UNTERSTÜTZE DAS SPIEL'],'passwort-neu':['Neues Passwort','KONTO'],'konto-bestaetigen':['E-Mail bestätigen','KONTO']};
 
 function Credits(){const all:any[]=[...Object.entries(vehicleGallery as any),...Object.entries((equipmentGallery as any).trailers||{}),...Object.entries((equipmentGallery as any).wagons||{})].filter(([,p])=>p&&p.sourceUrl).map(([id,p]:any)=>({id,...p}));return <><p>Fahrzeug- und Ausrüstungsfotos stammen von Wikimedia Commons und stehen unter den jeweils genannten freien Lizenzen. Bilder wurden verkleinert und zugeschnitten.</p><div className="log-site-table"><table><thead><tr><th>Bild</th><th>Urheber</th><th>Lizenz</th></tr></thead><tbody>{all.map(p=><tr key={p.id}><td><a href={p.sourceUrl} target="_blank" rel="noopener noreferrer">{p.depicted||p.id}</a></td><td>{p.author||p.attribution||'–'}</td><td>{p.licenseUrl?<a href={p.licenseUrl} target="_blank" rel="noopener noreferrer">{p.license}</a>:p.license||'–'}</td></tr>)}</tbody></table></div></>;}
 function linkify(line:string){return line.split(/(https?:\/\/[^\s)]+|[a-z0-9.-]+\.(?:gv\.at|eu\/[^\s)]*))/gi).map((p,i)=>/^(https?:\/\/|[a-z0-9.-]+\.gv\.at)/i.test(p)?<a key={i} href={p.startsWith('http')?p:'https://'+p} target="_blank" rel="noopener noreferrer">{p}</a>:p);}
 function Text({text}:{text:string}){return <>{text.split(/\n{2,}/).map((p,i)=>p.startsWith('# ')?null:p.startsWith('## ')?<h2 key={i}>{p.slice(3)}</h2>:p.split('\n').every(l=>/^\s*[-•]\s/.test(l))?<ul key={i}>{p.split('\n').map((l,j)=><li key={j}>{linkify(l.replace(/^\s*[-•]\s/,''))}</li>)}</ul>:<p key={i}>{p.split('\n').map((l,j)=><span key={j}>{j>0&&<br/>}{linkify(l)}</span>)}</p>)}</>;}
 
 export function SiteShell({kind,children}:{kind:string;children:ReactNode}){const [title,eyebrow]=TITLE[kind]||[kind,''];
- return <main className={'log-lobby log-site-page log-site-'+kind}><SiteNav active={'/'+kind} right={<a className="log-site-back" href="/">Zum Spiel →</a>}/><div className="log-lobby-bg" aria-hidden="true"><i/><i/><i/></div>
+ return <main className={'log-lobby log-site-page log-site-'+kind}><SiteNav active={'/'+kind}/><div className="log-lobby-bg" aria-hidden="true"><i/><i/><i/></div>
   <header className="log-page-hero log-anim"><div className="log-lobby-eyebrow">{eyebrow}</div><h1>{title}<span>.</span></h1></header>
   <section className="log-site-content log-anim">{children}</section>
   <footer className="log-lobby-footer"><a href="/impressum">Impressum</a> · <a href="/datenschutz">Datenschutz</a> · <a href="/agb">AGB</a> · <a href="/neuigkeiten">Neuigkeiten</a> · <a href="/roadmap">Roadmap</a> · <a href="/bildnachweise">Bildnachweise</a></footer></main>;}
@@ -23,12 +24,12 @@ function Legal({kind}:{kind:'impressum'|'datenschutz'|'agb'}){const [d,setD]=use
  if(!d)return <p className="log-muted">Wird geladen …</p>;const text=d.text||(kind==='impressum'?IMPRESSUM:kind==='agb'?AGB:DATENSCHUTZ);
  return <article className="log-site-text"><Text text={text}/>{d.updated>0&&<p className="log-site-stamp">Stand: {new Date(d.updated).toLocaleDateString('de-DE')}</p>}</article>;}
 
-function News(){const site=useSite();if(!site)return <p className="log-muted">Wird geladen …</p>;
+export function News(){const site=useSite();if(!site)return <p className="log-muted">Wird geladen …</p>;
  if(!site.changelog.length)return <div className="log-site-empty"><span>📰</span><p>Hier erscheinen die Neuigkeiten zu jedem Update.</p></div>;
  return <div className="log-news-list">{site.changelog.map((c,i)=><article key={c.id} className="log-news-entry" style={{animationDelay:i*70+'ms'}}><time>{new Date(c.date).toLocaleDateString('de-DE',{day:'2-digit',month:'long',year:'numeric'})}</time><h2>{c.title}</h2><ul>{c.items.map((x,j)=><li key={j}>{x}</li>)}</ul></article>)}</div>;}
 
 const STATUS:Record<string,[string,string]>={done:['Fertig','done'],progress:['In Arbeit','progress'],planned:['Geplant','planned']};
-function Roadmap(){const site=useSite(),ref=useRef<HTMLDivElement>(null),en=currentLanguage()==='en';
+export function Roadmap(){const site=useSite(),ref=useRef<HTMLDivElement>(null),en=currentLanguage()==='en';
  useEffect(()=>{const el=ref.current;if(!el)return;const io=new IntersectionObserver(es=>{for(const e of es)if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}},{threshold:.15});el.querySelectorAll('.log-rm-item').forEach(x=>io.observe(x));return()=>io.disconnect();},[site]);
  if(!site)return <p className="log-muted">Wird geladen …</p>;const items=site.roadmap,done=items.filter(i=>i.status==='done').length,prog=items.filter(i=>i.status==='progress').length,pct=items.length?Math.round((done+prog*.5)/items.length*100):0;
  return <div className="log-roadmap"><div className="log-rm-progress"><div><b>{pct} %</b><span>auf dem Weg</span></div><div className="log-rm-bar"><i style={{width:pct+'%'}}/></div><div className="log-rm-legend"><span className="done">● Fertig {done}</span><span className="progress">● In Arbeit {prog}</span><span className="planned">● Geplant {items.length-done-prog}</span></div></div>
@@ -37,7 +38,7 @@ function Roadmap(){const site=useSite(),ref=useRef<HTMLDivElement>(null),en=curr
   <div className="log-rm-foot">{site.discordUrl?<a className="log-rm-idea" href={site.discordUrl} target="_blank" rel="noopener noreferrer">Du hast eine Idee? Sag es uns im Discord!</a>:<p>Du hast eine Idee? Sag es uns!</p>}<DiscordButton className="log-discord-btn big" label="Zum Discord"/><a className="log-secondary-link" href="/neuigkeiten">Bisherige Updates</a></div></div>;}
 
 const PLAN_LABEL:Record<string,[string,string]>={month:['1 Monat',''],quarter:['3 Monate',''],year:['12 Monate','2 Monate gratis']};
-function Premium(){const site=useSite(),[status,setStatus]=useState<any>(undefined),[busy,setBusy]=useState(''),[msg,setMsg]=useState(''),[plan,setPlan]=useState('year'),[agb,setAgb]=useState(false),[waiver,setWaiver]=useState(false),en=currentLanguage()==='en';const q=typeof location!=='undefined'?new URLSearchParams(location.search):new URLSearchParams();
+export function Premium(){const site=useSite(),[status,setStatus]=useState<any>(undefined),[busy,setBusy]=useState(''),[msg,setMsg]=useState(''),[plan,setPlan]=useState('year'),[agb,setAgb]=useState(false),[waiver,setWaiver]=useState(false),en=currentLanguage()==='en';const q=typeof location!=='undefined'?new URLSearchParams(location.search):new URLSearchParams();
  useEffect(()=>{fetch('/api/logistik/premium',{cache:'no-store'}).then(r=>r.json()).then(d=>setStatus(d.status)).catch(()=>setStatus(null));},[]);
  const buy=async(provider:string)=>{setBusy(provider);setMsg('');try{const r=await fetch('/api/logistik/premium',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({provider,plan,agb,waiver})});const d=await r.json();if(!r.ok)throw Error(d.error);location.href=d.url;}catch(e:any){setMsg(e.message);setBusy('');}};
  if(!site)return <p className="log-muted">Wird geladen …</p>;const p=site.premium;if(!p)return <div className="log-site-empty"><span>⭐</span><p>Premium ist bald verfügbar.</p></div>;
@@ -60,4 +61,4 @@ function Verify(){const [state,setState]=useState('Wird bestätigt …');useEffe
  return <div className="log-site-empty"><span>✉️</span><p>{state}</p><a className="log-primary" href="/">Zum Spiel</a></div>;}
 
 export default function LegalPage({kind}:{kind:string}){
- return <SiteShell kind={kind}>{kind==='impressum'||kind==='datenschutz'||kind==='agb'?<Legal kind={kind}/>:kind==='bildnachweise'?<Credits/>:kind==='neuigkeiten'?<News/>:kind==='roadmap'?<Roadmap/>:kind==='premium'?<Premium/>:kind==='passwort-neu'?<ResetPassword/>:<Verify/>}</SiteShell>;}
+ return <SiteShell kind={kind}>{kind==='impressum'||kind==='datenschutz'||kind==='agb'?<Legal kind={kind}/>:kind==='bildnachweise'?<Credits/>:kind==='passwort-neu'?<ResetPassword/>:<Verify/>}</SiteShell>;}
