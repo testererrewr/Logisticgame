@@ -1,7 +1,7 @@
-export interface ChangelogEntry {id:string;date:string;title:string;items:string[]}
-export const CHANGELOG:ChangelogEntry[]=[
- {id:'u50',date:'2026-11-12',title:'Allianzgebäude, Tutorial & mehr',items:['Allianzgebäude: Hauptquartier (2,5 % Bonus im Land), Lager, Häfen, Flughäfen und Bahnhöfe für alle Mitglieder','Allianzkasse füllt sich aus Wochenzielen, Allianz-Aufträgen und Konvois','Retourroute suchen direkt aus dem Auftrag','Einstellung: Fahrzeuge nach Auftragsfahrten im Depot oder am Zielort','News wechseln täglich um 0 Uhr UTC – für alle gleich','Finanzen zeigen Gewinn/Verlust durch Ereignisse','Inseln zahlen mehr, exotische Waren über Kontinente lohnen sich','Deutlich mehr Aufträge in großen Ländern','Währung frei wählbar (nur Anzeige)','Mechaniker meldet Pannen per Nachricht, Nachrichten löschbar','Einstiegs-Tutorial, Feedback-Knopf, Impressum & Datenschutz']},
- {id:'u49',date:'2026-11-11',title:'Gebrauchte Auflieger & Lieferverträge',items:['Gebrauchtmarkt für Auflieger','Lieferverträge zwischen Speditionen unter „Kooperation“','Auftrag direkt aus der Vorschau annehmen','Fahrzeugdetails: Ziel anklickbar, Lebenslauf, Heimatdepot','Tag/Nacht folgt der echten Uhrzeit']},
- {id:'u46',date:'2026-11-11',title:'Fahrzeug-Lebenslauf & Wartungsbanner',items:['Lebenslauf jedes Fahrzeugs mit Kauf, Leasing und Verkauf','Hinweis-Banner vor Server-Neustarts']},
+export interface ChangelogEntry {id:string;date:string;title:string;items:string[];code?:string}
+export interface CodeUpdate {id:string;items:string[]}
+export const CODE_UPDATES:CodeUpdate[]=[
+ {id:'u54',items:['Anmeldung mit Google und Discord','E-Mail bestätigen und Passwort zurücksetzen','Premium mit Stripe oder PayPal','Discord-Link in Lobby und Spiel','Roadmap in der Lobby','Wochen-Highlights in der Zeitung','Weltenliste aufgeräumt: Fahrzeuge, Startkapital, Region','Fahrzeugtempo verständlicher: Ø Reisetempo und Höchstgeschwindigkeit','Spiel auf Englisch umschaltbar']},
 ];
-export const LATEST_CHANGELOG=CHANGELOG[0].id;
+export const updateNumber=(id:string)=>Number(String(id).replace(/\D/g,''))||0;
+export function pendingUpdates(list:CodeUpdate[],lastCode:string|undefined){const last=updateNumber(lastCode||'');return list.filter(u=>updateNumber(u.id)>last).sort((a,b)=>updateNumber(a.id)-updateNumber(b.id));}

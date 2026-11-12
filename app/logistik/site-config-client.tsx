@@ -1,0 +1,10 @@
+'use client';
+import {useEffect,useState} from 'react';
+import {currentLanguage,setLanguage} from '../../lib/i18n';
+export interface PublicSite {discordUrl:string;oauth:{google:boolean;discord:boolean};mail:boolean;premium:null|{price:number;days:number;benefits:string[];stripe:boolean;paypal:boolean};roadmap:{id:string;icon:string;title:string;text:string;status:'planned'|'progress'|'done';discord?:boolean}[];changelog:{id:string;date:string;title:string;items:string[]}[]}
+let cache:Promise<PublicSite>|null=null;
+export const loadSite=(fresh=false)=>{if(!cache||fresh)cache=fetch('/api/logistik/site',{cache:'no-store'}).then(r=>r.json()).catch(()=>({discordUrl:'',oauth:{google:false,discord:false},mail:false,premium:null,roadmap:[],changelog:[]}));return cache;};
+export function useSite(){const [s,setS]=useState<PublicSite|null>(null);useEffect(()=>{let on=true;void loadSite().then(d=>{if(on)setS(d);});return()=>{on=false;};},[]);return s;}
+export function DiscordButton({className='log-discord-btn',label='Discord'}:{className?:string;label?:string}){const s=useSite();if(!s?.discordUrl)return null;
+ return <a className={className} href={s.discordUrl} target="_blank" rel="noopener noreferrer" aria-label="Discord-Server"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.6 1.3a18.4 18.4 0 0 0-5.6 0L8.6 3a19.7 19.7 0 0 0-4.9 1.5C.6 9.1-.3 13.6.1 18.1a19.9 19.9 0 0 0 6 3l1.3-2.1a12.9 12.9 0 0 1-2-1l.5-.4a14.2 14.2 0 0 0 12.2 0l.5.4c-.6.4-1.3.7-2 1l1.3 2.1a19.8 19.8 0 0 0 6-3c.5-5.2-.8-9.7-3.6-13.7ZM8 15.3c-1.2 0-2.2-1.1-2.2-2.4S6.8 10.5 8 10.5s2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Zm8 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Z"/></svg>{label&&<span>{label}</span>}</a>;}
+export function LangSwitch(){const [l,setL]=useState('de');useEffect(()=>setL(currentLanguage()),[]);return <button className="log-lang-switch" data-no-translate aria-label="Sprache / Language" onClick={()=>setLanguage(l==='de'?'en':'de')}>{l==='de'?'🇬🇧 EN':'🇩🇪 DE'}</button>;}

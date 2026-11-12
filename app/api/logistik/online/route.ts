@@ -175,6 +175,7 @@ async function join(world:World,u:User,name:string){
  const row=await readCompany(world.id,u.id);if(row)return;
  if(world.status!=='running')throw Error('Diese Welt ist noch nicht geöffnet.');
  if(name.trim().length<3||name.trim().length>50)throw Error('Speditionsname: 3–50 Zeichen.');
+ {const A=await import('../../../../lib/logistics/auth-extra');const m=await A.mailReady();if(m?.requireVerify&&!['owner','admin'].includes(u.role)){await A.ensureAuthTables();const v=await db().prepare('SELECT email_verified FROM users WHERE id=?').bind(u.id).first<{email_verified:number|null}>();if(v?.email_verified===0)throw Error('Bitte bestätige zuerst deine E-Mail-Adresse (Link in deinem Postfach).');}}
  const duplicate=await db().prepare('SELECT user_id FROM logistics_world_companies WHERE world_id=? AND lower(name)=lower(?)').bind(world.id,name.trim()).first();if(duplicate)throw Error('Dieser Speditionsname ist in der Welt bereits vergeben.');
  const count=await db().prepare('SELECT count(*) AS n FROM logistics_world_companies WHERE world_id=?').bind(world.id).first<{n:number}>();
  {const cfg=parseSettings(world.settings);if((count?.n||0)>=cfg.maxPlayers)throw Error(`Diese Welt ist voll (${cfg.maxPlayers} Speditionen).`);if(cfg.private&&cfg.ownerId!==u.id&&!(cfg.members||[]).includes(u.id)&&!['owner','admin'].includes(u.role))throw Error('Diese Welt ist privat.');}
@@ -231,6 +232,7 @@ async function validateSharedCapacity(action:OnlineAction,state:State,rows:Compa
 let versionNoted=false;
 const lobbyMine=new Map<string,{at:number;map:Map<string,any>}>();
 const slow=(kind:string,t0:number,ctx:Record<string,unknown>)=>{const ms=Date.now()-t0;if(ms>6000)void logError('perf:'+kind,new Error(`Anfrage dauerte ${(ms/1000).toFixed(1)} s`),ctx,'warn');};
+function viewAsTarget(req:Request,u:User,world:string){if(!['owner','admin'].includes(u.role))return null;const c=(req.headers.get('cookie')||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('lgx_as='))?.slice(7);if(!c)return null;const [w,id]=decodeURIComponent(c).split(':');return w===world&&/^[\w-]{8,80}$/.test(id||'')?id:null;}
 export async function GET(req:NextRequest){const ctx:Record<string,unknown>={},t0=Date.now();try{
  const u=await currentUser(req);if(!u||u.status!=='active')return reply({error:'Bitte anmelden.'},401);ctx.user=u.id;
  const id=req.nextUrl.searchParams.get('world');ctx.world=id||undefined;
@@ -241,6 +243,7 @@ export async function GET(req:NextRequest){const ctx:Record<string,unknown>={},t
   return reply({lobbyBanner:siteCfg.lobbyBanner&&(!siteCfg.lobbyBanner.until||siteCfg.lobbyBanner.until>Date.now())?siteCfg.lobbyBanner:null,ordersEnabled:!!siteCfg.ordersEnabled,user:u.name,worlds:rows.results.filter(w=>{const st=parseSettings(w.settings);if(st.private&&!['owner','admin'].includes(u.role)&&st.ownerId!==u.id&&!(st.members||[]).includes(u.id)&&!w.joined)return false;return ['owner','admin'].includes(u.role)||w.status!=='draft'||st.ownerId===u.id;}).map(w=>({...w,external:!hostedHere(w.id,(w as any).host_url,new URL(req.url).origin)?(w as any).host_url||null:null,testWorld:isTestWorld(w.settings),mine:mine.get(w.id)||null,settings:settingsSummary(parseSettings(w.settings)),day:clockTarget(w,Date.now())})),singleplayerEnabled:false,isAdmin:['owner','admin'].includes(u.role)});
  }
  void referralActivity(u.id);
+ {const as=viewAsTarget(req,u,id);if(as){await settleWorld(id);const t=await db().prepare('SELECT id,name FROM users WHERE id=?').bind(as).first<{id:string;name:string}>();if(!t||!await readCompany(id,as))return reply({error:'Diese Spedition gibt es in der Welt nicht.'},404);const out=await snapshot({id:t.id,name:t.name,status:'active',role:'user'},id,(req.nextUrl.searchParams.get('geo')||'').slice(0,60));return reply({...out,viewAs:{id:t.id,name:t.name}});}}
  await settleWorld(id);if(!await readCompany(id,u.id))return reply({error:'Bitte zuerst dieser Welt beitreten.'},403);
  const out=await snapshot(u,id,(req.nextUrl.searchParams.get('geo')||'').slice(0,60));slow('online-GET',t0,ctx);return reply(out);
  }catch(e:any){await logError('online:GET',e,{...ctx,url:req.nextUrl.search});return reply({error:e.message||'Welt nicht erreichbar.'},503);}}
@@ -268,6 +271,7 @@ export async function POST(req:NextRequest){const ctx:Record<string,unknown>={},
  const u=await currentUser(req);if(!u||u.status!=='active')return reply({error:'Anmeldung erforderlich.'},401);if(u&&!allowAction('online:'+u.id,4,15))return NextResponse.json({error:TOO_FAST},{status:429});ctx.user=u.id;
  if(!sameOrigin(req))return reply({error:'Ungültiger Ursprung.'},403);
  if(!req.headers.get('content-type')?.includes('application/json'))return reply({error:'JSON erwartet.'},415);
+ if((req.headers.get('cookie')||'').includes('lgx_as=')&&['owner','admin'].includes(u.role))return reply({error:'Nur-Lesen-Ansicht: Änderungen sind hier nicht möglich.'},403);
  const body=JSON.parse(raw),cmd=body.command as OnlineCommand|{type:'createWorld';name:string;tickMs:number}|{type:'joinWorld';name:string};
  if(!cmd||typeof cmd.type!=='string')return reply({error:'Ungültige Aktion.'},400);ctx.command=cmd.type;ctx.world=String(body.worldId||'')||undefined;ctx.payload=JSON.stringify(cmd).slice(0,800);
  if(cmd.type==='createWorld')return reply({error:'Welten werden ausschließlich in der Admin-Verwaltung erstellt.'},403);

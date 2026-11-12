@@ -1,14 +1,17 @@
 'use client';
 import {useState} from 'react';
-import {LATEST_CHANGELOG,CHANGELOG} from '../../lib/logistics/changelog';
+import {useSite,DiscordButton} from './site-config-client';
 export function BetaFeedback({worldId,tab}:{worldId:string;tab:string}){const [open,setOpen]=useState(false),[reason,setReason]=useState('Idee'),[text,setText]=useState(''),[msg,setMsg]=useState(''),[busy,setBusy]=useState(false);
  const send=async()=>{setBusy(true);setMsg('');try{const context=`Bereich: ${tab}\nSeite: ${location.href}\nBrowser: ${navigator.userAgent}\nFenster: ${innerWidth}×${innerHeight}\nZeit: ${new Date().toISOString()}`;const r=await fetch('/api/logistik/community',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'bug',world:worldId,reason,text,context})}),d=await r.json() as any;if(!r.ok)throw Error(d.error);setText('');setMsg('Danke für dein Feedback! 💚');setTimeout(()=>{setOpen(false);setMsg('');},1800);}catch(e:any){setMsg(e.message);}finally{setBusy(false);}};
- return <>{!open&&<button className="log-feedback-fab" onClick={()=>setOpen(true)} aria-label="Feedback geben">💬 Feedback</button>}
+ return <>{!open&&<div className="log-feedback-fabs"><DiscordButton className="log-feedback-fab discord" label=""/><button className="log-feedback-fab" onClick={()=>setOpen(true)} aria-label="Feedback geben">💬 Feedback</button></div>}
   {open&&<div className="log-dialog-backdrop" onClick={e=>{if(e.target===e.currentTarget)setOpen(false);}}><section className="log-feedback-dialog" role="dialog" aria-modal="true" aria-label="Beta-Feedback"><header><h2>💬 Beta-Feedback</h2><button aria-label="Schließen" onClick={()=>setOpen(false)}>×</button></header>
    <div className="log-tabs">{['Idee','Problem','Lob','Sonstiges'].map(r=><button key={r} className={reason===r?'on':''} onClick={()=>setReason(r)}>{r==='Idee'?'💡 ':r==='Problem'?'🐞 ':r==='Lob'?'⭐ ':''}{r}</button>)}</div>
    <textarea className="log-chat-input" rows={5} maxLength={3000} value={text} autoFocus onChange={e=>setText(e.target.value)} placeholder={reason==='Problem'?'Was ist passiert? Was hast du davor gemacht?':'Erzähl uns, was du denkst …'}/>
    <button className="log-primary" disabled={busy||text.trim().length<10} onClick={()=>void send()}>Senden</button>{msg&&<p>{msg}</p>}<small className="log-muted">Bereich, Browser und Fenstergröße werden mitgeschickt.</small></section></div>}</>;}
-export function WhatsNew(){const [show,setShow]=useState(()=>{try{return localStorage.getItem('log-changelog-seen')!==LATEST_CHANGELOG&&!!localStorage.getItem('log-changelog-known');}catch{return false;}});
- if(typeof window!=='undefined'){try{if(!localStorage.getItem('log-changelog-known')){localStorage.setItem('log-changelog-known','1');localStorage.setItem('log-changelog-seen',LATEST_CHANGELOG);}}catch{}}
- if(!show)return null;const c=CHANGELOG[0],close=()=>{try{localStorage.setItem('log-changelog-seen',LATEST_CHANGELOG);}catch{}setShow(false);};
+export function WhatsNew(){const site=useSite(),[closed,setClosed]=useState(false);const c=site?.changelog?.[0];
+ let show=false;if(c&&!closed){try{const seen=localStorage.getItem('log-changelog-seen');if(!seen)localStorage.setItem('log-changelog-seen',c.id);else show=seen!==c.id;}catch{}}
+ if(!show||!c)return null;const close=()=>{try{localStorage.setItem('log-changelog-seen',c.id);}catch{}setClosed(true);};
  return <div className="log-dialog-backdrop" onClick={e=>{if(e.target===e.currentTarget)close();}}><section className="log-feedback-dialog" role="dialog" aria-modal="true" aria-label="Was ist neu"><header><h2>✨ Was ist neu</h2><button aria-label="Schließen" onClick={close}>×</button></header><h3>{c.title}</h3><ul>{c.items.map(x=><li key={x}>{x}</li>)}</ul><div className="log-trailer-toolbar"><a href="/neuigkeiten" target="_blank" rel="noreferrer">Alle Neuigkeiten</a><button className="log-primary" onClick={close}>Weiterspielen</button></div></section></div>;}
+export function ViewAsBanner(){const [as,setAs]=useState(()=>{try{const c=document.cookie.split(';').map(x=>x.trim()).find(x=>x.startsWith('lgx_as='));return c?decodeURIComponent(c.slice(7)):'';}catch{return '';}});
+ if(!as)return null;const end=()=>{document.cookie='lgx_as=; path=/; max-age=0';setAs('');location.href='/verwaltung';};
+ return <div className="log-viewas-banner">👁 Admin-Ansicht als Spieler · nur lesen <button onClick={end}>Ansicht beenden</button></div>;}

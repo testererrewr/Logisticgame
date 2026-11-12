@@ -1,0 +1,38 @@
+import {env} from 'cloudflare:workers';
+import {ensureBrandingTables} from './branding-server';
+import {readSettings,readSecrets} from './site-config';
+
+const db=()=>env.DB!;
+let ready:Promise<unknown>|undefined,lastExpire=0;
+export const ensurePremiumTables=()=>ready??=(async()=>{await ensureBrandingTables();
+ await db().prepare("CREATE TABLE IF NOT EXISTS logistics_payments(id TEXT PRIMARY KEY,user_id TEXT NOT NULL,provider TEXT NOT NULL,amount REAL NOT NULL,days INTEGER NOT NULL,status TEXT NOT NULL,created INTEGER NOT NULL)").run();
+ const cols=(await db().prepare('PRAGMA table_info(logistics_entitlements)').all<{name:string}>()).results;if(!cols.some(c=>c.name==='expires'))await db().prepare('ALTER TABLE logistics_entitlements ADD COLUMN expires INTEGER').run().catch(()=>{});})().catch(e=>{ready=undefined;throw e;});
+export async function expirePremium(){if(Date.now()-lastExpire<600000)return;lastExpire=Date.now();await ensurePremiumTables();await db().prepare('DELETE FROM logistics_entitlements WHERE expires IS NOT NULL AND expires<?').bind(Date.now()).run().catch(()=>{});}
+export async function premiumStatus(userId:string){await ensurePremiumTables();await expirePremium();const r=await db().prepare("SELECT expires FROM logistics_entitlements WHERE user_id=? AND feature='premium'").bind(userId).first<{expires:number|null}>();return r?{active:true,until:r.expires??null}:{active:false,until:null};}
+
+export async function paymentConfig(){const [s,sec]=await Promise.all([readSettings(),readSecrets()]);const p=s.premium;if(!p?.enabled)return null;return {price:p.price,days:p.days,stripeKey:p.stripe?sec.stripeKey:undefined,stripeWebhook:sec.stripeWebhook,paypal:p.paypal&&sec.paypalClientId&&sec.paypalSecret?{id:sec.paypalClientId,secret:sec.paypalSecret,base:p.paypalSandbox?'https://api-m.sandbox.paypal.com':'https://api-m.paypal.com'}:undefined};}
+
+export async function grantPremium(paymentId:string,userId:string,provider:string,amount:number,days:number){await ensurePremiumTables();
+ const ins=await db().prepare("INSERT OR IGNORE INTO logistics_payments(id,user_id,provider,amount,days,status,created) VALUES(?,?,?,?,?,'paid',?)").bind(paymentId,userId,provider,amount,days,Date.now()).run();if(!ins.meta.changes)return false;
+ const cur=await db().prepare("SELECT expires FROM logistics_entitlements WHERE user_id=? AND feature='premium'").bind(userId).first<{expires:number|null}>();
+ if(cur&&cur.expires===null)return true;const until=Math.max(Date.now(),cur?.expires||0)+days*86400000;
+ await db().prepare("INSERT OR REPLACE INTO logistics_entitlements(user_id,feature,granted_by,created,expires) VALUES(?,'premium',?,?,?)").bind(userId,provider,Date.now(),until).run();return true;}
+
+const cents=(n:number)=>Math.round(n*100);
+export async function stripeCheckout(cfg:NonNullable<Awaited<ReturnType<typeof paymentConfig>>>,user:{id:string;email:string},origin:string){
+ const body=new URLSearchParams({'mode':'payment','success_url':origin+'/api/logistik/premium?stripe={CHECKOUT_SESSION_ID}','cancel_url':origin+'/premium?abgebrochen=1','client_reference_id':user.id,...(user.email?{'customer_email':user.email}:{}),'line_items[0][quantity]':'1','line_items[0][price_data][currency]':'eur','line_items[0][price_data][unit_amount]':String(cents(cfg.price)),'line_items[0][price_data][product_data][name]':`Premium · ${cfg.days} Tage`,'metadata[user]':user.id,'metadata[days]':String(cfg.days)});
+ const r=await fetch('https://api.stripe.com/v1/checkout/sessions',{method:'POST',headers:{Authorization:'Bearer '+cfg.stripeKey,'Content-Type':'application/x-www-form-urlencoded'},body});const d:any=await r.json();if(!r.ok||!d.url)throw Error('Stripe: '+(d.error?.message||r.status));return d.url as string;}
+export async function stripeSession(key:string,id:string){const r=await fetch('https://api.stripe.com/v1/checkout/sessions/'+encodeURIComponent(id),{headers:{Authorization:'Bearer '+key}});if(!r.ok)return null;return await r.json() as any;}
+export async function stripeFulfil(s:any){if(s?.payment_status!=='paid'||!s.client_reference_id)return false;return grantPremium('stripe:'+s.id,s.client_reference_id,'stripe',(s.amount_total||0)/100,Number(s.metadata?.days)||30);}
+export async function verifyStripe(raw:string,header:string,secret:string){const parts=Object.fromEntries(header.split(',').map(p=>p.split('=') as [string,string]));const t=parts.t,v1=header.split(',').filter(p=>p.startsWith('v1=')).map(p=>p.slice(3));if(!t||!v1.length||Math.abs(Date.now()/1000-Number(t))>600)return false;
+ const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign']);const sig=Array.from(new Uint8Array(await crypto.subtle.sign('HMAC',key,new TextEncoder().encode(t+'.'+raw))),x=>x.toString(16).padStart(2,'0')).join('');return v1.includes(sig);}
+
+async function paypalToken(p:{id:string;secret:string;base:string}){const r=await fetch(p.base+'/v1/oauth2/token',{method:'POST',headers:{Authorization:'Basic '+btoa(p.id+':'+p.secret),'Content-Type':'application/x-www-form-urlencoded'},body:'grant_type=client_credentials'});const d:any=await r.json();if(!r.ok||!d.access_token)throw Error('PayPal-Anmeldung fehlgeschlagen.');return d.access_token as string;}
+export async function paypalCheckout(cfg:NonNullable<Awaited<ReturnType<typeof paymentConfig>>>,user:{id:string},origin:string){const p=cfg.paypal!;const t=await paypalToken(p);
+ const r=await fetch(p.base+'/v2/checkout/orders',{method:'POST',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({intent:'CAPTURE',purchase_units:[{custom_id:user.id+'|'+cfg.days,description:`Premium · ${cfg.days} Tage`,amount:{currency_code:'EUR',value:cfg.price.toFixed(2)}}],application_context:{return_url:origin+'/api/logistik/premium?paypal=1',cancel_url:origin+'/premium?abgebrochen=1',user_action:'PAY_NOW',shipping_preference:'NO_SHIPPING'}})});
+ const d:any=await r.json();const link=d.links?.find((l:any)=>l.rel==='approve'||l.rel==='payer-action')?.href;if(!r.ok||!link)throw Error('PayPal: '+(d.message||r.status));return link as string;}
+export async function paypalCapture(cfg:NonNullable<Awaited<ReturnType<typeof paymentConfig>>>,orderId:string,userId:string){const p=cfg.paypal!;if(!/^[A-Z0-9]{5,40}$/.test(orderId))return false;const t=await paypalToken(p);
+ const r=await fetch(p.base+'/v2/checkout/orders/'+orderId+'/capture',{method:'POST',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'}});const d:any=await r.json().catch(()=>({}));
+ const order:any=r.ok?d:await (await fetch(p.base+'/v2/checkout/orders/'+orderId,{headers:{Authorization:'Bearer '+t}})).json();if(order.status!=='COMPLETED')return false;
+ const unit=order.purchase_units?.[0],[uid,days]=String(unit?.custom_id||unit?.payments?.captures?.[0]?.custom_id||'').split('|');if(uid!==userId)return false;
+ const amount=Number(unit?.payments?.captures?.[0]?.amount?.value||unit?.amount?.value||0);return grantPremium('paypal:'+orderId,userId,'paypal',amount,Number(days)||cfg.days);}

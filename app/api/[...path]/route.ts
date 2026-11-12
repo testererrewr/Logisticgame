@@ -15,6 +15,7 @@ import { act, advance, economy, newCompany, newState, type WorldState } from '..
 import {loadMap} from '../../../lib/server-map';
 import {updateWorld as worldUpdate,listWorlds,readWorldSnapshot,refreshWorld} from '../../../lib/world-store';
 import {adminStatus,claimOwner,adminAction} from '../../../lib/admin-server';
+import {publicOrigin} from '../../../lib/logistics/auth-extra';
 export const dynamic='force-dynamic';
 const json=(v:any,status=200,headers:Record<string,string>={})=>Response.json(v,{status,headers:{'Cache-Control':'no-store',...headers}});
 
@@ -24,9 +25,31 @@ const hash=async(v:string)=>hex(await crypto.subtle.digest('SHA-256',bytes(v)));
 async function password(value:string,salt=crypto.randomUUID()){const key=await crypto.subtle.importKey('raw',bytes(value),'PBKDF2',false,['deriveBits']);return salt+':'+hex(await crypto.subtle.deriveBits({name:'PBKDF2',salt:bytes(salt),iterations:100000,hash:'SHA-256'},key,256));}
 async function matches(value:string,stored:string){const actual=await password(value,stored.split(':')[0]);let mismatch=actual.length^stored.length;for(let i=0;i<actual.length;i++)mismatch|=actual.charCodeAt(i)^(stored.charCodeAt(i)||0);return mismatch===0;}
 const db=()=>{if(!env.DB)throw Error('Datenbank nicht verfügbar.');return env.DB;};
-const safeUser=(u:any)=>({id:u.id,email:u.email,name:u.name,role:u.role||'user',status:u.status||'active',moneyDisplay:u.money_display==='compact'?'compact':'full'});
+const safeUser=(u:any)=>({id:u.id,email:u.email,name:u.name,role:u.role||'user',status:u.status||'active',moneyDisplay:u.money_display==='compact'?'compact':'full',emailVerified:u.email_verified!==0});
 async function user(req:Request){const token=(req.headers.get('cookie')||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('wv_session='))?.slice(11);if(!token||token.length>150)return null;return db().prepare('SELECT u.* FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token=? AND s.expires>?').bind(await hash(token),Date.now()).first<any>();}
-async function session(u:any,req:Request){const token=crypto.randomUUID()+crypto.randomUUID();await db().batch([db().prepare('DELETE FROM sessions WHERE expires<?').bind(Date.now()),db().prepare('INSERT INTO sessions(token,user_id,expires) VALUES(?,?,?)').bind(await hash(token),u.id,Date.now()+14*86400000)]);return json({user:safeUser(u)},200,{'Set-Cookie':`wv_session=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=1209600${new URL(req.url).protocol==='https:'?'; Secure':''}`});}
+async function sessionCookie(u:any,req:Request){const token=crypto.randomUUID()+crypto.randomUUID();await db().batch([db().prepare('DELETE FROM sessions WHERE expires<?').bind(Date.now()),db().prepare('INSERT INTO sessions(token,user_id,expires) VALUES(?,?,?)').bind(await hash(token),u.id,Date.now()+14*86400000)]);return `wv_session=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=1209600${new URL(req.url).protocol==='https:'||publicOrigin(req).startsWith('https:')?'; Secure':''}`;}
+async function session(u:any,req:Request){return json({user:safeUser(u)},200,{'Set-Cookie':await sessionCookie(u,req)});}
+const redirect=(to:string,cookies:string[]=[])=>{const h=new Headers({Location:to,'Cache-Control':'no-store'});for(const c of cookies)h.append('Set-Cookie',c);return new Response(null,{status:302,headers:h});};
+const cookieOf=(req:Request,name:string)=>(req.headers.get('cookie')||'').split(';').map(x=>x.trim()).find(x=>x.startsWith(name+'='))?.slice(name.length+1);
+async function authExtra(path:string[],req:Request,body:any):Promise<Response|null>{
+ if(path[0]!=='auth')return null;const A=await import('../../../lib/logistics/auth-extra');
+ if(path[1]==='oauth'&&req.method==='GET'){const provider=path[2]||'',cfg=await A.oauthConfig(provider);if(!cfg)return redirect('/?login=nicht-verfuegbar');
+  if(path[3]!=='callback'){await rate(req,'oauth',40);const state=crypto.randomUUID().replace(/-/g,''),ref=(new URL(req.url).searchParams.get('ref')||'').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,40);
+   const q=new URLSearchParams({client_id:cfg.clientId,redirect_uri:A.oauthRedirect(req,provider),response_type:'code',scope:cfg.scope,state,prompt:provider==='google'?'select_account':'consent'});
+   return redirect(cfg.auth+'?'+q,[`wv_oauth=${state}.${ref}; HttpOnly; SameSite=Lax; Path=/api/auth/oauth; Max-Age=600${A.publicOrigin(req).startsWith('https:')?'; Secure':''}`]);}
+  const sp=new URL(req.url).searchParams,[state,ref]=(cookieOf(req,'wv_oauth')||'').split('.'),clear='wv_oauth=; Path=/api/auth/oauth; Max-Age=0';
+  if(!state||sp.get('state')!==state||!sp.get('code'))return redirect('/?login=abgebrochen',[clear]);
+  try{const tr=await fetch(cfg.token,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded',Accept:'application/json'},body:new URLSearchParams({code:sp.get('code')!,client_id:cfg.clientId,client_secret:cfg.secret,redirect_uri:A.oauthRedirect(req,provider),grant_type:'authorization_code'})});
+   const tok:any=await tr.json();if(!tr.ok||!tok.access_token)throw Error('Token abgelehnt.');const u=await A.oauthUser(provider,await cfg.profile(tok.access_token),password,ref||undefined);
+   if(u.status==='suspended')return redirect('/?login=gesperrt',[clear]);return redirect('/',[clear,await sessionCookie(u,req)]);}
+  catch(e:any){console.error('oauth',provider,e?.message);return redirect('/?login=fehler',[clear]);}}
+ if(path[1]==='forgot'&&req.method==='POST'){await rate(req,'forgot',8);const email=String(body.email||'').trim().toLowerCase();if(!await A.mailReady())throw Error('Passwort-Zurücksetzen ist derzeit nicht verfügbar.');await rate(req,'forgot:'+email,3);
+  const u=await db().prepare('SELECT id,email,name,status FROM users WHERE email=?').bind(email).first<any>();if(u&&u.status!=='suspended')await A.sendResetMail(req,u).catch(e=>console.error('mail',e?.message));return json({ok:true});}
+ if(path[1]==='reset'&&req.method==='POST'){await rate(req,'reset',20);const pw=String(body.password||'');if(pw.length<8||pw.length>256)throw Error('Das Passwort muss 8–256 Zeichen lang sein.');const id=await A.useToken(String(body.token||''),'reset');if(!id)throw Error('Der Link ist ungültig oder abgelaufen.');
+  await A.ensureAuthTables();await db().batch([db().prepare('UPDATE users SET password=?,email_verified=1 WHERE id=?').bind(await password(pw),id),db().prepare('DELETE FROM sessions WHERE user_id=?').bind(id)]);const u=await db().prepare('SELECT * FROM users WHERE id=?').bind(id).first<any>();return session(u,req);}
+ if(path[1]==='verify'&&req.method==='POST'){await rate(req,'verify',20);const id=await A.useToken(String(body.token||''),'verify');if(!id)throw Error('Der Link ist ungültig oder abgelaufen.');await db().prepare('UPDATE users SET email_verified=1 WHERE id=?').bind(id).run();return json({ok:true});}
+ if(path[1]==='resend-verify'&&req.method==='POST'){const u=await user(req);if(!u)return json({error:'Bitte zuerst anmelden.'},401);await rate(req,'resend:'+u.id,3);await A.sendVerifyMail(req,u);return json({ok:true});}
+ return null;}
 async function rate(req:Request,key:string,max=20){const id=await hash((req.headers.get('cf-connecting-ip')||'local')+':'+key+':'+Math.floor(Date.now()/900000));const row=await db().prepare('INSERT INTO limits(id,hits,expires) VALUES(?,1,?) ON CONFLICT(id) DO UPDATE SET hits=hits+1 RETURNING hits').bind(id,Date.now()+900000).first<any>();if(row.hits>max)throw Object.assign(Error('Zu viele Versuche. Bitte in 15 Minuten erneut versuchen.'),{status:429});}
 export async function GET(req:Request){return handle(req);}
 export async function POST(req:Request){return handle(req);}
@@ -40,9 +63,10 @@ async function handle(req:Request){try{const path=new URL(req.url).pathname.slic
  if(path[0]==='admin-setup'&&req.method==='POST')return await claimOwner(body,{rate,hash,password,session},req);
  if(path[0]==='places'&&req.method==='GET')return json({places:await searchPlaces(new URL(req.url).searchParams.get('q')||'')});
  if(path[0]==='map'&&path[1]&&req.method==='GET'){const map=await loadMap(path[1]),etag='\"'+await hash(map.key+':'+map.date)+'\"',headers={'Cache-Control':'public, max-age=86400, immutable','ETag':etag};if(req.headers.get('if-none-match')===etag)return new Response(null,{status:304,headers});return json({map},200,headers);}
+ {const extra=await authExtra(path,req,body);if(extra)return extra;}
  if(path[0]==='auth'&&['register','login'].includes(path[1])&&req.method==='POST'){
  await rate(req,'auth',30);const email=String(body.email||'').trim().toLowerCase(),pw=String(body.password||'');if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254||pw.length<8||pw.length>256)throw Error('Bitte eine gültige E-Mail und ein Passwort mit 8–256 Zeichen eingeben.');await rate(req,'email:'+email,15);
- if(path[1]==='register'){const name=String(body.name||'').trim();if(name.length<2||name.length>40)throw Error('Der Name muss 2–40 Zeichen lang sein.');const u={id:crypto.randomUUID(),email,name};try{await db().prepare('INSERT INTO users(id,email,name,password,created) VALUES(?,?,?,?,?)').bind(u.id,email,name,await password(pw),Date.now()).run();}catch(e){if(String(e).includes('UNIQUE'))throw Error('Registrierung nicht möglich. Ist diese E-Mail bereits registriert?');throw e;}if(body.ref){const {recordReferral}=await import('../../../lib/logistics/referrals');await recordReferral(u.id,String(body.ref));}return session(u,req);}
+ if(path[1]==='register'){const name=String(body.name||'').trim();if(name.length<2||name.length>40)throw Error('Der Name muss 2–40 Zeichen lang sein.');const u={id:crypto.randomUUID(),email,name};try{await db().prepare('INSERT INTO users(id,email,name,password,created) VALUES(?,?,?,?,?)').bind(u.id,email,name,await password(pw),Date.now()).run();}catch(e){if(String(e).includes('UNIQUE'))throw Error('Registrierung nicht möglich. Ist diese E-Mail bereits registriert?');throw e;}if(body.ref){const {recordReferral}=await import('../../../lib/logistics/referrals');await recordReferral(u.id,String(body.ref));}{const A=await import('../../../lib/logistics/auth-extra');await A.ensureAuthTables();if(await A.mailReady()){await db().prepare('UPDATE users SET email_verified=0 WHERE id=?').bind(u.id).run();await A.sendVerifyMail(req,u).catch(e=>console.error('mail',e?.message));return session({...u,email_verified:0},req);}}return session(u,req);}
  const u=await db().prepare('SELECT * FROM users WHERE email=?').bind(email).first<any>();if(u?.status==='suspended')return json({error:'Dieses Konto wurde gesperrt.'},403);if(!u||!await matches(pw,u.password))throw Object.assign(Error('E-Mail oder Passwort ist falsch.'),{status:401});return session(u,req);
  }
  const u=await user(req);
