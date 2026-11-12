@@ -26,7 +26,7 @@ export async function convoyOffers(worldId:string,allianceId:string,day:number):
  for(const [country,list] of by){const n=2+hash(allianceId+'/'+period+'/'+country)%4;
   for(const {r,h} of list.map(r=>({r,h:hash(allianceId+'/'+period+'/'+r.id)})).sort((a,b)=>a.h-b.h).slice(0,n)){
    const km=Math.round(Number(r.distance_km)||0),x=(h%10000)/10000,quantity=Math.min(1000000,Math.max(15000,Math.round((15000+Math.pow(x,2.5)*985000)/1000)*1000)),days=Math.max(7,Math.ceil(km/500)+Math.ceil(quantity/40000)+3);
-   out.push({key:period+':'+r.id,offerId:r.id,source_id:r.source_id,destination_id:r.destination_id,sourceName:r.sn,destinationName:r.dn,sourceCity:r.source_city||'',destinationCity:r.destination_city||'',sourceCountry:country,good:r.good||'containers',goodName:good((r.good||'containers') as GoodId)?.name||r.good,quantity,fee:Math.round(Number(r.fee)*1.6*100)/100,days,km} as ConvoyOffer);}}
+   out.push({key:period+':'+r.id,offerId:r.id,source_id:r.source_id,destination_id:r.destination_id,sourceName:r.sn,destinationName:r.dn,sourceCity:r.source_city||'',destinationCity:r.destination_city||'',sourceCountry:country,good:r.good||'containers',goodName:good((r.good||'containers') as GoodId)?.name||r.good,quantity,fee:Math.round(Number(r.fee)*1.4*100)/100,days,km} as ConvoyOffer);}}
  return out.sort((a,b)=>a.sourceCountry!.localeCompare(b.sourceCountry!,'de')||b.quantity-a.quantity);
 }
 

@@ -4,7 +4,7 @@ import {recordFinance} from './finance';
 
 const db=()=>env.DB!;
 export const ALLIANCE_BUILDINGS:{kind:string;name:string;icon:string;price:number;site?:string}[]=[
- {kind:'hq',name:'Hauptquartier',icon:'🏰',price:2500000},
+ {kind:'hq',name:'Hauptquartier',icon:'🏰',price:0},
  {kind:'warehouseSmall',name:'Lager klein',icon:'📦',price:0,site:'warehouseSmall'},
  {kind:'warehouseMedium',name:'Lager mittel',icon:'🏬',price:0,site:'warehouseMedium'},
  {kind:'warehouseXL',name:'Lager groß',icon:'🏭',price:0,site:'warehouseXL'},
@@ -13,7 +13,7 @@ export const ALLIANCE_BUILDINGS:{kind:string;name:string;icon:string;price:numbe
  {kind:'airport',name:'Flughafen',icon:'✈️',price:0,site:'airport'},
  {kind:'railStation',name:'Güterbahnhof',icon:'🚉',price:0,site:'railStation'},
 ];
-export const buildingPrice=(kind:string)=>{const b=ALLIANCE_BUILDINGS.find(x=>x.kind===kind);if(!b)return 0;return b.price||Math.round((BUILDINGS.find(x=>x.id===b.site)?.price||500000)*1.2);};
+export const buildingPrice=(kind:string)=>{const b=ALLIANCE_BUILDINGS.find(x=>x.kind===kind);if(!b||kind==='hq')return 0;return b.price||Math.round((BUILDINGS.find(x=>x.id===b.site)?.price||500000)*1.2);};
 export const HQ_COUNTRY_BONUS=.025;
 export interface AllianceBuilding {id:string;alliance_id:string;world_id:string;kind:string;name:string;lat:number;lon:number;country:string;created:number}
 let ready:Promise<unknown>|undefined;

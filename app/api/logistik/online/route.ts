@@ -25,11 +25,12 @@ import {ensureMessageTable,systemMessageStatement} from '../../../../lib/logisti
 import {prepareConvoys,settleConvoys,type ConvoyCtx} from '../../../../lib/logistics/alliance-convoy';
 import {countryAt} from '../../../../lib/countries-server';
 setNewsCountryResolver(p=>countryAt(p));
-import {settleAuctions} from '../../../../lib/logistics/used-vehicle-store';
+import {settleAuctions,settleDealerBuyback} from '../../../../lib/logistics/used-vehicle-store';
 import {feedFromStates,ensureSocialTables,feedStatement} from '../../../../lib/logistics/social-server';
 import {activeSupplyRows,attachSupplySites,settleSupplyContracts,supplySitesFor,type SupplyRow} from '../../../../lib/logistics/supply-contracts';
 import {settleAllianceStock} from '../../../../lib/logistics/alliance-stock';
 import {buildingSitesFor,settleAllianceBuildings,settleAllianceMarket} from '../../../../lib/logistics/alliance-buildings';
+import {recordActiveUser} from '../analytics/route';
 import {allianceMap,allySites,allianceSitesFor,settleAllianceOrders,settleAllianceWeekly,settleAllianceHelp,settleAllianceDuels,ensureAllianceSocial,chronicle,hqLevel} from '../../../../lib/logistics/alliance-server';
 import {seasonFinalStatements} from '../../../../lib/logistics/season-server';
 import {logError} from '../../../../lib/logistics/error-log';
@@ -144,6 +145,7 @@ async function settleWorldNow(id:string,budgetMs:number):Promise<World>{
   try{statements.push(...await settleAllianceWeekly(id,advanced,next));}catch(e){await logError('settle:alliance-weekly',e,{world:id},'error');}
   try{statements.push(...await settleProjects(id,advanced,next));}catch(e){await logError('settle:projects',e,{world:id},'error');}
   try{statements.push(...await settleConvoys(id,advanced,next,convoyCtx));}catch(e){await logError('settle:convoys',e,{world:id},'error');}
+  if(Math.floor(next)>Math.floor(world.day))try{statements.push(...await settleDealerBuyback(id,advanced));}catch(e){await logError('settle:dealer-buyback',e,{world:id},'warn');}
   try{statements.push(...await settleAuctions(id,advanced,next));}catch(e){await logError('settle:auctions',e,{world:id},'error');}
   try{statements.push(...await settleAllianceDuels(id,next));}catch(e){await logError('settle:alliance-duels',e,{world:id},'error');}
   try{statements.push(...await settleAllianceHelp(id,advanced,next));}catch(e){await logError('settle:alliance-help',e,{world:id},'error');}
@@ -234,8 +236,9 @@ export async function GET(req:NextRequest){const ctx:Record<string,unknown>={},t
   await ensureWorldSettingsColumn();const rows=await db().prepare('SELECT w.*,(SELECT count(*) FROM logistics_world_companies c WHERE c.world_id=w.id) AS companies,EXISTS(SELECT 1 FROM logistics_world_companies c WHERE c.world_id=w.id AND c.user_id=?) AS joined FROM logistics_worlds w ORDER BY created DESC LIMIT 100').bind(u.id).all<World&{companies:number;joined:number}>();
   const cachedMine=lobbyMine.get(u.id),mine:Map<string,any>=cachedMine&&Date.now()-cachedMine.at<60000?cachedMine.map:new Map<string,any>();if(!cachedMine||Date.now()-cachedMine.at>=60000)try{const own=(await db().prepare('SELECT world_id,name,state FROM logistics_world_companies WHERE user_id=? LIMIT 30').bind(u.id).all<{world_id:string;name:string;state:string}>()).results;const {rowFor}=await import('../../../../lib/logistics/ranking');for(const c of own){try{const st=await decodeCompany(c.state),r=rowFor(u.id,c.name||u.name,st);mine.set(c.world_id,{company:c.name||u.name,value:r.value,cash:r.cash,vehicles:r.vehicles,lines:r.lines,transported:r.transported,profit30:r.profit30});}catch{}}lobbyMine.set(u.id,{at:Date.now(),map:mine});if(lobbyMine.size>500)lobbyMine.clear();}catch{}
   const site=await db().prepare("SELECT payload FROM logistics_runtime WHERE id='site-settings'").first<{payload:string}>().catch(()=>null);let siteCfg:any={};try{siteCfg=JSON.parse(site?.payload||'{}');}catch{}
-  return reply({ordersEnabled:!!siteCfg.ordersEnabled,user:u.name,worlds:rows.results.filter(w=>{const st=parseSettings(w.settings);if(st.private&&!['owner','admin'].includes(u.role)&&st.ownerId!==u.id&&!(st.members||[]).includes(u.id)&&!w.joined)return false;return ['owner','admin'].includes(u.role)||w.status!=='draft'||st.ownerId===u.id;}).map(w=>({...w,external:!hostedHere(w.id,(w as any).host_url,new URL(req.url).origin)?(w as any).host_url||null:null,testWorld:isTestWorld(w.settings),mine:mine.get(w.id)||null,settings:settingsSummary(parseSettings(w.settings)),day:clockTarget(w,Date.now())})),singleplayerEnabled:false,isAdmin:['owner','admin'].includes(u.role)});
+  return reply({lobbyBanner:siteCfg.lobbyBanner&&(!siteCfg.lobbyBanner.until||siteCfg.lobbyBanner.until>Date.now())?siteCfg.lobbyBanner:null,ordersEnabled:!!siteCfg.ordersEnabled,user:u.name,worlds:rows.results.filter(w=>{const st=parseSettings(w.settings);if(st.private&&!['owner','admin'].includes(u.role)&&st.ownerId!==u.id&&!(st.members||[]).includes(u.id)&&!w.joined)return false;return ['owner','admin'].includes(u.role)||w.status!=='draft'||st.ownerId===u.id;}).map(w=>({...w,external:!hostedHere(w.id,(w as any).host_url,new URL(req.url).origin)?(w as any).host_url||null:null,testWorld:isTestWorld(w.settings),mine:mine.get(w.id)||null,settings:settingsSummary(parseSettings(w.settings)),day:clockTarget(w,Date.now())})),singleplayerEnabled:false,isAdmin:['owner','admin'].includes(u.role)});
  }
+ void recordActiveUser(u.id);
  await settleWorld(id);if(!await readCompany(id,u.id))return reply({error:'Bitte zuerst dieser Welt beitreten.'},403);
  const out=await snapshot(u,id,(req.nextUrl.searchParams.get('geo')||'').slice(0,60));slow('online-GET',t0,ctx);return reply(out);
  }catch(e:any){await logError('online:GET',e,{...ctx,url:req.nextUrl.search});return reply({error:e.message||'Welt nicht erreichbar.'},503);}}

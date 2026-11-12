@@ -17,7 +17,11 @@ E-Mail: [E-Mail-Adresse]
 
 ## Hinweis
 
-Weltverbund Logistik ist ein Browserspiel. Standorte stammen aus OpenStreetMap (© OpenStreetMap-Mitwirkende, ODbL). Waren, Preise und Ereignisse sind Spielwerte.`;
+Weltverbund Logistik ist ein Browserspiel. Standorte stammen aus OpenStreetMap (© OpenStreetMap-Mitwirkende, ODbL). Waren, Preise und Ereignisse sind Spielwerte.
+
+## Bildnachweise
+
+Fahrzeugfotos stammen von Wikimedia Commons unter freien Lizenzen (z. B. CC BY-SA). Urheber und Lizenz jedes Bildes: siehe Seite „Bildnachweise“ (/bildnachweise). Fahrzeugnamen und Marken gehören ihren jeweiligen Inhabern; es besteht keine Verbindung zu den Herstellern.`;
 const DATENSCHUTZ=`# Datenschutzerklärung
 
 ## 1. Verantwortlicher

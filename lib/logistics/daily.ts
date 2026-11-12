@@ -1,4 +1,4 @@
-import {credit,log,good,type State,type GoodId} from './engine';
+import {credit,log,good,GOODS,RECIPES,FREIGHT_NAMES,type State,type GoodId} from './engine';
 
 export interface QuizQuestion {q:string;a:[string,string,string,string];ok:number}
 export const QUIZ:QuizQuestion[]=[
@@ -46,9 +46,18 @@ export const QUIZ:QuizQuestion[]=[
 
 const hash=(t:string)=>{let h=2166136261;for(const c of t){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;};
 export const QUIZ_REWARD=3000;
-export const quizFor=(day:number)=>QUIZ[hash('quiz/'+Math.floor(day))%QUIZ.length];
+export const quizDay=()=>Math.floor(Date.now()/864e5);
+let generated:QuizQuestion[]|null=null;
+function generatedQuiz():QuizQuestion[]{if(generated)return generated;const out:QuizQuestion[]=[],goods=GOODS.filter(g=>!(g as any).seasonal&&g.id!=='containers'),types=Object.keys(FREIGHT_NAMES) as (keyof typeof FREIGHT_NAMES)[];
+ const opts=(right:string,pool:string[],seed:string):{a:[string,string,string,string];ok:number}=>{const wrong=[...new Set(pool.filter(x=>x!==right))];const pick:string[]=[];for(let i=0;pick.length<3&&i<60;i++){const w=wrong[hash(seed+'/'+i)%wrong.length];if(w&&!pick.includes(w))pick.push(w);}const ok=hash(seed+'/ok')%4;const a=[...pick];a.splice(ok,0,right);return {a:a.slice(0,4) as any,ok};};
+ for(const g of goods){const r=opts(FREIGHT_NAMES[g.type as keyof typeof FREIGHT_NAMES],types.map(t=>FREIGHT_NAMES[t]),'t'+g.id);out.push({q:`Als welche Frachtart wird „${g.name}“ transportiert?`,...r});}
+ for(const rc of RECIPES as any[]){const inputs=Object.keys(rc.inputs||{});if(!inputs.length||!good(rc.output))continue;const right=inputs.map(i=>good(i as GoodId)?.name||i).join(' + ');const pool=RECIPES.map((x:any)=>Object.keys(x.inputs||{}).map(i=>good(i as GoodId)?.name||i).join(' + '));const r=opts(right,pool,'r'+rc.id);out.push({q:`Woraus wird „${good(rc.output)!.name}“ hergestellt?`,...r});}
+ for(const rc of RECIPES as any[]){const inputs=Object.keys(rc.inputs||{});if(inputs.length!==1||!good(rc.output))continue;const r=opts(good(rc.output)!.name,RECIPES.map((x:any)=>good(x.output)?.name||'').filter(Boolean),'o'+rc.id);out.push({q:`Was entsteht in der Verarbeitung aus „${good(inputs[0] as GoodId)?.name}“?`,...r});}
+ const priced=goods.filter(g=>g.sale>0);for(let i=0;i<120&&priced.length>4;i++){const four=[0,1,2,3].map(k=>priced[hash('p'+i+'/'+k)%priced.length]);if(new Set(four.map(x=>x.id)).size<4)continue;const best=four.reduce((m,x)=>x.sale>m.sale?x:m);out.push({q:'Welche dieser Waren ist pro EH am wertvollsten?',a:four.map(x=>x.name) as any,ok:four.indexOf(best)});}
+ return generated=out;}
+export const quizFor=(_day?:number)=>{const all=[...QUIZ,...generatedQuiz()];return all[hash('quiz/'+quizDay())%all.length];};
 
-export function answerQuiz(s:State,answer:number){const day=Math.floor(s.day),p:any=s;if(p.dailyQuiz?.day===day)throw Error('Das heutige Quiz ist schon beantwortet.');const q=quizFor(day),ok=answer===q.ok;p.dailyQuiz={day,answer,ok};if(ok){credit(s,QUIZ_REWARD,'Prämien & Erfolge');log(s,`🧠 Tagesquiz richtig! +${QUIZ_REWARD.toLocaleString('de-DE')} €`,'good');}else log(s,`🧠 Tagesquiz: leider falsch. Richtig war „${q.a[q.ok]}“.`,'info');}
+export function answerQuiz(s:State,answer:number){const day=Math.floor(s.day),utc=quizDay(),p:any=s;if(p.dailyQuiz?.utc===utc)throw Error('Das heutige Quiz ist schon beantwortet.');const q=quizFor(),ok=answer===q.ok;p.dailyQuiz={day,utc,answer,ok};if(ok){credit(s,QUIZ_REWARD,'Prämien & Erfolge');log(s,`🧠 Tagesquiz richtig! +${QUIZ_REWARD.toLocaleString('de-DE')} €`,'good');}else log(s,`🧠 Tagesquiz: leider falsch. Richtig war „${q.a[q.ok]}“.`,'info');}
 
 export interface DailyTask {day:number;good:string|null;qty:number;base:number;reward:number;done?:boolean}
 export function newDailyTask(s:State,day:number):DailyTask{

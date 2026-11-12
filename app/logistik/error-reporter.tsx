@@ -3,7 +3,7 @@ import {Component,type ReactNode} from 'react';
 
 let installed=false,sent=0;const seen=new Set<string>();
 export function reportClientError(kind:string,error:unknown,extra:Record<string,unknown>={}){
- try{const e=error instanceof Error?error:new Error(typeof error==='string'?error:JSON.stringify(error));const key=kind+e.message;if(seen.has(key)||sent>=25)return;seen.add(key);sent++;
+ try{const e=error instanceof Error?error:new Error(typeof error==='string'?error:JSON.stringify(error));if(!navigator.onLine||/Failed to fetch|NetworkError|Load failed|network error|The operation was aborted|AbortError|signal is aborted|TimeoutError/i.test(e.message+' '+e.name))return;const key=kind+e.message;if(seen.has(key)||sent>=25)return;seen.add(key);sent++;
   const world=new URLSearchParams(location.search).get('welt')||undefined;
   void fetch('/api/logistik/errors',{method:'POST',headers:{'Content-Type':'application/json'},keepalive:true,body:JSON.stringify({kind,name:e.name,message:e.message,stack:e.stack,url:location.pathname+location.search,world,...extra})}).catch(()=>{});
  }catch{}
@@ -11,6 +11,8 @@ export function reportClientError(kind:string,error:unknown,extra:Record<string,
 export function installErrorReporter(){if(installed||typeof window==='undefined')return;installed=true;
  window.addEventListener('error',ev=>{if(ev.error||ev.message)reportClientError('window',ev.error||new Error(ev.message+' @ '+ev.filename+':'+ev.lineno));});
  window.addEventListener('unhandledrejection',ev=>reportClientError('promise',ev.reason));
+ const orig=window.fetch.bind(window);
+ window.fetch=async(input:RequestInfo|URL,init?:RequestInit)=>{const url=typeof input==='string'?input:input instanceof URL?input.href:input.url;const res=await orig(input,init);try{if(res.status>=500&&url.includes('/api/')&&!url.includes('/api/logistik/errors')&&!url.includes('/api/logistik/analytics')){const text=await res.clone().text().catch(()=>'');let msg='';try{msg=JSON.parse(text).error||'';}catch{msg=text.slice(0,200);}reportClientError('http',new Error(`HTTP ${res.status} ${url.split('?')[0]}: ${msg}`),{status:res.status});}}catch{}return res;};
 }
 export class ErrorBoundary extends Component<{children:ReactNode;label?:string},{failed:Error|null}>{
  state={failed:null as Error|null};

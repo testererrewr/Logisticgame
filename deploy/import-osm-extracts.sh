@@ -18,12 +18,12 @@ WORK="${OSM_WORK:-/var/lib/logistik/osm-extrakte}"
 LOG="$WORK/import.log"; ERR="$WORK/fehler.log"
 mkdir -p "$WORK/fertig"
 
-args=(); NEU=0; FINISH=0; BG=0
-for a in "$@"; do case "$a" in --neu) NEU=1;; --abschliessen) FINISH=1;; --hintergrund) BG=1;; *) args+=("$a");; esac; done
+args=(); NEU=0; FINISH=0; BG=0; EXTERN="${REGISTRY_EXTERN:-0}"
+for a in "$@"; do case "$a" in --neu) NEU=1;; --abschliessen) FINISH=1;; --hintergrund) BG=1;; --extern) EXTERN=1;; *) args+=("$a");; esac; done
 [[ ${#args[@]} -gt 0 ]] || { sed -n '2,12p' "$0"; exit 1; }
 
 if [[ $BG -eq 1 ]]; then
-  pass=("${args[@]}"); [[ $NEU -eq 1 ]] && pass+=(--neu); [[ $FINISH -eq 1 ]] && pass+=(--abschliessen)
+  pass=("${args[@]}"); [[ $NEU -eq 1 ]] && pass+=(--neu); [[ $FINISH -eq 1 ]] && pass+=(--abschliessen); [[ $EXTERN -eq 1 ]] && pass+=(--extern)
   systemctl reset-failed logistik-osm-import 2>/dev/null || true
   systemd-run --unit=logistik-osm-import --collect --property=Nice=10 --property=IOSchedulingClass=idle bash "$(realpath "$0")" "${pass[@]}"
   echo "Import läuft im Hintergrund (auch nach dem Abmelden)."
@@ -64,12 +64,25 @@ need=(); command -v osmium >/dev/null || need+=(osmium-tool); command -v sqlite3
 if [[ ${#need[@]} -gt 0 ]]; then log "Installiere ${need[*]} …"; apt-get update -y >>"$LOG" 2>&1; apt-get install -y "${need[@]}" >>"$LOG" 2>&1 || { fail "Paketinstallation fehlgeschlagen: ${need[*]} (Details in $LOG)"; exit 1; }; fi
 command -v node >/dev/null || { fail "node nicht gefunden"; exit 1; }
 [[ -f "$APP/scripts/osm-extract-import.mjs" ]] || { fail "$APP/scripts/osm-extract-import.mjs fehlt – zuerst das Update installieren."; exit 1; }
+if [[ $EXTERN -eq 1 ]]; then DB="$WORK/register-extern.sqlite"; touch "$DB"; DB_USER=root; else
 DB="$(find "$STATE_DIR" -name '*.sqlite' ! -name 'metadata.sqlite' | head -1)"
 [[ -n "$DB" ]] || { fail "Spieldatenbank in $STATE_DIR nicht gefunden"; exit 1; }
-DB_USER="$(stat -c %U "$DB")"
+DB_USER="$(stat -c %U "$DB")"; fi
 sql(){ runuser -u "$DB_USER" -- sqlite3 -bail -cmd ".timeout 60000" "$DB" "$@"; }
 sql "PRAGMA busy_timeout=60000; SELECT 1;" >/dev/null || { fail "Datenbank $DB nicht beschreibbar als $DB_USER"; exit 1; }
 sql "CREATE TABLE IF NOT EXISTS logistics_partner_registry(id TEXT PRIMARY KEY,kind TEXT NOT NULL,name TEXT NOT NULL,lat REAL NOT NULL,lon REAL NOT NULL,payload TEXT NOT NULL,loaded INTEGER NOT NULL);" 2>>"$ERR" || true
+
+if [[ "${args[0]}" == "paket" ]]; then
+  since=$(cat "$WORK/paket-seit" 2>/dev/null || echo 0); now=$(( $(date +%s)*1000 )); out="$WORK/register-paket-$(date +%Y%m%d-%H%M).sql.gz"
+  n=$(sql "SELECT count(*) FROM logistics_partner_registry WHERE loaded>$since;")
+  [[ "$n" -gt 0 ]] || { log "Keine neuen Betriebe seit dem letzten Paket."; exit 0; }
+  log "Erstelle Paket mit $n Betrieben …"
+  printf '.mode insert logistics_partner_registry\nSELECT id,kind,name,lat,lon,payload,loaded FROM logistics_partner_registry WHERE loaded>%s;\n' "$since" | sql | sed 's/^INSERT INTO/INSERT OR REPLACE INTO/' | gzip -6 > "$out" || { fail "Paket fehlgeschlagen"; exit 1; }
+  echo "$now" > "$WORK/paket-seit"
+  log "Paket fertig: $out ($(du -h "$out" | cut -f1)). Auf den Hauptserver kopieren und dort einspielen:"
+  log "  scp $out root@HAUPTSERVER:/root/ && ssh root@HAUPTSERVER 'bash /opt/logistik/app/deploy/registry-apply.sh /root/$(basename "$out")'"
+  exit 0
+fi
 
 if [[ "${args[0]}" == "neu-einordnen" ]]; then
   log "Ordne vorhandene Betriebe neu ein …"
@@ -88,7 +101,7 @@ node "$APP/scripts/osm-extract-regions.mjs" "$WORK/index.json" "${args[@]}" > "$
 TOTAL=$(wc -l < "$WORK/regionen.txt"); log "Plan: $TOTAL Regionen · Arbeitsordner $WORK · Datenbank $DB"
 
 # Overpass-Weltimport pausieren, damit er nicht parallel dieselben Daten abfragt
-sql "UPDATE logistics_runtime SET payload=json_set(payload,'\$.enabled',json('false')) WHERE id='world-import-v10';" 2>>"$ERR" && log "Overpass-Weltimport pausiert (Admin → Betriebsregister)."
+[[ $EXTERN -eq 1 ]] || { sql "UPDATE logistics_runtime SET payload=json_set(payload,'\$.enabled',json('false')) WHERE id='world-import-v10';" 2>>"$ERR" && log "Overpass-Weltimport pausiert (Admin → Betriebsregister)."; }
 
 FILTER=(nwr/shop nwr/craft nwr/industrial nwr/forestry nwr/farm nwr/building=warehouse
   nwr/office=logistics,transport,forestry,forest_management
@@ -123,9 +136,9 @@ while IFS=$'\t' read -r id url; do
   rm -f "$pbf"
   if ! osmium export "$flt" -f geojsonseq -a type,id --geometry-types=point,linestring,polygon -o "$geo" --overwrite 2>>"$WORK/osmium-export.log"; then fail "$id: osmium export fehlgeschlagen (Details: $WORK/osmium-export.log)"; rm -f "$flt" "$geo"; failed=$((failed+1)); continue; fi
   rm -f "$flt"
-  before=$(sql "SELECT count(*) FROM logistics_partner_registry;" 2>/dev/null || echo 0)
+  before=$(sql "SELECT COALESCE(max(rowid),0) FROM logistics_partner_registry;" 2>/dev/null || echo 0)
   if ! (cd "$APP" && node --no-warnings --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/osm-extract-import.mjs "$geo" "$id" 2> >(tee -a "$LOG" >/dev/null) | sql) 2>>"$ERR"; then fail "$id: Datenbankimport fehlgeschlagen (Details in $ERR)"; rm -f "$geo"; failed=$((failed+1)); continue; fi
-  after=$(sql "SELECT count(*) FROM logistics_partner_registry;" 2>/dev/null || echo 0)
+  after=$(sql "SELECT COALESCE(max(rowid),0) FROM logistics_partner_registry;" 2>/dev/null || echo 0)
   rm -f "$geo"; ok=$((ok+1))
   echo "$(ts) neu: $((after-before)) · Register gesamt: $after" > "$mark"
   elapsed=$(( $(date +%s)-START )); done_n=$(find "$WORK/fertig" -name '*.ok' -newermt "@$SINCE" | wc -l)
@@ -139,6 +152,7 @@ log "Durchlauf beendet: $ok Regionen importiert, $failed fehlgeschlagen, $(find 
 log "$(storage)"
 if [[ $failed -gt 0 ]]; then log "Fehlgeschlagene Regionen: einfach denselben Befehl erneut starten (fertige werden übersprungen). Details: $ERR"; fi
 
+if [[ $EXTERN -eq 1 ]]; then log "Externer Import fertig. Paket erstellen mit: bash $(realpath "$0") paket --extern"; exit 0; fi
 if [[ $FINISH -eq 1 || ( "${args[0]}" == "welt" && $failed -eq 0 ) ]]; then
   now=$(( $(date +%s)*1000 ))
   sql "PRAGMA busy_timeout=60000;

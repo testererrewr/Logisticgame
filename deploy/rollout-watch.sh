@@ -11,13 +11,14 @@ done < <(find "$STATE_DIR" -name '*.sqlite' ! -name 'metadata.sqlite' 2>/dev/nul
 [[ -n "$DB" ]] || exit 0
 q(){ runuser -u logistik -- sqlite3 -cmd ".timeout 30000" "$DB" "$1"; }
 req="$(q "SELECT updated FROM logistics_runtime WHERE id='rollout-request'")"
+delay="$(q "SELECT COALESCE(json_extract(payload,'$.delay'),0) FROM logistics_runtime WHERE id='rollout-request'")"; [[ "$delay" =~ ^[0-9]+$ ]] || delay=0
 [[ -n "$req" ]] || exit 0
 status(){ q "INSERT OR REPLACE INTO logistics_runtime(id,updated,payload) VALUES('rollout-status',$(date +%s)000,json_object('text','$1'))"; }
 status "läuft"
 commit="$(git -C /opt/logistik/app-test rev-parse HEAD)"
 echo "==> Rollout auf Stand ${commit:0:8}"
 if runuser -u logistik -- env HOME=/opt/logistik bash -c "cd /opt/logistik/app && git fetch -q && git merge -q --ff-only $commit" \
-   && SKIP_BACKUP=1 APP=/opt/logistik/app SERVICE=logistik bash /opt/logistik/app/deploy/update.sh --no-pull; then
+   && RESTART_IN="$delay" SKIP_BACKUP=1 APP=/opt/logistik/app SERVICE=logistik bash /opt/logistik/app/deploy/update.sh --no-pull; then
   q "DELETE FROM logistics_runtime WHERE id='rollout-request'"; status "erfolgreich (Stand ${commit:0:8})"
 else
   q "DELETE FROM logistics_runtime WHERE id='rollout-request'"; status "fehlgeschlagen (Stand ${commit:0:8}), Log: journalctl -u logistik-rollout"

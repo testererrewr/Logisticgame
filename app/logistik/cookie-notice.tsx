@@ -7,7 +7,7 @@ export default function CookieNotice(){const [show,setShow]=useState(false),[det
  useEffect(()=>{setStats(analyticsConsent());try{if(!localStorage.getItem(KEY))setShow(true);}catch{setShow(true);}const on=()=>{setShow(true);setDetails(true);setStats(analyticsConsent());};window.addEventListener('log-cookie-info',on);return()=>window.removeEventListener('log-cookie-info',on);},[]);
  if(!show)return null;
  const save=(allow:boolean)=>{setAnalyticsConsent(allow);try{localStorage.setItem(KEY,String(Date.now()));}catch{}setShow(false);setDetails(false);};
- return <div className="log-cookie" role="dialog" aria-live="polite" aria-label="Cookies & Datenschutz"><div><b>🍪 Cookies & Statistik</b><p>Notwendig sind nur Anmeldung, Sitzung und deine Einstellungen im Browser. Mit deiner Zustimmung zählen wir zusätzlich anonym, welche Bereiche des Spiels genutzt werden – ohne Werbung, ohne Weitergabe an Dritte, nur auf unserem eigenen Server.</p>
+ return <div className="log-cookie" role="dialog" aria-live="polite" aria-label="Cookies & Datenschutz"><div><b>🍪 Cookies & Statistik</b><p>Wir speichern nur, was für Anmeldung und deine Einstellungen nötig ist. Mit deiner Zustimmung zählen wir zusätzlich anonym wiederkehrende Besuche – ohne Werbung, ohne Dritte, nur auf unserem Server.</p>
   {details&&<table className="log-exchange-table"><thead><tr><th>Name</th><th>Art</th><th>Zweck</th><th>Dauer</th></tr></thead><tbody>
    <tr><td>Sitzungs-Cookie</td><td>Cookie, notwendig</td><td>Hält dich angemeldet</td><td>bis Abmeldung</td></tr>
    <tr><td>lgx_inst</td><td>Cookie, notwendig</td><td>Leitet Testwelten zur richtigen Serverinstanz</td><td>30 Tage</td></tr>

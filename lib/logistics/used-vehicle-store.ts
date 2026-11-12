@@ -24,3 +24,13 @@ export async function settleAuctions(world:string,states:Map<string,import('./en
   if(won){try{await ensureSocialTables();out.push(feedStatement(world,won,'special',`🔨 ${o.sellerId.startsWith('insolvency:')?'Aus Insolvenzmasse':'Seltenes Fahrzeug'} versteigert: ${o.vehicle.name} für ${o.price.toLocaleString('de-DE')} €.`,{day}));}catch{}}}
  return out;
 }
+
+export async function settleDealerBuyback(world:string,states:Map<string,import('./engine').State>){
+ const {dealerValue,trailerDealerValue}=await import('./vehicle-sales');const {credit,log,TRAILERS}=await import('./engine');const out:D1PreparedStatement[]=[],now=Date.now(),DAYS=14*864e5;
+ for(const o of await readUsedVehicleOffers(world)){if(o.status!=='open'||/^(rare|special|insolvency|liquidation):/.test(o.sellerId)||now-o.created<DAYS)continue;const st=states.get(o.sellerId);if(!st)continue;
+  let price=1;try{price=Math.max(1,Math.round(dealerValue(o.vehicle)*.9));}catch{}credit(st,price,'Fahrzeugverkäufe');log(st,`🏪 Händler hat ${o.vehicle.name||'dein Fahrzeug'} nach 14 Tagen ohne Käufer übernommen · ${price.toLocaleString('de-DE')} €`,'info');
+  out.push(saveUsedVehicleOffer({...o,status:'sold',buyerId:'dealer'}));}
+ try{const rows=(await env.DB!.prepare("SELECT * FROM logistics_trailer_offers WHERE world_id=? AND status='open' AND created<?").bind(world,now-DAYS).all<any>()).results;
+  for(const r of rows){const st=states.get(r.seller_id);if(!st)continue;const t=JSON.parse(r.trailer),price=Math.max(1,Math.round(trailerDealerValue(t)*.9));credit(st,price,'Fahrzeugverkäufe');log(st,`🏪 Händler hat Auflieger ${TRAILERS.find(x=>x.id===t.specId)?.name||''} nach 14 Tagen übernommen · ${price.toLocaleString('de-DE')} €`,'info');out.push(env.DB!.prepare("UPDATE logistics_trailer_offers SET status='sold',buyer_id='dealer' WHERE id=? AND status='open'").bind(r.id));}}catch{}
+ return out;
+}

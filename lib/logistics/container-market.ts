@@ -74,12 +74,12 @@ export async function ensureContainerDay(worldId:string,day:number,rules:Partner
  }finally{await env.DB!.prepare('DELETE FROM logistics_runtime WHERE id=?').bind(lockId).run().catch(()=>{});}
 }
 async function generateCountry(worldId:string,c:CountryArea,period:number,gen:number,day:number,rules:PartnerRules,inside:((lat:number,lon:number)=>boolean)|null,far:Lite[]){
- const seed=worldId+'/'+c.name+'/'+Math.round(period*24)+'/'+gen,count=Math.max(6,Math.min(160,Math.round(Math.sqrt(c.area)*8))),total=Math.min(40000,Math.max(2500,Math.round(c.area*450))),stripes:number[][]=[];
+ const seed=worldId+'/'+c.name+'/'+Math.round(period*24)+'/'+gen,count=Math.max(6,Math.min(120,Math.round(Math.sqrt(c.area)*7))),total=Math.min(20000,Math.max(2500,Math.round(c.area*300))),stripes:number[][]=[];
  for(let i=0;i<count;i++){const h=(k:string)=>(stableHash(seed+'/stripe/'+i+'/'+k)%100000)/100000;let pick=h('box')*c.area,box=c.boxes[0];for(const b of c.boxes){if(pick<b.area){box=b;break;}pick-=b.area;}const height=Math.max(.02,(box.maxY-box.minY)/count*.6),lat=box.minY+h('y')*Math.max(0,box.maxY-box.minY-height);stripes.push([lat,lat+height,box.minX,box.maxX]);}
  const rows=(await stripeRows(stripes,Math.ceil(total/count))).filter((r,i,a)=>a.findIndex(x=>x.id===r.id)===i&&!rules.items[r.id]?.hidden&&(!inside||inside(r.lat,r.lon)));
  await env.DB!.prepare("DELETE FROM logistics_container_offers WHERE world_id=? AND source_country=? AND status='open' AND accepted_by IS NULL AND day<? AND id NOT LIKE 'hol:%'").bind(worldId,c.name,period).run();
  if(!rows.length)return 0;
- const own=rows.filter(r=>inCountry(c.name,[r.lat,r.lon])),wanted=Math.max(3,Math.min(9000,Math.round(own.length*.5)));
+ const own=rows.filter(r=>inCountry(c.name,[r.lat,r.lon])),wanted=Math.max(3,Math.min(5000,Math.round(own.length*.5)));
  const picked=own.filter(p=>factoryPartner(p)||stableHash(p.id+'/'+seed+'/pick')%100<55).slice(0,wanted);if(!picked.length)return 0;
  const payloads=await withPayload(picked.map(p=>p.id)),sources:Lite[]=picked.map(p=>({...(payloads.get(p.id)||p),city:p.city}) as Lite);
  const targets=[...rows,...far],grid=new Map<string,Lite[]>(),cell=(lat:number,lon:number)=>Math.floor(lat)+':'+Math.floor(lon);for(const t of targets){const k=cell(t.lat,t.lon);(grid.get(k)??grid.set(k,[]).get(k)!).push(t);}

@@ -20,7 +20,8 @@ fi
 
 SECRET="${SIMULATION_TRIGGER_SECRET:-}"
 notice(){ [[ -n "$SECRET" ]] || return 0; curl -s -m 5 -o /dev/null -X POST "http://$BIND_IP:$PORT/api/logistik/status" -H "Authorization: Bearer $SECRET" -H 'Content-Type: application/json' -d "$1" || true; }
-notice "{\"minutes\":${MAINT_MINUTES:-5},\"message\":\"Ein Update wird eingespielt. Der Server startet in wenigen Minuten kurz neu – dein Spielstand bleibt erhalten.\"}"
+RESTART_IN="${RESTART_IN:-0}"; [[ "$RESTART_IN" =~ ^[0-9]+$ ]] || RESTART_IN=0
+[[ "$RESTART_IN" -gt 0 ]] || notice "{\"minutes\":${MAINT_MINUTES:-5},\"message\":\"Ein Update wird eingespielt. Der Server startet in wenigen Minuten kurz neu – dein Spielstand bleibt erhalten.\"}"
 
 echo "==> Abhängigkeiten installieren"
 as_app "npm ci --include=dev --no-audit --no-fund"
@@ -35,6 +36,8 @@ if ! as_app "npm run build"; then
 fi
 as_app "rm -rf dist.prev"
 [[ -f "$APP/dist/server/wrangler.json" ]] || { echo "!! Build ohne dist/server/wrangler.json" >&2; exit 1; }
+
+if [[ "$RESTART_IN" -gt 0 ]]; then notice "{\"minutes\":$RESTART_IN,\"message\":\"Ein Update ist bereit. Der Server startet in $RESTART_IN Minuten kurz neu – dein Spielstand bleibt erhalten.\"}"; echo "==> Neustart in $RESTART_IN Minuten (Banner ist aktiv)"; sleep $((RESTART_IN*60)); fi
 
 echo "==> Sicherung vor dem Neustart"
 if [[ "${SKIP_BACKUP:-0}" == "1" ]]; then echo "(Sicherung auf Wunsch übersprungen – SKIP_BACKUP=1)"; else bash "$APP/deploy/backup.sh" || echo "(Sicherung übersprungen)"; fi
