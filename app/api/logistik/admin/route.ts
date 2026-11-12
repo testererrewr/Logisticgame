@@ -20,7 +20,7 @@ export async function GET(req:NextRequest){try{
   db().prepare('SELECT w.*,(SELECT count(*) FROM logistics_world_companies c WHERE c.world_id=w.id) AS companies FROM logistics_worlds w ORDER BY created DESC'),
   db().prepare('SELECT id,name,email,role,status,created FROM users ORDER BY created DESC LIMIT 100'),
   db().prepare("SELECT * FROM logistics_runtime WHERE id='simulation'"),
-  db().prepare('SELECT * FROM logistics_loaded_areas ORDER BY loaded DESC LIMIT 40'),
+  db().prepare('SELECT * FROM logistics_loaded_areas ORDER BY rowid DESC LIMIT 40'),
   db().prepare('SELECT max(rowid) AS n FROM logistics_partner_registry'),
  ]);const {instanceRole}=await import('../../../../lib/logistics/world-hosting');const ro=await db().prepare("SELECT id,updated,payload FROM logistics_runtime WHERE id IN ('rollout-request','rollout-status','version:stable','version:test','version:all')").all<{id:string;updated:number;payload:string}>().catch(()=>({results:[] as any[]}));
  const orderStatus:Record<string,any>=slowCached('orders',60000,async()=>{const out:Record<string,any>={};const CM=await import('../../../../lib/logistics/container-market');for(const w of (worlds.results as any[]).filter(w=>w.status==='running').slice(0,20)){const st=await CM.containerGenerationStatus(w.id,w.day).catch(()=>null);const open=await db().prepare("SELECT count(*) AS n FROM logistics_container_offers WHERE world_id=? AND status='open' AND day<=? AND day>?").bind(w.id,w.day,w.day-5).first<{n:number}>().catch(()=>null);out[w.id]={...(st||{}),open:open?.n||0,lastError:CM.lastGenError.get(w.id)||null};}return out;})||{};

@@ -8,7 +8,7 @@ ENV=/etc/logistik/logistik.env; [[ -f "$ENV" ]] && { set -a; . "$ENV"; set +a; }
 BIND_IP="${BIND_IP:-127.0.0.1}"; PORT="${PORT:-8787}"; TEST_PORT="${TEST_PORT:-8788}"
 IP="$(curl -fsS4 https://api.ipify.org 2>/dev/null || true)"
 echo "Prüfe DNS für $NEW (Server-IP: ${IP:-unbekannt}) …"
-for d in "$NEW" "www.$NEW"; do got="$(getent ahostsv4 "$d" 2>/dev/null | awk 'NR==1{print $1}' || true)"; echo "  $d → ${got:-keine Antwort}"; [[ -n "$IP" && "$got" != "$IP" ]] && { echo "!! $d zeigt auf '${got:-nichts}', dieser Server ist $IP. Erst den A-Eintrag beim Domain-Anbieter setzen und warten." >&2; exit 1; }; done
+for d in "$NEW" "www.$NEW"; do got="$(getent ahostsv4 "$d" 2>/dev/null | awk 'NR==1{print $1}' || true)"; echo "  $d → ${got:-keine Antwort}"; if [[ -n "$IP" && "$got" != "$IP" ]]; then if [[ "$d" == "$NEW" ]]; then echo "!! $d zeigt auf '${got:-nichts}', dieser Server ist $IP. Erst den A-Eintrag beim Domain-Anbieter setzen und ein paar Minuten warten." >&2; exit 1; else echo "   Hinweis: $d ist hier noch nicht sichtbar – Caddy holt das Zertifikat dafür automatisch, sobald der Eintrag ankommt."; fi; fi; done
 command -v docker >/dev/null || { echo "Kein Docker gefunden." >&2; exit 1; }
 C="${CADDY_CONTAINER:-$(docker ps --format '{{.Names}} {{.Image}}' | awk 'tolower($0) ~ /caddy/ && !f {print $1; f=1}')}"
 [[ -n "$C" ]] || { echo "Kein Caddy-Container gefunden. Name angeben: CADDY_CONTAINER=name sudo bash $0" >&2; exit 1; }
