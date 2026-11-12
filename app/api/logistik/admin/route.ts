@@ -15,9 +15,12 @@ const reply=(data:unknown,status=200)=>NextResponse.json(data,{status,headers:{'
 const slow=new Map<string,{at:number;value:any;running?:boolean}>();
 function slowCached(key:string,ttl:number,load:()=>Promise<any>){const hit=slow.get(key);if(!hit||(!hit.running&&Date.now()-hit.at>ttl)){const entry={at:hit?.at||0,value:hit?.value,running:true};slow.set(key,entry);void load().then(v=>slow.set(key,{at:Date.now(),value:v})).catch(()=>slow.set(key,{at:Date.now(),value:entry.value}));}return slow.get(key)?.value;}
 let coreReady=false;
-export async function GET(req:NextRequest){try{const t0=Date.now();
+export async function GET(req:NextRequest){const st={step:'Start',t:Date.now(),log:[] as string[]};const mark=(n:string)=>{const now=Date.now();st.log.push(`${st.step} ${now-st.t}ms`);st.step=n;st.t=now;};
+ const guard=new Promise<Response>(r=>setTimeout(()=>{console.log('[admin] hängt bei',st.step,st.log.join(' · '));void logError('perf:admin',Error('Verwaltung hängt bei: '+st.step),{steps:st.log.join(' · ')},'warn');r(reply({error:'Verwaltung hängt bei Schritt „'+st.step+'“ ('+st.log.join(' · ')+')'},503));},25000));
+ return Promise.race([guard,adminGet(req,mark).then(r=>{console.log('[admin] fertig',st.log.join(' · '));return r;})]);}
+async function adminGet(req:NextRequest,mark:(n:string)=>void){try{const t0=Date.now();mark('Anmeldung');
  const u=await currentUser(req);if(!u||u.status!=='active'||!['owner','admin'].includes(u.role))return reply({error:'Nur für Administratoren.'},403);
- if(!coreReady){await ensureWorldSettingsColumn();await ensureBrandingTables();await readWorldImport();coreReady=true;}
+ mark('Tabellen prüfen');if(!coreReady){await ensureWorldSettingsColumn();mark('Branding-Tabellen');await ensureBrandingTables();mark('Import-Status');await readWorldImport();coreReady=true;}mark('Datenbank-Abfragen');
  const rt=(id:string)=>db().prepare('SELECT id,updated,payload FROM logistics_runtime WHERE id=?').bind(id);
  const [worlds,users,runtime,areas,partners,ro,site,ops,moves,nodes,ents,imp]=await db().batch([
   db().prepare('SELECT w.id,w.name,w.description,w.status,w.day,w.time_scale,w.created,w.settings,w.host_url,(SELECT count(*) FROM logistics_world_companies c WHERE c.world_id=w.id) AS companies FROM logistics_worlds w ORDER BY created DESC'),
@@ -33,7 +36,7 @@ export async function GET(req:NextRequest){try{const t0=Date.now();
   db().prepare('SELECT user_id,feature FROM logistics_entitlements'),
   rt('world-import-v10'),
  ]);
- const {instanceRole}=await import('../../../../lib/logistics/world-hosting');const roRows=ro.results as {id:string;updated:number;payload:string}[];
+ mark('Auswertung');const {instanceRole}=await import('../../../../lib/logistics/world-hosting');const roRows=ro.results as {id:string;updated:number;payload:string}[];
  const orderStatus:Record<string,any>=slowCached('orders',60000,async()=>{const out:Record<string,any>={};const CM=await import('../../../../lib/logistics/container-market');for(const w of (worlds.results as any[]).filter(w=>w.status==='running').slice(0,20)){const st=await CM.containerGenerationStatus(w.id,w.day).catch(()=>null);const open=await db().prepare("SELECT count(*) AS n FROM logistics_container_offers WHERE world_id=? AND status='open' AND day<=? AND day>?").bind(w.id,w.day,w.day-5).first<{n:number}>().catch(()=>null);out[w.id]={...(st||{}),open:open?.n||0,lastError:CM.lastGenError.get(w.id)||null};}return out;})||{};
  const parse=(v:any)=>{try{return JSON.parse(v);}catch{return null;}};
  const nodesInfo={nodes:(nodes.results as any[]).map(r=>parse(r.payload)).filter(Boolean).map(({token,...n}:any)=>n),moves:(moves.results as any[]).map(r=>({world:r.id.slice(5),...parse(r.payload)}))};

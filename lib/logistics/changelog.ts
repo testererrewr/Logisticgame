@@ -1,6 +1,7 @@
 export interface ChangelogEntry {id:string;date:string;title:string;items:string[];code?:string}
 export interface CodeUpdate {id:string;items:string[]}
 export const CODE_UPDATES:CodeUpdate[]=[
+ {id:'u59',items:['Fehlersuche Verwaltung']},
  {id:'u58',items:['Verwaltung lädt deutlich schneller','Cookie-Hinweis wieder unten']},
  {id:'u57',items:['Verwaltung und Karte laden nach dem Weltimport wieder schnell']},
  {id:'u55',items:['Neuer Name: Loadstar – neues Logo und neue Adresse playloadstar.com','Neue Startseite mit deinen Speditionen und eigener Seite „Welten“','Premium für 1, 3 oder 12 Monate (12 Monate mit 2 Monaten gratis)','Premium: Priority Support, Discord-Rolle und bis zu 5 Welten','AGB mit Rücktrittsrecht','Linien zeigen Tagesbedarf und Versorgung','Schnellere Lkw-Modelle fahren jetzt spürbar schneller','Roadmap und Premium auf Englisch','Roadmap, Premium und Neuigkeiten direkt in der Startseite','Sprachumschalter repariert, Verwaltung lädt schneller']},
