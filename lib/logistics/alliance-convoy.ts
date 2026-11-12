@@ -8,12 +8,12 @@ export const CONVOY_PERIOD=3;
 export interface ConvoyOffer {sourceCountry?:string;key:string;offerId:string;source_id:string;destination_id:string;sourceName:string;destinationName:string;sourceCity:string;destinationCity:string;good:string;goodName:string;quantity:number;fee:number;days:number;km:number}
 export interface ConvoyRow {id:string;alliance_id:string;world_id:string;source_id:string;destination_id:string;source_name:string;destination_name:string;good:string;quantity:number;fee:number;deadline:number;status:string;created_day:number;km:number;loaded:string;delivered:string}
 
-let ready:Promise<unknown>|undefined;
-export const ensureConvoyTable=()=>ready??=db().batch([
+let ready:Promise<unknown>|undefined;let readyDone=false;
+export const ensureConvoyTable=()=>(readyDone?Promise.resolve(undefined as any):Promise.resolve(db().batch([
  db().prepare("CREATE TABLE IF NOT EXISTS logistics_alliance_convoys(id TEXT PRIMARY KEY,alliance_id TEXT NOT NULL,world_id TEXT NOT NULL,source_id TEXT NOT NULL,destination_id TEXT NOT NULL,source_name TEXT NOT NULL DEFAULT '',destination_name TEXT NOT NULL DEFAULT '',good TEXT NOT NULL,quantity REAL NOT NULL,fee REAL NOT NULL,deadline REAL NOT NULL,status TEXT NOT NULL DEFAULT 'active',created_day REAL NOT NULL,km REAL NOT NULL DEFAULT 0,loaded TEXT NOT NULL DEFAULT '{}',delivered TEXT NOT NULL DEFAULT '{}')"),
  db().prepare('CREATE INDEX IF NOT EXISTS logistics_alliance_convoys_world ON logistics_alliance_convoys(world_id,status)'),
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_convoy_month(world_id TEXT NOT NULL,alliance_id TEXT NOT NULL,month INTEGER NOT NULL,eh REAL NOT NULL DEFAULT 0,convoys INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(world_id,alliance_id,month))'),
-]).then(async()=>{const cols=(await db().prepare('PRAGMA table_info(logistics_alliances)').all<{name:string}>()).results;if(!cols.some(c=>c.name==='convoy_share'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN convoy_share INTEGER NOT NULL DEFAULT 10').run().catch(()=>{});}).catch(e=>{ready=undefined;throw e;});
+]).then(async()=>{const cols=(await db().prepare('PRAGMA table_info(logistics_alliances)').all<{name:string}>()).results;if(!cols.some(c=>c.name==='convoy_share'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN convoy_share INTEGER NOT NULL DEFAULT 10').run().catch(()=>{});}).catch(e=>{ready=undefined;throw e;})).then((v:any)=>{readyDone=true;return v;}));
 
 const hash=(t:string)=>{let h=2166136261;for(const c of t){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;};
 const sum=(o:Record<string,number>)=>Object.values(o).reduce((a,b)=>a+(b||0),0);

@@ -7,11 +7,11 @@ export const SUPPLY_PENALTY=.8;
 export const supplyMinPrice=(g:GoodId)=>Math.ceil((good(g)?.purchase||0)*1.1*100)/100;
 export const SUPPLY_MAX_MISSES=5;
 export interface SupplyRow {id:string;world_id:string;requester_id:string;requester_name:string;supplier_id:string|null;supplier_name:string|null;target_id:string|null;site_id:string;site_name:string;site:string;good:string;daily:number;price:number;days:number;start_day:number;end_day:number;day_key:number;today:number;delivered:number;paid:number;penalties:number;misses:number;blocked:number;status:string;note:string;created:number}
-let ready:Promise<unknown>|undefined;
-export const ensureSupplyTable=()=>ready??=db().batch([
+let ready:Promise<unknown>|undefined;let readyDone=false;
+export const ensureSupplyTable=()=>(readyDone?Promise.resolve(undefined as any):Promise.resolve(db().batch([
  db().prepare("CREATE TABLE IF NOT EXISTS logistics_supply_contracts(id TEXT PRIMARY KEY,world_id TEXT NOT NULL,requester_id TEXT NOT NULL,requester_name TEXT NOT NULL DEFAULT '',supplier_id TEXT,supplier_name TEXT,target_id TEXT,site_id TEXT NOT NULL,site_name TEXT NOT NULL,site TEXT NOT NULL,good TEXT NOT NULL,daily REAL NOT NULL,price REAL NOT NULL,days INTEGER NOT NULL,start_day REAL NOT NULL DEFAULT 0,end_day REAL NOT NULL DEFAULT 0,day_key INTEGER NOT NULL DEFAULT 0,today REAL NOT NULL DEFAULT 0,delivered REAL NOT NULL DEFAULT 0,paid REAL NOT NULL DEFAULT 0,penalties REAL NOT NULL DEFAULT 0,misses INTEGER NOT NULL DEFAULT 0,blocked INTEGER NOT NULL DEFAULT 0,status TEXT NOT NULL,note TEXT NOT NULL DEFAULT '',created INTEGER NOT NULL)"),
  db().prepare('CREATE INDEX IF NOT EXISTS logistics_supply_world ON logistics_supply_contracts(world_id,status)'),
-]).catch(e=>{ready=undefined;throw e;});
+]).catch(e=>{ready=undefined;throw e;})).then((v:any)=>{readyDone=true;return v;}));
 
 const cache=new Map<string,{at:number;sites:Site[]}>();
 export const invalidateSupplyCache=()=>cache.clear();

@@ -3,14 +3,14 @@ import {decodeCompany} from './company-codec';
 import {GOODS,good,salePrice,credit,debit,log,type GoodId,type Site,type State} from './engine';
 
 const db=()=>env.DB!;
-let ready:Promise<void>|undefined;
-export function ensureAllianceTables(){return ready??=(async()=>{await db().batch([
+let ready:Promise<void>|undefined;let readyDone=false;
+export function ensureAllianceTables(){return (readyDone?Promise.resolve(undefined as any):Promise.resolve((async()=>{await db().batch([
  db().prepare("CREATE TABLE IF NOT EXISTS logistics_alliances(id TEXT PRIMARY KEY,world_id TEXT NOT NULL,name TEXT NOT NULL,tag TEXT NOT NULL,description TEXT NOT NULL DEFAULT '',color TEXT NOT NULL DEFAULT '#4a90c8',owner_id TEXT NOT NULL,open INTEGER NOT NULL DEFAULT 0,created INTEGER NOT NULL)"),
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_alliance_members(alliance_id TEXT NOT NULL,world_id TEXT NOT NULL,user_id TEXT NOT NULL,role TEXT NOT NULL,joined INTEGER NOT NULL,PRIMARY KEY(world_id,user_id))'),
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_alliance_invites(alliance_id TEXT NOT NULL,user_id TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(alliance_id,user_id))'),
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_alliance_posts(id TEXT PRIMARY KEY,alliance_id TEXT NOT NULL,user_id TEXT NOT NULL,text TEXT NOT NULL,created INTEGER NOT NULL)'),
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_alliance_orders(id TEXT PRIMARY KEY,alliance_id TEXT NOT NULL,world_id TEXT NOT NULL,good TEXT NOT NULL,destination_id TEXT NOT NULL,destination_name TEXT NOT NULL,quantity REAL NOT NULL,delivered REAL NOT NULL DEFAULT 0,reward REAL NOT NULL,deadline_day REAL NOT NULL,status TEXT NOT NULL,created INTEGER NOT NULL,baselines TEXT NOT NULL DEFAULT \'{}\',contributions TEXT NOT NULL DEFAULT \'{}\')'),
-]);const cols=(await db().prepare('PRAGMA table_info(logistics_alliances)').all<{name:string}>()).results;if(!cols.some(c=>c.name==='share_storage'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN share_storage INTEGER NOT NULL DEFAULT 1').run().catch(()=>{});if(!cols.some(c=>c.name==='logo'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN logo TEXT').run().catch(()=>{});if(!cols.some(c=>c.name==='capacity'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN capacity REAL NOT NULL DEFAULT 0').run().catch(()=>{});if(!cols.some(c=>c.name==='logo_updated'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN logo_updated INTEGER').run().catch(()=>{});})().catch(e=>{ready=undefined;throw e;});}
+]);const cols=(await db().prepare('PRAGMA table_info(logistics_alliances)').all<{name:string}>()).results;if(!cols.some(c=>c.name==='share_storage'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN share_storage INTEGER NOT NULL DEFAULT 1').run().catch(()=>{});if(!cols.some(c=>c.name==='logo'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN logo TEXT').run().catch(()=>{});if(!cols.some(c=>c.name==='capacity'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN capacity REAL NOT NULL DEFAULT 0').run().catch(()=>{});if(!cols.some(c=>c.name==='logo_updated'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN logo_updated INTEGER').run().catch(()=>{});})().catch(e=>{ready=undefined;throw e;})).then((v:any)=>{readyDone=true;return v;}));}
 
 export const STORAGE_KINDS=['warehouse','warehouseSmall','warehouseMedium','warehouseXL','hub'];
 export const SHARED_KINDS=['railStation','railDepot','port','inlandPort','shipDepot','airport','regionalAirport','airDepot','depot',...STORAGE_KINDS];
@@ -62,13 +62,13 @@ export async function settleAllianceOrders(worldId:string,states:Map<string,Stat
 import {weekOf,weekBaseOf} from './progression';
 import {buildingSitesFor} from './alliance-buildings';
 import {ensureSocialTables,feedStatement} from './social-server';
-let extra:Promise<void>|undefined;
-export function ensureAllianceExtras(){return extra??=db().batch([
+let extraDone=false;let extra:Promise<void>|undefined;
+export function ensureAllianceExtras(){return (extraDone?Promise.resolve(undefined as any):Promise.resolve(db().batch([
  db().prepare("CREATE TABLE IF NOT EXISTS logistics_alliance_weekly(alliance_id TEXT NOT NULL,world_id TEXT NOT NULL,week INTEGER NOT NULL,target REAL NOT NULL,progress REAL NOT NULL DEFAULT 0,reward REAL NOT NULL,baselines TEXT NOT NULL DEFAULT '{}',contributions TEXT NOT NULL DEFAULT '{}',status TEXT NOT NULL DEFAULT 'active',PRIMARY KEY(alliance_id,week))"),
  db().prepare('CREATE INDEX IF NOT EXISTS logistics_alliance_weekly_world ON logistics_alliance_weekly(world_id,week)'),
  db().prepare("CREATE TABLE IF NOT EXISTS logistics_alliance_help(id TEXT PRIMARY KEY,alliance_id TEXT NOT NULL,world_id TEXT NOT NULL,requester_id TEXT NOT NULL,site_id TEXT NOT NULL,site_name TEXT NOT NULL,good TEXT NOT NULL,quantity REAL NOT NULL,delivered REAL NOT NULL DEFAULT 0,price REAL NOT NULL,escrow REAL NOT NULL DEFAULT 0,helper_id TEXT,status TEXT NOT NULL,deadline_day REAL NOT NULL,created INTEGER NOT NULL,note TEXT NOT NULL DEFAULT '')"),
  db().prepare('CREATE INDEX IF NOT EXISTS logistics_alliance_help_world ON logistics_alliance_help(world_id,status)'),
-]).then(()=>undefined).catch(e=>{extra=undefined;throw e;});}
+]).then(()=>undefined).catch(e=>{extra=undefined;throw e;})).then((v:any)=>{extraDone=true;return v;}));}
 const ehOf=(s:State,good?:string)=>good?(s.deliveryStats as any)?.[good]||0:Object.values(s.deliveryStats||{}).reduce((n,x)=>n+(x||0),0);
 const WEEKLY_GOODS=['wheat','corn','milk','timber','lumber','steel','flour','bread','potatoes','vegetables','beef','pork','cheese','cement','gravel','sand','coal','paper','furniture','diesel','water','beer','animalFeed','sugar','containers','spareParts','fertilizer','glass','textiles'];
 export const weeklyGood=(allianceId:string,week:number)=>wh(allianceId,week,'g')%100<35?WEEKLY_GOODS[wh(allianceId,week,'w')%WEEKLY_GOODS.length]:null;
@@ -114,12 +114,12 @@ export async function settleAllianceHelp(worldId:string,states:Map<string,State>
 export const HQ_LEVELS=[0,250000,1000000,3000000,8000000,20000000];
 export const hqLevel=(funds:number)=>HQ_LEVELS.reduce((l,t,i)=>funds>=t?i:l,0);
 export const hqBonus=(level:number)=>({weekly:0,orders:.05*level});
-let social:Promise<unknown>|undefined;
-export function ensureAllianceSocial(){return social??=(async()=>{await ensureAllianceTables();await db().batch([
+let socialDone=false;let social:Promise<unknown>|undefined;
+export function ensureAllianceSocial(){return (socialDone?Promise.resolve(undefined as any):Promise.resolve((async()=>{await ensureAllianceTables();await db().batch([
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_alliance_chronicle(id TEXT PRIMARY KEY,alliance_id TEXT NOT NULL,day REAL NOT NULL,text TEXT NOT NULL,created INTEGER NOT NULL)'),
  db().prepare('CREATE INDEX IF NOT EXISTS logistics_alliance_chronicle_a ON logistics_alliance_chronicle(alliance_id,created)'),
  db().prepare("CREATE TABLE IF NOT EXISTS logistics_alliance_duels(id TEXT PRIMARY KEY,world_id TEXT NOT NULL,a_id TEXT NOT NULL,b_id TEXT NOT NULL,week INTEGER NOT NULL,status TEXT NOT NULL,winner TEXT,created INTEGER NOT NULL)"),
-]);const cols=(await db().prepare('PRAGMA table_info(logistics_alliances)').all<{name:string}>()).results;if(!cols.some(c=>c.name==='hq_funds'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN hq_funds REAL NOT NULL DEFAULT 0').run().catch(()=>{});if(!cols.some(c=>c.name==='treasury'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN treasury REAL NOT NULL DEFAULT 0').run().catch(()=>{});const dcols=(await db().prepare('PRAGMA table_info(logistics_alliance_duels)').all<{name:string}>()).results;if(!dcols.some(c=>c.name==='stake'))await db().prepare('ALTER TABLE logistics_alliance_duels ADD COLUMN stake REAL NOT NULL DEFAULT 0').run().catch(()=>{});})().catch(e=>{social=undefined;throw e;});}
+]);const cols=(await db().prepare('PRAGMA table_info(logistics_alliances)').all<{name:string}>()).results;if(!cols.some(c=>c.name==='hq_funds'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN hq_funds REAL NOT NULL DEFAULT 0').run().catch(()=>{});if(!cols.some(c=>c.name==='treasury'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN treasury REAL NOT NULL DEFAULT 0').run().catch(()=>{});const dcols=(await db().prepare('PRAGMA table_info(logistics_alliance_duels)').all<{name:string}>()).results;if(!dcols.some(c=>c.name==='stake'))await db().prepare('ALTER TABLE logistics_alliance_duels ADD COLUMN stake REAL NOT NULL DEFAULT 0').run().catch(()=>{});})().catch(e=>{social=undefined;throw e;})).then((v:any)=>{socialDone=true;return v;}));}
 export const chronicle=(allianceId:string,day:number,text:string)=>db().prepare('INSERT INTO logistics_alliance_chronicle(id,alliance_id,day,text,created) VALUES(?,?,?,?,?)').bind(crypto.randomUUID(),allianceId,day,text.slice(0,300),Date.now());
 export async function hqLevels(worldId:string){await ensureAllianceSocial();const rows=(await db().prepare('SELECT id,hq_funds FROM logistics_alliances WHERE world_id=?').bind(worldId).all<{id:string;hq_funds:number}>()).results;return new Map(rows.map(r=>[r.id,hqLevel(r.hq_funds||0)]));}
 export interface AllianceBadge {id:string;icon:string;name:string;text:string;earned:boolean}

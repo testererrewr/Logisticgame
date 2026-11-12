@@ -1,15 +1,15 @@
 import {env} from 'cloudflare:workers';
 import type {State} from './engine';
 const db=()=>env.DB!;
-let ready:Promise<unknown>|undefined;
-export const ensureSocialTables=()=>ready??=db().batch([
+let ready:Promise<unknown>|undefined;let readyDone=false;
+export const ensureSocialTables=()=>(readyDone?Promise.resolve(undefined as any):Promise.resolve(db().batch([
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_guestbook(id TEXT PRIMARY KEY,profile_user TEXT NOT NULL,author_id TEXT NOT NULL,text TEXT NOT NULL,created INTEGER NOT NULL)'),
  db().prepare('CREATE INDEX IF NOT EXISTS logistics_guestbook_profile ON logistics_guestbook(profile_user,created)'),
  db().prepare("CREATE TABLE IF NOT EXISTS logistics_feed(id TEXT PRIMARY KEY,world_id TEXT NOT NULL,user_id TEXT,kind TEXT NOT NULL,ref TEXT NOT NULL DEFAULT '',text TEXT NOT NULL,important INTEGER NOT NULL DEFAULT 0,day REAL NOT NULL DEFAULT 0,created INTEGER NOT NULL)"),
  db().prepare('CREATE INDEX IF NOT EXISTS logistics_feed_world ON logistics_feed(world_id,created)'),
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_congrats(feed_id TEXT NOT NULL,user_id TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(feed_id,user_id))'),
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_messages(id TEXT PRIMARY KEY,world_id TEXT NOT NULL,from_id TEXT NOT NULL,to_id TEXT NOT NULL,text TEXT NOT NULL,created INTEGER NOT NULL,read INTEGER NOT NULL DEFAULT 0)'),
-]).catch(e=>{ready=undefined;throw e;});
+]).catch(e=>{ready=undefined;throw e;})).then((v:any)=>{readyDone=true;return v;}));
 export function feedStatement(world:string,user:string|null,kind:string,text:string,opts:{ref?:string;important?:boolean;day?:number;id?:string}={}){return db().prepare('INSERT OR IGNORE INTO logistics_feed(id,world_id,user_id,kind,ref,text,important,day,created) VALUES(?,?,?,?,?,?,?,?,?)').bind(opts.id||crypto.randomUUID(),world,user,kind,opts.ref||'',text.slice(0,300),opts.important?1:0,opts.day||0,Date.now());}
 export async function addFeed(world:string,user:string|null,kind:string,text:string,opts:{ref?:string;important?:boolean;day?:number;id?:string}={}){await ensureSocialTables();await feedStatement(world,user,kind,text,opts).run();}
 

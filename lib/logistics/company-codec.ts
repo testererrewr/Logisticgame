@@ -20,12 +20,12 @@ async function gzip(text:string){const raw=new Uint8Array(await new Response(new
  let b64:string;if(typeof Buffer!=='undefined')b64=Buffer.from(raw).toString('base64');else{let binary='';for(let i=0;i<raw.length;i+=8192)binary+=String.fromCharCode(...raw.subarray(i,i+8192));b64=btoa(binary);}return PREFIX+b64;}
 
 const CHUNK='gzc:',PART=1800000,MAX_PARTS=32;
-let chunkReady:Promise<unknown>|undefined,dbRef:D1Database|undefined;
+let chunkReadyDone=false;let chunkReady:Promise<unknown>|undefined,dbRef:D1Database|undefined;
 
 async function D(){if(!dbRef){const m=await import('cloudflare:workers');dbRef=(m.env as {DB?:D1Database}).DB!;}return dbRef;}
 export const ensureChunkTable=()=>chunkTable();
 export const deleteChunks=async(world:string,user:string)=>(await D()).prepare('DELETE FROM logistics_company_chunks WHERE owner=?').bind(world+'|'+user);
-const chunkTable=()=>chunkReady??=D().then(db=>db.prepare('CREATE TABLE IF NOT EXISTS logistics_company_chunks(id TEXT NOT NULL,idx INTEGER NOT NULL,owner TEXT NOT NULL,data TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(id,idx))').run().then(()=>db.prepare('CREATE INDEX IF NOT EXISTS logistics_company_chunks_owner ON logistics_company_chunks(owner,created)').run())).catch(e=>{chunkReady=undefined;throw e;});
+const chunkTable=()=>(chunkReadyDone?Promise.resolve(undefined as any):Promise.resolve(D().then(db=>db.prepare('CREATE TABLE IF NOT EXISTS logistics_company_chunks(id TEXT NOT NULL,idx INTEGER NOT NULL,owner TEXT NOT NULL,data TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(id,idx))').run().then(()=>db.prepare('CREATE INDEX IF NOT EXISTS logistics_company_chunks_owner ON logistics_company_chunks(owner,created)').run())).catch(e=>{chunkReady=undefined;throw e;})).then((v:any)=>{chunkReadyDone=true;return v;}));
 function stripAlliance(state:State){return state.sites.some(p=>(p as {allianceShared?:boolean}).allianceShared)?{...state,sites:state.sites.filter(p=>!(p as {allianceShared?:boolean}).allianceShared)}:state;}
 
 export async function encodeCompanyParts(state:State,world:string,user:string):Promise<{value:string;statements:D1PreparedStatement[];text:string}>{

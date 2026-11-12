@@ -4,12 +4,12 @@ import {readSettings,readSecrets} from './site-config';
 const db=()=>env.DB!;
 const hex=(v:ArrayBuffer)=>Array.from(new Uint8Array(v),x=>x.toString(16).padStart(2,'0')).join('');
 export const sha=async(v:string)=>hex(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v)));
-let ready:Promise<unknown>|undefined;
-export const ensureAuthTables=()=>ready??=(async()=>{await db().batch([
+let ready:Promise<unknown>|undefined;let readyDone=false;
+export const ensureAuthTables=()=>(readyDone?Promise.resolve(undefined as any):Promise.resolve((async()=>{await db().batch([
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_auth_tokens(token TEXT PRIMARY KEY,user_id TEXT NOT NULL,kind TEXT NOT NULL,expires INTEGER NOT NULL)'),
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_oauth(provider TEXT NOT NULL,subject TEXT NOT NULL,user_id TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(provider,subject))'),
 ]);const cols=(await db().prepare('PRAGMA table_info(users)').all<{name:string}>()).results;
- if(!cols.some(c=>c.name==='email_verified'))await db().prepare('ALTER TABLE users ADD COLUMN email_verified INTEGER').run().catch(()=>{});})().catch(e=>{ready=undefined;throw e;});
+ if(!cols.some(c=>c.name==='email_verified'))await db().prepare('ALTER TABLE users ADD COLUMN email_verified INTEGER').run().catch(()=>{});})().catch(e=>{ready=undefined;throw e;})).then((v:any)=>{readyDone=true;return v;}));
 
 export function publicOrigin(req:Request){const u=new URL(req.url),host=req.headers.get('x-forwarded-host')||req.headers.get('host')||u.host,proto=req.headers.get('x-forwarded-proto')||(/^(localhost|127\.|\[::1\])/.test(host)?u.protocol.replace(':',''):'https');return `${proto}://${host}`;}
 

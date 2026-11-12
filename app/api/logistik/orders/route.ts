@@ -9,8 +9,8 @@ import {ensureWorldSettingsColumn} from '../../../../lib/logistics/world-region-
 const db=()=>env.DB!;
 const reply=(d:unknown,status=200)=>NextResponse.json(d,{status,headers:{'Cache-Control':'no-store'}});
 const isAdmin=(u:any)=>u&&['owner','admin'].includes(u.role);
-let ready:Promise<unknown>|undefined;
-const ensure=()=>ready??=db().prepare("CREATE TABLE IF NOT EXISTS logistics_server_orders(id TEXT PRIMARY KEY,user_id TEXT NOT NULL,config TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'pending',price TEXT NOT NULL DEFAULT '',admin_note TEXT NOT NULL DEFAULT '',world_id TEXT,created INTEGER NOT NULL,updated INTEGER NOT NULL)").run().catch(e=>{ready=undefined;throw e;});
+let readyDone=false;let ready:Promise<unknown>|undefined;
+const ensure=()=>(readyDone?Promise.resolve(undefined as any):Promise.resolve(db().prepare("CREATE TABLE IF NOT EXISTS logistics_server_orders(id TEXT PRIMARY KEY,user_id TEXT NOT NULL,config TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'pending',price TEXT NOT NULL DEFAULT '',admin_note TEXT NOT NULL DEFAULT '',world_id TEXT,created INTEGER NOT NULL,updated INTEGER NOT NULL)").run().catch(e=>{ready=undefined;throw e;})).then((v:any)=>{readyDone=true;return v;}));
 const STATUS=['pending','quoted','accepted','declined','active','cancelled'];
 function cleanConfig(c:any){const name=String(c?.name||'').trim().slice(0,60);if(name.length<3)throw Error('Weltname: mindestens 3 Zeichen.');
  return {name,players:Math.max(1,Math.min(1000,Math.round(Number(c?.players)||10))),timeScale:Math.max(.1,Math.min(1440,Number(c?.timeScale)||1)),seasonDays:Math.max(0,Math.min(3650,Math.round(Number(c?.seasonDays)||0))),startCash:Math.max(10000,Math.min(1e12,Math.round(Number(c?.startCash)||5500000))),modes:Array.isArray(c?.modes)?c.modes.filter((m:unknown)=>typeof m==='string').slice(0,10):['road','rail','ship','air'],region:String(c?.region||'Ganze Welt').slice(0,300),maintenance:c?.maintenance!==false,fuel:c?.fuel!==false,drivers:c?.drivers!==false,ownServer:!!c?.ownServer,notes:String(c?.notes||'').slice(0,2000),contact:String(c?.contact||'').slice(0,200)};}

@@ -7,8 +7,8 @@ export const saveUsedVehicleOffer=(offer:UsedVehicleOffer)=>env.DB!.prepare('INS
 
 export async function ensureRareOffer(world:string,day:number,allowed:(mode:string)=>boolean){const {rareOfferFor,specialOfferFor}=await import('./rare-vehicles');for(const d of [Math.floor(day),Math.floor(day)-1])for(const o of [rareOfferFor(world,d,allowed),specialOfferFor(world,d,allowed)]){if(o&&o.expiresDay!>day)await env.DB!.prepare('INSERT OR IGNORE INTO logistics_runtime(id,payload,updated) VALUES(?,?,?)').bind(usedVehicleKey(world,o.id),JSON.stringify(o),Date.now()).run();}}
 
-let auctionReady:Promise<unknown>|undefined;
-export const ensureAuctionTable=()=>auctionReady??=env.DB!.prepare('CREATE TABLE IF NOT EXISTS logistics_auction_bids(offer_id TEXT NOT NULL,world_id TEXT NOT NULL,user_id TEXT NOT NULL,amount REAL NOT NULL,depot_id TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(offer_id,user_id))').run().catch(e=>{auctionReady=undefined;throw e;});
+let auctionReadyDone=false;let auctionReady:Promise<unknown>|undefined;
+export const ensureAuctionTable=()=>(auctionReadyDone?Promise.resolve(undefined as any):Promise.resolve(env.DB!.prepare('CREATE TABLE IF NOT EXISTS logistics_auction_bids(offer_id TEXT NOT NULL,world_id TEXT NOT NULL,user_id TEXT NOT NULL,amount REAL NOT NULL,depot_id TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(offer_id,user_id))').run().catch(e=>{auctionReady=undefined;throw e;})).then((v:any)=>{auctionReadyDone=true;return v;}));
 export const isAuction=(o:UsedVehicleOffer)=>o.sellerId.startsWith('rare:')||o.sellerId.startsWith('insolvency:');
 export const minBid=(start:number,top:number)=>top>0?Math.ceil((top+Math.max(1000,top*.02))/100)*100:start;
 export async function auctionInfo(world:string,user:string){await ensureAuctionTable();const rows=(await env.DB!.prepare('SELECT offer_id,user_id,amount FROM logistics_auction_bids WHERE world_id=?').bind(world).all<{offer_id:string;user_id:string;amount:number}>()).results;const out=new Map<string,{top:number;count:number;mine:number;leading:boolean}>();

@@ -19,7 +19,7 @@ const admin=async(req:NextRequest)=>{const u=await currentUser(req);return u&&u.
 export async function GET(req:NextRequest){const sp=req.nextUrl.searchParams;
  if(sp.has('admin')){const u=await admin(req);if(!u)return reply({error:'Nur für Administratoren.'},403);const [s,sec,list]=await Promise.all([readSettings(),readSecrets(),published()]);
   return reply({settings:{...s,roadmap:s.roadmap?.length?s.roadmap:DEFAULT_ROADMAP,premium:{...PREMIUM_DEFAULTS,...(s.premium||{})}},secrets:maskedSecrets(sec),published:list,pending:pendingUpdates(await codeUpdates(),list.find(e=>e.code)?.code),origin:new URL(req.url).origin});}
- void expirePremium().catch(()=>{});
+ await expirePremium().catch(()=>{});
  return reply({...await publicConfig(),changelog:await published()});}
 
 export async function POST(req:NextRequest){const u=await admin(req);if(!u)return reply({error:'Nur für Administratoren.'},403);if(!sameOrigin(req))return reply({error:'Ungültiger Ursprung.'},403);

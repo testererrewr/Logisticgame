@@ -6,12 +6,12 @@ import {currentUser} from '../online/route';
 import {sameOrigin} from '../../../../lib/same-origin';
 const db=()=>env.DB!;
 const reply=(d:unknown,status=200)=>NextResponse.json(d,{status,headers:{'Cache-Control':'no-store'}});
-let ready:Promise<unknown>|undefined;
-const ensure=()=>ready??=db().batch([
+let readyDone=false;let ready:Promise<unknown>|undefined;
+const ensure=()=>(readyDone?Promise.resolve(undefined as any):Promise.resolve(db().batch([
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_messages(id TEXT PRIMARY KEY,world_id TEXT NOT NULL,from_id TEXT NOT NULL,to_id TEXT NOT NULL,text TEXT NOT NULL,created INTEGER NOT NULL,read INTEGER NOT NULL DEFAULT 0)'),
  db().prepare('CREATE INDEX IF NOT EXISTS logistics_messages_to ON logistics_messages(world_id,to_id,read)'),
  db().prepare('CREATE INDEX IF NOT EXISTS logistics_messages_from ON logistics_messages(world_id,from_id)'),
-]).then(async()=>{const cols=(await db().prepare('PRAGMA table_info(logistics_messages)').all<{name:string}>()).results;if(!cols.some(c=>c.name==='del_from'))await db().prepare('ALTER TABLE logistics_messages ADD COLUMN del_from INTEGER NOT NULL DEFAULT 0').run().catch(()=>{});if(!cols.some(c=>c.name==='del_to'))await db().prepare('ALTER TABLE logistics_messages ADD COLUMN del_to INTEGER NOT NULL DEFAULT 0').run().catch(()=>{});}).catch(e=>{ready=undefined;throw e;});
+]).then(async()=>{const cols=(await db().prepare('PRAGMA table_info(logistics_messages)').all<{name:string}>()).results;if(!cols.some(c=>c.name==='del_from'))await db().prepare('ALTER TABLE logistics_messages ADD COLUMN del_from INTEGER NOT NULL DEFAULT 0').run().catch(()=>{});if(!cols.some(c=>c.name==='del_to'))await db().prepare('ALTER TABLE logistics_messages ADD COLUMN del_to INTEGER NOT NULL DEFAULT 0').run().catch(()=>{});}).catch(e=>{ready=undefined;throw e;})).then((v:any)=>{readyDone=true;return v;}));
 const inWorld=async(world:string,user:string)=>!!await db().prepare('SELECT 1 FROM logistics_world_companies WHERE world_id=? AND user_id=?').bind(world,user).first();
 const NAME="COALESCE(NULLIF(c.name,''),us.name)";
 

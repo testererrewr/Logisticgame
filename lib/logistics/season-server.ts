@@ -3,8 +3,8 @@ import type {State} from './engine';
 import {rowFor} from './ranking';
 
 const db=()=>env.DB!;
-let ready:Promise<void>|undefined;
-export function ensureSeasonTables(){return ready??=db().prepare('CREATE TABLE IF NOT EXISTS logistics_season_results(world_id TEXT NOT NULL,user_id TEXT NOT NULL,rank INTEGER NOT NULL,name TEXT NOT NULL,tag TEXT,value REAL NOT NULL,profit30 REAL NOT NULL,transported REAL NOT NULL,orders INTEGER NOT NULL,vehicles INTEGER NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(world_id,user_id))').run().then(()=>undefined).catch(e=>{ready=undefined;throw e;});}
+let ready:Promise<void>|undefined;let readyDone=false;
+export function ensureSeasonTables(){return (readyDone?Promise.resolve(undefined as any):Promise.resolve(db().prepare('CREATE TABLE IF NOT EXISTS logistics_season_results(world_id TEXT NOT NULL,user_id TEXT NOT NULL,rank INTEGER NOT NULL,name TEXT NOT NULL,tag TEXT,value REAL NOT NULL,profit30 REAL NOT NULL,transported REAL NOT NULL,orders INTEGER NOT NULL,vehicles INTEGER NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(world_id,user_id))').run().then(()=>undefined).catch(e=>{ready=undefined;throw e;})).then((v:any)=>{readyDone=true;return v;}));}
 
 export async function seasonFinalStatements(worldId:string,states:Map<string,State>,names:Map<string,string>,tags:Map<string,string>){
  await ensureSeasonTables();const now=Date.now();

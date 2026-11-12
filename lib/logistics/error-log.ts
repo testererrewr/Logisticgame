@@ -3,11 +3,11 @@ installD1Retry();
 import {env} from 'cloudflare:workers';
 
 const db=()=>env.DB!;
-let ready:Promise<void>|undefined;
-export function ensureErrorLog(){return ready??=db().batch([
+let ready:Promise<void>|undefined;let readyDone=false;
+export function ensureErrorLog(){return (readyDone?Promise.resolve(undefined as any):Promise.resolve(db().batch([
  db().prepare("CREATE TABLE IF NOT EXISTS logistics_error_log(id TEXT PRIMARY KEY,first INTEGER NOT NULL,last INTEGER NOT NULL,count INTEGER NOT NULL DEFAULT 1,level TEXT NOT NULL,source TEXT NOT NULL,name TEXT NOT NULL DEFAULT '',message TEXT NOT NULL,stack TEXT NOT NULL DEFAULT '',context TEXT NOT NULL DEFAULT '{}',user_id TEXT,world_id TEXT)"),
  db().prepare('CREATE INDEX IF NOT EXISTS logistics_error_log_last ON logistics_error_log(last)'),
-]).then(()=>undefined).catch(e=>{ready=undefined;throw e;});}
+]).then(()=>undefined).catch(e=>{ready=undefined;throw e;})).then((v:any)=>{readyDone=true;return v;}));}
 export type ErrorLevel='error'|'warn'|'info';
 const hash=(t:string)=>{let h=2166136261;for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(36);};
 

@@ -2,12 +2,12 @@ import {env} from 'cloudflare:workers';
 import {CREW_ROLES,LEVEL_HOURS,driverName,type CrewRole,type Driver,type DriverCandidate} from './drivers';
 
 const db=()=>env.DB!;
-let ready:Promise<void>|undefined;
-export function ensureDriverMarket(){return ready??=db().batch([
+let ready:Promise<void>|undefined;let readyDone=false;
+export function ensureDriverMarket(){return (readyDone?Promise.resolve(undefined as any):Promise.resolve(db().batch([
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_driver_market(id TEXT PRIMARY KEY,world_id TEXT NOT NULL,role TEXT NOT NULL,name TEXT NOT NULL,xp_hours REAL NOT NULL DEFAULT 0,source TEXT NOT NULL,created INTEGER NOT NULL,expires INTEGER NOT NULL)'),
  db().prepare('CREATE INDEX IF NOT EXISTS logistics_driver_market_world ON logistics_driver_market(world_id,role)'),
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_driver_taken(id TEXT PRIMARY KEY,world_id TEXT NOT NULL,user_id TEXT NOT NULL,created INTEGER NOT NULL)'),
-]).then(()=>undefined).catch(e=>{ready=undefined;throw e;});}
+]).then(()=>undefined).catch(e=>{ready=undefined;throw e;})).then((v:any)=>{readyDone=true;return v;}));}
 const PER_ROLE:Record<CrewRole,number>={van:10,truck:16,rail:8,ship:8,air:10};
 const DAY=86400000;
 export function mix(seed:string){let h=2166136261;for(const c of seed){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return ()=>{h^=h>>>15;h=Math.imul(h,2246822507);h^=h>>>13;h=Math.imul(h,3266489909);h^=h>>>16;return (h>>>0)/4294967296;};}

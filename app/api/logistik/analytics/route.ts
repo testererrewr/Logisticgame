@@ -2,11 +2,11 @@ import {NextRequest,NextResponse} from 'next/server';
 import {env} from 'cloudflare:workers';
 import {currentUser} from '../online/route';
 const db=()=>env.DB!;
-let ready:Promise<unknown>|undefined;
-const ensure=()=>ready??=db().batch([
+let readyDone=false;let ready:Promise<unknown>|undefined;
+const ensure=()=>(readyDone?Promise.resolve(undefined as any):Promise.resolve(db().batch([
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_analytics_daily(day TEXT NOT NULL,kind TEXT NOT NULL,key TEXT NOT NULL,n INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(day,kind,key))'),
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_analytics_visitors(day TEXT NOT NULL,vid TEXT NOT NULL,user INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(day,vid))'),
-]).then(()=>db().prepare("DELETE FROM logistics_analytics_visitors WHERE day<date('now','-1 day')").run()).catch(e=>{ready=undefined;throw e;});
+]).then(()=>db().prepare("DELETE FROM logistics_analytics_visitors WHERE day<date('now','-1 day')").run()).catch(e=>{ready=undefined;throw e;})).then((v:any)=>{readyDone=true;return v;}));
 const KINDS=new Set(['page','tab','action','world','consent','error']);
 async function hash(t:string){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return [...new Uint8Array(b)].slice(0,12).map(x=>x.toString(16).padStart(2,'0')).join('');}
 export async function POST(req:NextRequest){try{

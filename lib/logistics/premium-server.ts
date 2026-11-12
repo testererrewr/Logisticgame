@@ -4,10 +4,10 @@ import {readSettings,readSecrets,premiumPlans,type PremiumPlan} from './site-con
 import {sendMail,mailReady} from './auth-extra';
 
 const db=()=>env.DB!;
-let ready:Promise<unknown>|undefined,lastExpire=0;
-export const ensurePremiumTables=()=>ready??=(async()=>{await ensureBrandingTables();
+let readyDone=false;let ready:Promise<unknown>|undefined,lastExpire=0;
+export const ensurePremiumTables=()=>(readyDone?Promise.resolve(undefined as any):Promise.resolve((async()=>{await ensureBrandingTables();
  await db().prepare("CREATE TABLE IF NOT EXISTS logistics_payments(id TEXT PRIMARY KEY,user_id TEXT NOT NULL,provider TEXT NOT NULL,amount REAL NOT NULL,days INTEGER NOT NULL,status TEXT NOT NULL,created INTEGER NOT NULL)").run();
- const cols=(await db().prepare('PRAGMA table_info(logistics_entitlements)').all<{name:string}>()).results;if(!cols.some(c=>c.name==='expires'))await db().prepare('ALTER TABLE logistics_entitlements ADD COLUMN expires INTEGER').run().catch(()=>{});})().catch(e=>{ready=undefined;throw e;});
+ const cols=(await db().prepare('PRAGMA table_info(logistics_entitlements)').all<{name:string}>()).results;if(!cols.some(c=>c.name==='expires'))await db().prepare('ALTER TABLE logistics_entitlements ADD COLUMN expires INTEGER').run().catch(()=>{});})().catch(e=>{ready=undefined;throw e;})).then((v:any)=>{readyDone=true;return v;}));
 export async function expirePremium(){if(Date.now()-lastExpire<600000)return;lastExpire=Date.now();await ensurePremiumTables();await db().prepare('DELETE FROM logistics_entitlements WHERE expires IS NOT NULL AND expires<?').bind(Date.now()).run().catch(()=>{});}
 export async function premiumStatus(userId:string){await ensurePremiumTables();await expirePremium();const r=await db().prepare("SELECT expires FROM logistics_entitlements WHERE user_id=? AND feature='premium'").bind(userId).first<{expires:number|null}>();return r?{active:true,until:r.expires??null}:{active:false,until:null};}
 
@@ -18,7 +18,7 @@ export async function grantPremium(paymentId:string,userId:string,provider:strin
  const cur=await db().prepare("SELECT expires FROM logistics_entitlements WHERE user_id=? AND feature='premium'").bind(userId).first<{expires:number|null}>();
  if(cur&&cur.expires===null)return true;const until=Math.max(Date.now(),cur?.expires||0)+days*86400000;
  await db().prepare("INSERT OR REPLACE INTO logistics_entitlements(user_id,feature,granted_by,created,expires) VALUES(?,'premium',?,?,?)").bind(userId,provider,Date.now(),until).run();
- void confirmationMail(userId,amount,days,until).catch(()=>{});return true;}
+ await confirmationMail(userId,amount,days,until).catch(()=>{});return true;}
 async function confirmationMail(userId:string,amount:number,days:number,until:number){if(!await mailReady())return;const u=await db().prepare('SELECT email,name FROM users WHERE id=?').bind(userId).first<{email:string;name:string}>();if(!u?.email)return;
  const eur=amount.toLocaleString('de-DE',{style:'currency',currency:'EUR'}),end=new Date(until).toLocaleDateString('de-DE');
  await sendMail(u.email,'Bestätigung: Loadstar Premium',`<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;padding:24px;color:#1d2b3a"><h2>Danke, ${u.name.replace(/[<>&]/g,'')}!</h2><p>Dein Kauf von <b>Loadstar Premium</b> (${days} Tage) über <b>${eur}</b> ist bestätigt. Premium ist aktiv bis <b>${end}</b>. Es gibt keine automatische Verlängerung.</p><p>Du hast beim Kauf ausdrücklich zugestimmt, dass wir vor Ablauf der Rücktrittsfrist mit der Leistung beginnen, und zur Kenntnis genommen, dass du dadurch dein Rücktrittsrecht verlierst (§ 18 Abs. 1 Z 11 FAGG).</p><p>Es gelten unsere AGB: https://playloadstar.com/agb</p></div>`);}

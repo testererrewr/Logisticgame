@@ -4,12 +4,12 @@ import {ensureAllianceSocial,hqLevel,SHARED_KINDS} from './alliance-server';
 
 const db=()=>env.DB!;
 export const stockCapacity=(level:number)=>25000*(1+level);
-let ready:Promise<unknown>|undefined;
-export const ensureAllianceStock=()=>ready??=(async()=>{await ensureAllianceSocial();await db().batch([
+let ready:Promise<unknown>|undefined;let readyDone=false;
+export const ensureAllianceStock=()=>(readyDone?Promise.resolve(undefined as any):Promise.resolve((async()=>{await ensureAllianceSocial();await db().batch([
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_alliance_stock(alliance_id TEXT NOT NULL,good TEXT NOT NULL,qty REAL NOT NULL,PRIMARY KEY(alliance_id,good))'),
  db().prepare("CREATE TABLE IF NOT EXISTS logistics_alliance_stock_moves(id TEXT PRIMARY KEY,alliance_id TEXT NOT NULL,world_id TEXT NOT NULL,user_id TEXT NOT NULL,user_name TEXT NOT NULL DEFAULT '',site_id TEXT NOT NULL,site_name TEXT NOT NULL,good TEXT NOT NULL,kind TEXT NOT NULL,qty REAL NOT NULL,done REAL NOT NULL DEFAULT 0,status TEXT NOT NULL,note TEXT NOT NULL DEFAULT '',created INTEGER NOT NULL)"),
  db().prepare('CREATE INDEX IF NOT EXISTS logistics_alliance_stock_moves_world ON logistics_alliance_stock_moves(world_id,status)'),
-]);const cols=(await db().prepare('PRAGMA table_info(logistics_alliances)').all<{name:string}>()).results;if(!cols.some(c=>c.name==='stock_open'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN stock_open INTEGER NOT NULL DEFAULT 1').run().catch(()=>{});})().catch(e=>{ready=undefined;throw e;});
+]);const cols=(await db().prepare('PRAGMA table_info(logistics_alliances)').all<{name:string}>()).results;if(!cols.some(c=>c.name==='stock_open'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN stock_open INTEGER NOT NULL DEFAULT 1').run().catch(()=>{});})().catch(e=>{ready=undefined;throw e;})).then((v:any)=>{readyDone=true;return v;}));
 
 export async function allianceStock(allianceId:string){await ensureAllianceStock();
  const [items,info,moves]=await db().batch([db().prepare('SELECT good,qty FROM logistics_alliance_stock WHERE alliance_id=? AND qty>0.009 ORDER BY qty DESC').bind(allianceId),db().prepare('SELECT hq_funds,stock_open FROM logistics_alliances WHERE id=?').bind(allianceId),db().prepare('SELECT id,user_id,user_name,site_name,good,kind,qty,done,status,note,created FROM logistics_alliance_stock_moves WHERE alliance_id=? ORDER BY created DESC LIMIT 40').bind(allianceId)]);

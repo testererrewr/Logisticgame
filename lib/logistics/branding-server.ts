@@ -1,14 +1,14 @@
 import {env} from 'cloudflare:workers';
 const db=()=>env.DB!;
-let ready:Promise<void>|undefined;
-export function ensureBrandingTables(){return ready??=(async()=>{await db().batch([
+let ready:Promise<void>|undefined;let readyDone=false;
+export function ensureBrandingTables(){return (readyDone?Promise.resolve(undefined as any):Promise.resolve((async()=>{await db().batch([
  db().prepare("CREATE TABLE IF NOT EXISTS logistics_branding(world_id TEXT NOT NULL,user_id TEXT NOT NULL,primary_color TEXT NOT NULL DEFAULT '#2f6fae',secondary_color TEXT NOT NULL DEFAULT '#f2c14e',logo TEXT,updated INTEGER NOT NULL,PRIMARY KEY(world_id,user_id))"),
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_vehicle_images(world_id TEXT NOT NULL,user_id TEXT NOT NULL,model_id TEXT NOT NULL,image TEXT NOT NULL,updated INTEGER NOT NULL,PRIMARY KEY(world_id,user_id,model_id))'),
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_entitlements(user_id TEXT NOT NULL,feature TEXT NOT NULL,granted_by TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(user_id,feature))'),
 ]);
  const add=async(table:string,col:string,def:string)=>{const cols=(await db().prepare(`PRAGMA table_info(${table})`).all<{name:string}>()).results;if(!cols.some(c=>c.name===col))await db().prepare(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`).run().catch(()=>{});};
  await add('logistics_vehicle_images','status',"TEXT NOT NULL DEFAULT 'pending'");await add('logistics_vehicle_images','reviewed_by','TEXT');await add('logistics_vehicle_images','reviewed_at','INTEGER');await add('logistics_vehicle_images','note','TEXT');await add('logistics_branding','show_badge','INTEGER NOT NULL DEFAULT 1');
-})().catch(e=>{ready=undefined;throw e;});}
+})().catch(e=>{ready=undefined;throw e;})).then((v:any)=>{readyDone=true;return v;}));}
 
 export const PREMIUM_FEATURES:Record<string,string>={premium:'Premium: Fahrzeugbilder, Firmenauftritt, Allianzlogo & -farben, Abzeichen, automatische Fahrer',customVehicleImages:'Nur eigene Fahrzeugbilder'};
 export const PREMIUM_PERKS=['Eigene Fahrzeugbilder für jedes Modell','Firmenauftritt: Farben und Logo','Allianzlogo und Allianzfarben','Premium-Abzeichen in der Rangliste','Fahrer werden beim Fahrzeugkauf automatisch eingestellt und zugewiesen'];

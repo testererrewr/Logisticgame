@@ -7,13 +7,13 @@ import {ensureWorldSettingsColumn} from '../../../../lib/logistics/world-region-
 import {newWorldImport} from '../../../../lib/logistics/world-import-plan';
 import {readWorldImport,worldImportStatus,setWorldImportEnabled,continueWorldImport,retryWorldImport} from '../../../../lib/logistics/world-import';
 import {NextRequest,NextResponse} from 'next/server';
-import {env} from 'cloudflare:workers';
+import {env,waitUntil} from 'cloudflare:workers';
 import {currentUser,settleWorld,settleAllWorlds} from '../online/route';
 import {loadPartnerArea} from '../partners/route';
 const db=()=>env.DB!;
 const reply=(data:unknown,status=200)=>NextResponse.json(data,{status,headers:{'Cache-Control':'no-store'}});
 const slow=new Map<string,{at:number;value:any;running?:boolean}>();
-function slowCached(key:string,ttl:number,load:()=>Promise<any>){const hit=slow.get(key);if(!hit||(!hit.running&&Date.now()-hit.at>ttl)){const entry={at:hit?.at||0,value:hit?.value,running:true};slow.set(key,entry);void load().then(v=>slow.set(key,{at:Date.now(),value:v})).catch(()=>slow.set(key,{at:Date.now(),value:entry.value}));}return slow.get(key)?.value;}
+function slowCached(key:string,ttl:number,load:()=>Promise<any>){const hit=slow.get(key);if(!hit||(!hit.running&&Date.now()-hit.at>ttl)){const entry={at:hit?.at||0,value:hit?.value,running:true};slow.set(key,entry);waitUntil(load().then(v=>slow.set(key,{at:Date.now(),value:v})).catch(()=>slow.set(key,{at:Date.now(),value:entry.value})));}return slow.get(key)?.value;}
 let coreReady=false;
 export async function GET(req:NextRequest){const st={step:'Start',t:Date.now(),log:[] as string[]};const mark=(n:string)=>{const now=Date.now();st.log.push(`${st.step} ${now-st.t}ms`);st.step=n;st.t=now;};
  const guard=new Promise<Response>(r=>setTimeout(()=>{console.log('[admin] hängt bei',st.step,st.log.join(' · '));void logError('perf:admin',Error('Verwaltung hängt bei: '+st.step),{steps:st.log.join(' · ')},'warn');r(reply({error:'Verwaltung hängt bei Schritt „'+st.step+'“ ('+st.log.join(' · ')+')'},503));},25000));

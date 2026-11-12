@@ -1,6 +1,7 @@
 export interface ChangelogEntry {id:string;date:string;title:string;items:string[];code?:string}
 export interface CodeUpdate {id:string;items:string[]}
 export const CODE_UPDATES:CodeUpdate[]=[
+ {id:'u60',items:['Verwaltung lädt wieder','Hängende Datenbank-Vorbereitungen behoben']},
  {id:'u59',items:['Fehlersuche Verwaltung']},
  {id:'u58',items:['Verwaltung lädt deutlich schneller','Cookie-Hinweis wieder unten']},
  {id:'u57',items:['Verwaltung und Karte laden nach dem Weltimport wieder schnell']},

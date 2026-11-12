@@ -16,15 +16,15 @@ export const ALLIANCE_BUILDINGS:{kind:string;name:string;icon:string;price:numbe
 export const buildingPrice=(kind:string)=>{const b=ALLIANCE_BUILDINGS.find(x=>x.kind===kind);if(!b||kind==='hq')return 0;return b.price||Math.round((BUILDINGS.find(x=>x.id===b.site)?.price||500000)*1.2);};
 export const HQ_COUNTRY_BONUS=.025;
 export interface AllianceBuilding {id:string;alliance_id:string;world_id:string;kind:string;name:string;lat:number;lon:number;country:string;created:number}
-let ready:Promise<unknown>|undefined;
-export const ensureAllianceBuildings=()=>ready??=(async()=>{await db().batch([
+let ready:Promise<unknown>|undefined;let readyDone=false;
+export const ensureAllianceBuildings=()=>(readyDone?Promise.resolve(undefined as any):Promise.resolve((async()=>{await db().batch([
  db().prepare("CREATE TABLE IF NOT EXISTS logistics_alliance_buildings(id TEXT PRIMARY KEY,alliance_id TEXT NOT NULL,world_id TEXT NOT NULL,kind TEXT NOT NULL,name TEXT NOT NULL,lat REAL NOT NULL,lon REAL NOT NULL,country TEXT NOT NULL DEFAULT '',created INTEGER NOT NULL)"),
  db().prepare('CREATE INDEX IF NOT EXISTS logistics_alliance_buildings_world ON logistics_alliance_buildings(world_id,alliance_id)'),
  db().prepare("CREATE TABLE IF NOT EXISTS logistics_alliance_market(id TEXT PRIMARY KEY,building_id TEXT NOT NULL,alliance_id TEXT NOT NULL,world_id TEXT NOT NULL,seller_id TEXT NOT NULL,seller_name TEXT NOT NULL,good TEXT NOT NULL,qty REAL NOT NULL,price REAL NOT NULL,status TEXT NOT NULL,buyer_id TEXT,buyer_name TEXT,created INTEGER NOT NULL)"),
  db().prepare('CREATE INDEX IF NOT EXISTS logistics_alliance_market_world ON logistics_alliance_market(world_id,status)'),
 ]);const cols=(await db().prepare('PRAGMA table_info(logistics_alliances)').all<{name:string}>()).results;
  if(!cols.some(c=>c.name==='build_role'))await db().prepare("ALTER TABLE logistics_alliances ADD COLUMN build_role TEXT NOT NULL DEFAULT 'leader'").run().catch(()=>{});
- if(!cols.some(c=>c.name==='facility_fee'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN facility_fee REAL NOT NULL DEFAULT 0').run().catch(()=>{});})().catch(e=>{ready=undefined;throw e;});
+ if(!cols.some(c=>c.name==='facility_fee'))await db().prepare('ALTER TABLE logistics_alliances ADD COLUMN facility_fee REAL NOT NULL DEFAULT 0').run().catch(()=>{});})().catch(e=>{ready=undefined;throw e;})).then((v:any)=>{readyDone=true;return v;}));
 
 const cache=new Map<string,{at:number;rows:AllianceBuilding[]}>();
 export const invalidateBuildingCache=()=>cache.clear();
