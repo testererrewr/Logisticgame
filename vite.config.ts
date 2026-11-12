@@ -43,6 +43,7 @@ export default defineConfig(async ({ command }) => {
   const { cloudflare } = await import("@cloudflare/vite-plugin");
 
   return {
+    build: { chunkSizeWarningLimit: 4000 },
     server: {
       watch: {ignored:['**/public/logistics-products/**'],...(isCodexSeatbeltSandbox?{useFsEvents:false,usePolling:true}:{})},
       ...(managedLinux

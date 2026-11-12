@@ -2,7 +2,7 @@ import {env} from 'cloudflare:workers';
 import {credit,log,type State} from './engine';
 import {systemMessageStatement,ensureMessageTable} from './system-message';
 const db=()=>env.DB!;
-export const REF_BONUS_NEW=250000,REF_BONUS_INVITER=500000;
+export const REF_BONUS_NEW=250000,REF_BONUS_INVITER=250000;
 let ready:Promise<unknown>|undefined;
 export const ensureReferrals=()=>ready??=db().batch([
  db().prepare('CREATE TABLE IF NOT EXISTS logistics_ref_codes(user_id TEXT PRIMARY KEY,code TEXT NOT NULL UNIQUE,world_id TEXT)'),

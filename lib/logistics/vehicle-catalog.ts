@@ -740,7 +740,7 @@ export const REAL_VEHICLES:VehicleSpec[]=[
  },
  {
   "id": "cargoPlane",
-  "name": "Boeing 777F",
+  "name": "Boeing 777F (Express-Version)",
   "manufacturer": "Boeing",
   "role": "aircraft",
   "mode": "air",

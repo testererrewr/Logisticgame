@@ -6,7 +6,7 @@ async function call(world:string,body?:any){const r=await fetch('/api/logistik/a
 
 export function AllianceBuildMenu({worldId,center,onBuilt}:{worldId:string;center:[number,number];onBuilt?:()=>void}){
  const [a,setA]=useState<any>(null),[kind,setKind]=useState(''),[name,setName]=useState(''),[msg,setMsg]=useState(''),[busy,setBusy]=useState(false);
- const load=useCallback(()=>call(worldId).then(d=>setA(d.detail||null)).catch(()=>setA(null)),[worldId]);useEffect(()=>{load();},[load]);
+ const load=useCallback(()=>call(worldId).then(d=>setA(d.alliance||null)).catch(()=>setA(null)),[worldId]);useEffect(()=>{load();},[load]);
  const b=a?.buildings;if(!a)return null;if(!b?.types)return null;if(!b.canBuild)return null;const type=b.types.find((t:any)=>t.kind===kind);
  const build=async()=>{setBusy(true);setMsg('');try{await call(worldId,{action:'build',kind,lat:center[0],lon:center[1],name});setMsg('Gebaut.');setKind('');setName('');await load();onBuilt?.();}catch(e:any){setMsg(e.message);}finally{setBusy(false);}};
  return <details className="log-trailer-box log-alliance-build"><summary><b>🤝 Allianzgebäude [{a.tag}]</b> <small className="log-muted">Kasse {eur(a.treasury||0)}</small></summary>
