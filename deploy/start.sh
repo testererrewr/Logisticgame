@@ -2,7 +2,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-DOMAIN="${DOMAIN:-play.crackgaming.org}"
+DOMAIN="${DOMAIN:-playloadstar.com}"
 PORT="${PORT:-8787}"
 BIND_IP="${BIND_IP:-127.0.0.1}"   # z. B. Docker-Gateway-IP, wenn ein Caddy im Docker-Container weiterleitet
 STATE_DIR="${STATE_DIR:-/var/lib/logistik/state}"

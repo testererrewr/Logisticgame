@@ -1,7 +1,7 @@
 'use client';
 import {useEffect,useState} from 'react';
 import {currentLanguage,setLanguage} from '../../lib/i18n';
-export interface PublicSite {discordUrl:string;oauth:{google:boolean;discord:boolean};mail:boolean;premium:null|{price:number;days:number;benefits:string[];stripe:boolean;paypal:boolean};roadmap:{id:string;icon:string;title:string;text:string;status:'planned'|'progress'|'done';discord?:boolean}[];changelog:{id:string;date:string;title:string;items:string[]}[]}
+export interface PublicSite {discordUrl:string;oauth:{google:boolean;discord:boolean};mail:boolean;premium:null|{price:number;plans:{id:string;months:number;days:number;price:number;save:number}[];benefits:string[];benefitsEn?:string[];worlds:null|{free:number;premium:number};stripe:boolean;paypal:boolean};roadmap:{id:string;icon:string;title:string;text:string;titleEn?:string;textEn?:string;status:'planned'|'progress'|'done';discord?:boolean}[];changelog:{id:string;date:string;title:string;items:string[]}[]}
 let cache:Promise<PublicSite>|null=null;
 export const loadSite=(fresh=false)=>{if(!cache||fresh)cache=fetch('/api/logistik/site',{cache:'no-store'}).then(r=>r.json()).catch(()=>({discordUrl:'',oauth:{google:false,discord:false},mail:false,premium:null,roadmap:[],changelog:[]}));return cache;};
 export function useSite(){const [s,setS]=useState<PublicSite|null>(null);useEffect(()=>{let on=true;void loadSite().then(d=>{if(on)setS(d);});return()=>{on=false;};},[]);return s;}

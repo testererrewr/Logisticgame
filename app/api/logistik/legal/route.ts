@@ -2,7 +2,7 @@ import {NextRequest,NextResponse} from 'next/server';
 import {env} from 'cloudflare:workers';
 import {currentUser} from '../online/route';
 import {sameOrigin} from '../../../../lib/same-origin';
-const KINDS=['impressum','datenschutz'];
+const KINDS=['impressum','datenschutz','agb'];
 export async function GET(req:NextRequest){const kind=String(req.nextUrl.searchParams.get('kind')||'');if(!KINDS.includes(kind))return NextResponse.json({error:'Unbekannt.'},{status:404});
  const row=await env.DB!.prepare('SELECT payload,updated FROM logistics_runtime WHERE id=?').bind('legal:'+kind).first<{payload:string;updated:number}>().catch(()=>null);
  return NextResponse.json({text:row?.payload||'',updated:row?.updated||0},{headers:{'Cache-Control':'no-store'}});}

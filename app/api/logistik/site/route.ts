@@ -2,7 +2,7 @@ import {NextRequest,NextResponse} from 'next/server';
 import {env} from 'cloudflare:workers';
 import {currentUser} from '../online/route';
 import {sameOrigin} from '../../../../lib/same-origin';
-import {publicConfig,readSettings,readSecrets,saveSettings,saveSecrets,cleanIntegrations,cleanSecrets,maskedSecrets,DEFAULT_ROADMAP,DEFAULT_BENEFITS} from '../../../../lib/logistics/site-config';
+import {publicConfig,readSettings,readSecrets,saveSettings,saveSecrets,cleanIntegrations,cleanSecrets,maskedSecrets,DEFAULT_ROADMAP,PREMIUM_DEFAULTS} from '../../../../lib/logistics/site-config';
 import {CODE_UPDATES,pendingUpdates,type ChangelogEntry} from '../../../../lib/logistics/changelog';
 import {instanceRole} from '../../../../lib/logistics/world-hosting';
 import {expirePremium} from '../../../../lib/logistics/premium-server';
@@ -18,7 +18,7 @@ const admin=async(req:NextRequest)=>{const u=await currentUser(req);return u&&u.
 
 export async function GET(req:NextRequest){const sp=req.nextUrl.searchParams;
  if(sp.has('admin')){const u=await admin(req);if(!u)return reply({error:'Nur für Administratoren.'},403);const [s,sec,list]=await Promise.all([readSettings(),readSecrets(),published()]);
-  return reply({settings:{...s,roadmap:s.roadmap?.length?s.roadmap:DEFAULT_ROADMAP,premium:s.premium||{enabled:false,price:4.99,days:30,benefits:DEFAULT_BENEFITS,stripe:false,paypal:false,paypalSandbox:false}},secrets:maskedSecrets(sec),published:list,pending:pendingUpdates(await codeUpdates(),list.find(e=>e.code)?.code),origin:new URL(req.url).origin});}
+  return reply({settings:{...s,roadmap:s.roadmap?.length?s.roadmap:DEFAULT_ROADMAP,premium:{...PREMIUM_DEFAULTS,...(s.premium||{})}},secrets:maskedSecrets(sec),published:list,pending:pendingUpdates(await codeUpdates(),list.find(e=>e.code)?.code),origin:new URL(req.url).origin});}
  void expirePremium().catch(()=>{});
  return reply({...await publicConfig(),changelog:await published()});}
 

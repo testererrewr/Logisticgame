@@ -2,7 +2,7 @@
 set -euo pipefail
 [[ $EUID -eq 0 ]] || { echo "Bitte mit sudo ausführen." >&2; exit 1; }
 set -a; . /etc/logistik/logistik.env; set +a
-DOMAIN="${DOMAIN:-play.crackgaming.org}"; BIND_IP="${BIND_IP:-127.0.0.1}"; PORT="${PORT:-8787}"; TEST_PORT="${TEST_PORT:-8788}"
+DOMAIN="${DOMAIN:-playloadstar.com}"; BIND_IP="${BIND_IP:-127.0.0.1}"; PORT="${PORT:-8787}"; TEST_PORT="${TEST_PORT:-8788}"
 command -v docker >/dev/null || { echo "Kein Docker gefunden – trage den Block bitte im Webserver selbst ein."; exit 1; }
 C="${CADDY_CONTAINER:-$(docker ps --format '{{.Names}} {{.Image}}' | awk 'tolower($0) ~ /caddy/ {print $1; exit}')}"
 [[ -n "$C" ]] || { echo "Kein laufender Caddy-Container gefunden. Name angeben: CADDY_CONTAINER=name sudo bash $0" >&2; exit 1; }

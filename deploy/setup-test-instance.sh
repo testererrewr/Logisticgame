@@ -21,6 +21,6 @@ echo "Fertig. Testinstanz läuft auf $BIND_IP:$TEST_PORT."
 echo
 if bash /opt/logistik/app/deploy/caddy-testroute.sh; then :; else
 echo "Caddy konnte nicht automatisch angepasst werden. Diesen Block im Webserver für die Domain eintragen:"
-echo "${DOMAIN:-play.crackgaming.org} {"; echo "\t@test header_regexp Cookie lgx_inst=test"; echo "\thandle @test { reverse_proxy $BIND_IP:$TEST_PORT }"; echo "\thandle { reverse_proxy $BIND_IP:${PORT:-8787} }"; echo "}"
+echo "${DOMAIN:-playloadstar.com} {"; echo "\t@test header_regexp Cookie lgx_inst=test"; echo "\thandle @test { reverse_proxy $BIND_IP:$TEST_PORT }"; echo "\thandle { reverse_proxy $BIND_IP:${PORT:-8787} }"; echo "}"
 fi
 echo "Danach in der Verwaltung bei einer Welt „🧪 Testwelt“ anhaken."

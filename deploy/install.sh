@@ -2,7 +2,7 @@
 set -euo pipefail
 [[ $EUID -eq 0 ]] || { echo "Bitte mit sudo/root ausführen." >&2; exit 1; }
 
-DOMAIN="play.crackgaming.org"
+DOMAIN="${DOMAIN:-playloadstar.com}"
 REPO="https://github.com/testererrewr/Logisticgame.git"
 BRANCH="main"
 SAVEGAME=""
@@ -103,7 +103,7 @@ fi
 if [[ -z "${SKIP_CADDY:-}" ]]; then
 log "Caddy für https://$DOMAIN"
 mkdir -p /etc/caddy/sites
-sed "s/play\.crackgaming\.org/$DOMAIN/; s/127\.0\.0\.1:8787/127.0.0.1:$PORT/" "$APP/deploy/Caddyfile" > /etc/caddy/sites/logistik.caddy
+sed "s/playloadstar\.com/$DOMAIN/; s/127\.0\.0\.1:8787/127.0.0.1:$PORT/" "$APP/deploy/Caddyfile" > /etc/caddy/sites/logistik.caddy
 if [[ ! -f /etc/caddy/Caddyfile ]] || grep -q '/usr/share/caddy' /etc/caddy/Caddyfile; then
   [[ -f /etc/caddy/Caddyfile ]] && cp /etc/caddy/Caddyfile /etc/caddy/Caddyfile.original
   echo 'import sites/*.caddy' > /etc/caddy/Caddyfile

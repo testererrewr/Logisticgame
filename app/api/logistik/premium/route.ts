@@ -2,7 +2,7 @@ import {NextRequest,NextResponse} from 'next/server';
 import {currentUser} from '../online/route';
 import {sameOrigin} from '../../../../lib/same-origin';
 import {publicOrigin} from '../../../../lib/logistics/auth-extra';
-import {premiumStatus,paymentConfig,stripeCheckout,stripeSession,stripeFulfil,verifyStripe,paypalCheckout,paypalCapture} from '../../../../lib/logistics/premium-server';
+import {premiumStatus,paymentConfig,stripeCheckout,stripeSession,stripeFulfil,verifyStripe,paypalCheckout,paypalCapture,recordConsent} from '../../../../lib/logistics/premium-server';
 import {logError} from '../../../../lib/logistics/error-log';
 import {allowAction,TOO_FAST} from '../../../../lib/logistics/rate-limit';
 
@@ -21,7 +21,10 @@ export async function POST(req:NextRequest){try{
   const ev=JSON.parse(raw);if(['checkout.session.completed','checkout.session.async_payment_succeeded'].includes(ev.type))await stripeFulfil(ev.data?.object);return reply({received:true});}
  const u=await currentUser(req);if(!u)return reply({error:'Bitte zuerst anmelden.'},401);if(!sameOrigin(req))return reply({error:'Ungültiger Ursprung.'},403);if(!allowAction('premium:'+u.id,1,3))return reply({error:TOO_FAST},429);
  const b=await req.json() as any,cfg=await paymentConfig();if(!cfg)return reply({error:'Premium ist derzeit nicht verfügbar.'},400);const origin=publicOrigin(req);
- if(b.provider==='stripe'&&cfg.stripeKey){const {env}=await import('cloudflare:workers');const row=await env.DB!.prepare('SELECT email FROM users WHERE id=?').bind(u.id).first<{email:string}>();return reply({url:await stripeCheckout(cfg,{id:u.id,email:row?.email||''},origin)});}
- if(b.provider==='paypal'&&cfg.paypal)return reply({url:await paypalCheckout(cfg,u,origin)});
+ const plan=cfg.plans.find(p=>p.id===b.plan);if(!plan)return reply({error:'Bitte eine Laufzeit wählen.'},400);
+ if(b.agb!==true||b.waiver!==true)return reply({error:'Bitte AGB akzeptieren und dem sofortigen Beginn zustimmen.'},400);
+ if(!['stripe','paypal'].includes(b.provider))return reply({error:'Unbekannte Zahlungsart.'},400);await recordConsent(u.id,b.provider,plan.id);
+ if(b.provider==='stripe'&&cfg.stripeKey){const {env}=await import('cloudflare:workers');const row=await env.DB!.prepare('SELECT email FROM users WHERE id=?').bind(u.id).first<{email:string}>();return reply({url:await stripeCheckout(cfg,plan,{id:u.id,email:row?.email||''},origin)});}
+ if(b.provider==='paypal'&&cfg.paypal)return reply({url:await paypalCheckout(cfg,plan,u,origin)});
  return reply({error:'Diese Zahlungsart ist nicht aktiv.'},400);}
  catch(e:any){await logError('premium',e,{url:req.url});return reply({error:e.message},422);}}

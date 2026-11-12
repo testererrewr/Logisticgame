@@ -15,7 +15,7 @@ export function publicOrigin(req:Request){const u=new URL(req.url),host=req.head
 
 export async function mailReady(){const [s,sec]=await Promise.all([readSettings(),readSecrets()]);return s.mail?.enabled&&s.mail.from&&sec.resendKey?{from:s.mail.from,key:sec.resendKey,requireVerify:!!s.mail.requireVerify}:null;}
 const esc=(s:string)=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]!));
-function layout(title:string,text:string,button:string,link:string){return `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;padding:24px;color:#1d2b3a"><h2 style="margin:0 0 12px">${esc(title)}</h2><p style="line-height:1.5">${esc(text)}</p><p style="margin:24px 0"><a href="${esc(link)}" style="background:#2f6fae;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold">${esc(button)}</a></p><p style="font-size:12px;color:#6b7785">Falls der Knopf nicht geht: ${esc(link)}<br>Wenn du das nicht angefordert hast, ignoriere diese E-Mail.</p></div>`;}
+function layout(title:string,text:string,button:string,link:string){return `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;padding:24px;color:#1d2b3a"><p style="font-weight:800;letter-spacing:2px;color:#2f6fae;margin:0 0 16px">LOADSTAR<span style="color:#35d5b6">.</span></p><h2 style="margin:0 0 12px">${esc(title)}</h2><p style="line-height:1.5">${esc(text)}</p><p style="margin:24px 0"><a href="${esc(link)}" style="background:#2f6fae;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold">${esc(button)}</a></p><p style="font-size:12px;color:#6b7785">Falls der Knopf nicht geht: ${esc(link)}<br>Wenn du das nicht angefordert hast, ignoriere diese E-Mail.</p></div>`;}
 export async function sendMail(to:string,subject:string,html:string){const m=await mailReady();if(!m)throw Error('E-Mail-Versand ist nicht eingerichtet.');
  const r=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+m.key,'Content-Type':'application/json'},body:JSON.stringify({from:m.from,to:[to],subject,html})});
  if(!r.ok)throw Error('E-Mail konnte nicht gesendet werden ('+r.status+').');}
@@ -26,9 +26,9 @@ export async function useToken(token:string,kind:'verify'|'reset'){await ensureA
  const row=await db().prepare('SELECT user_id FROM logistics_auth_tokens WHERE token=? AND kind=? AND expires>?').bind(h,kind,Date.now()).first<{user_id:string}>();if(!row)return null;await db().prepare('DELETE FROM logistics_auth_tokens WHERE token=?').bind(h).run();return row.user_id;}
 
 export async function sendVerifyMail(req:Request,u:{id:string;email:string;name:string}){const t=await newToken(u.id,'verify',72);const link=publicOrigin(req)+'/konto-bestaetigen?token='+t;
- await sendMail(u.email,'Bitte bestätige deine E-Mail-Adresse',layout(`Hallo ${u.name}!`,'Bitte bestätige deine E-Mail-Adresse, damit dein Konto vollständig aktiv ist.','E-Mail bestätigen',link));}
+ await sendMail(u.email,'Loadstar: Bitte bestätige deine E-Mail-Adresse',layout(`Hallo ${u.name}!`,'Bitte bestätige deine E-Mail-Adresse, damit dein Konto vollständig aktiv ist.','E-Mail bestätigen',link));}
 export async function sendResetMail(req:Request,u:{id:string;email:string;name:string}){const t=await newToken(u.id,'reset',1);const link=publicOrigin(req)+'/passwort-neu?token='+t;
- await sendMail(u.email,'Passwort zurücksetzen',layout(`Hallo ${u.name}!`,'Du hast ein neues Passwort angefordert. Der Link ist eine Stunde gültig.','Neues Passwort festlegen',link));}
+ await sendMail(u.email,'Loadstar: Passwort zurücksetzen',layout(`Hallo ${u.name}!`,'Du hast ein neues Passwort angefordert. Der Link ist eine Stunde gültig.','Neues Passwort festlegen',link));}
 
 export const OAUTH:Record<string,{auth:string;token:string;scope:string;profile:(token:string)=>Promise<{sub:string;email:string;verified:boolean;name:string}>}>={
  google:{auth:'https://accounts.google.com/o/oauth2/v2/auth',token:'https://oauth2.googleapis.com/token',scope:'openid email profile',

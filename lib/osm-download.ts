@@ -1,6 +1,6 @@
 import {osmGeometry} from './osm-source';
 export type OsmBox={south:number;west:number;north:number;east:number};
-const headers={'User-Agent':'Weltverbund/1.0 (+https://play.crackgaming.org)','Accept':'application/json'};
+const headers={'User-Agent':'Loadstar/1.0 (+https://playloadstar.com)','Accept':'application/json'};
 const cooldown=new Map<string,number>();
 export async function downloadOsm(box:OsmBox,query:string,custom?:string,fetcher:typeof fetch=fetch,partCache?:{get:(b:OsmBox)=>Promise<any|null>;put:(b:OsmBox,raw:any)=>Promise<void>}){
  const failures:string[]=[],deadline=Date.now()+45000;const objects=new Map<string,any>();let running=0;const waiting:(()=>void)[]=[];

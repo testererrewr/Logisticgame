@@ -26,7 +26,7 @@ Anwendbare Rechtsvorschrift: Gewerbeordnung (www.ris.bka.gv.at)
 
 ## Grundlegende Richtung
 
-Informationen und Unterhaltung rund um das Browserspiel. Waren, Preise, Unternehmen und Ereignisse im Spiel sind Spielwerte.
+Informationen und Unterhaltung rund um das Browserspiel Loadstar. Waren, Preise, Unternehmen und Ereignisse im Spiel sind Spielwerte.
 
 ## Online-Streitbeilegung
 
@@ -50,6 +50,8 @@ E-Mail: [E-Mail-Adresse]
 Wir verarbeiten personenbezogene Daten nach der Datenschutz-Grundverordnung (DSGVO), dem österreichischen Datenschutzgesetz (DSG) und dem Telekommunikationsgesetz 2021 (TKG 2021).
 
 ## 2. Konto und Spiel
+
+Betrifft das Browserspiel Loadstar (playloadstar.com).
 
 Bei der Registrierung speichern wir Spielername, E-Mail-Adresse und das Passwort (nur als sicheren Hash). Im Spiel speichern wir deine Speditionen, Spielstände, Nachrichten an andere Spieler, Allianz-Beiträge, Meldungen und Leserbriefe.
 
@@ -94,3 +96,51 @@ Kontodaten bis zur Löschung deines Kontos. Spielstände bis zum Ende der jeweil
 Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch (Art. 15–21 DSGVO) sowie auf Widerruf erteilter Einwilligungen. Anfragen an die oben genannte E-Mail-Adresse.
 
 Wenn du meinst, dass die Verarbeitung deiner Daten gegen das Datenschutzrecht verstößt, kannst du dich bei der Österreichischen Datenschutzbehörde beschweren: Barichgasse 40–42, 1030 Wien, dsb@dsb.gv.at, www.dsb.gv.at.`;
+
+export const AGB=`# Allgemeine Geschäftsbedingungen
+
+## 1. Geltungsbereich
+
+Diese AGB gelten für die Nutzung des Browserspiels Loadstar (playloadstar.com) und den Kauf von Premium. Anbieter ist [Vor- und Nachname bzw. Firmenname], [Anschrift], Österreich, E-Mail: [E-Mail-Adresse].
+
+## 2. Spiel und Konto
+
+Das Spiel ist kostenlos spielbar. Für ein Konto ist eine gültige E-Mail-Adresse nötig. Pro Person ist ein Konto erlaubt. Spielwährung, Fahrzeuge, Gebäude und alle anderen Spielinhalte haben keinen Geldwert, sind nicht übertragbar und können nicht ausgezahlt werden. Spielwelten können zurückgesetzt, beendet oder geändert werden.
+
+## 3. Verhalten
+
+Beleidigungen, Betrug, Ausnutzen von Fehlern, automatisierte Programme (Bots) und mehrere Konten pro Person sind verboten. Bei Verstößen können wir Konten verwarnen, sperren oder löschen. Bereits bezahltes Premium wird in diesem Fall nicht erstattet.
+
+## 4. Premium
+
+Premium ist ein digitaler Inhalt bzw. eine digitale Dienstleistung mit den auf der Premium-Seite beschriebenen Vorteilen. Premium bringt keine spielerischen Vorteile gegenüber anderen Spielern. Premium wird für die gewählte Laufzeit (1 Monat, 3 Monate oder 12 Monate) im Voraus bezahlt und endet automatisch, es gibt kein Abo und keine automatische Verlängerung. Ein weiterer Kauf verlängert die Laufzeit.
+
+## 5. Preise und Zahlung
+
+Alle Preise sind Endpreise in Euro. [Gemäß § 6 Abs. 1 Z 27 UStG wird keine Umsatzsteuer berechnet (Kleinunternehmerregelung).] Die Zahlung erfolgt über Stripe oder PayPal. Der Vertrag kommt zustande, wenn die Zahlung bestätigt ist. Premium wird sofort danach freigeschaltet. Du erhältst eine Bestätigung per E-Mail.
+
+## 6. Rücktrittsrecht (Widerrufsbelehrung)
+
+Verbraucher haben grundsätzlich das Recht, binnen 14 Tagen ohne Angabe von Gründen von einem online geschlossenen Vertrag zurückzutreten. Die Frist beginnt mit dem Tag des Vertragsabschlusses. Um das Rücktrittsrecht auszuüben, genügt eine eindeutige Erklärung (z. B. per E-Mail an [E-Mail-Adresse]). Im Fall eines Rücktritts erstatten wir alle Zahlungen unverzüglich, spätestens binnen 14 Tagen, über dasselbe Zahlungsmittel.
+
+## 7. Vorzeitiges Erlöschen des Rücktrittsrechts
+
+Das Rücktrittsrecht erlischt bei digitalen Inhalten, die nicht auf einem körperlichen Datenträger geliefert werden, wenn wir mit der Leistung begonnen haben, nachdem du ausdrücklich zugestimmt hast, dass wir vor Ablauf der Rücktrittsfrist beginnen, und du zur Kenntnis genommen hast, dass du dadurch dein Rücktrittsrecht verlierst (§ 18 Abs. 1 Z 11 FAGG). Beim Kauf von Premium holen wir diese Zustimmung ausdrücklich ein und bestätigen sie per E-Mail.
+
+## 8. Muster-Rücktrittsformular
+
+An [Vor- und Nachname bzw. Firmenname], [Anschrift], [E-Mail-Adresse]:
+Hiermit trete ich von dem von mir abgeschlossenen Vertrag über den Kauf von Loadstar Premium zurück.
+Bestellt am: … · Name: … · E-Mail des Kontos: … · Datum: …
+
+## 9. Verfügbarkeit und Haftung
+
+Wir bemühen uns um einen störungsfreien Betrieb, können aber keine ständige Verfügbarkeit garantieren (z. B. bei Wartung oder Updates). Wir haften nur für Vorsatz und grobe Fahrlässigkeit, ausgenommen Personenschäden. Zwingende Rechte von Verbrauchern bleiben unberührt.
+
+## 10. Änderungen und Ende
+
+Wir können das Spiel weiterentwickeln und diese AGB mit Wirkung für die Zukunft ändern; über wesentliche Änderungen informieren wir rechtzeitig. Du kannst dein Konto jederzeit löschen. Wird das Spiel dauerhaft eingestellt, erstatten wir für noch laufendes Premium den anteiligen Betrag.
+
+## 11. Recht und Gerichtsstand
+
+Es gilt österreichisches Recht unter Ausschluss des UN-Kaufrechts. Für Verbraucher gilt dies nur, soweit dadurch zwingende Schutzbestimmungen ihres Wohnsitzstaates nicht eingeschränkt werden. Informationen zur Online-Streitbeilegung: https://ec.europa.eu/consumers/odr`;
