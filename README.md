@@ -88,6 +88,13 @@ Passwörter: PBKDF2-SHA256 mit zufälligem Salt und 100.000 Iterationen. Sitzung
 
 Noch kein E-Mail-Versand oder Passwort-Reset. Diese erste Version wurde lokal funktional mit zwei Konten getestet; ein Lasttest mit 32 gleichzeitig aktiven Clients ist nicht enthalten. Eine faire Aufteilung von 32 × 32 gleichwertigen Anbieter-Kombinationen ist als Modelltest enthalten. Die Entwicklungsdatenbank und lokalen Testkonten werden nicht veröffentlicht.
 
+## Loadstar auf dem Handy installieren
+
+- **Android:** Die Spielseite über HTTPS in Chrome öffnen. Auf der Startseite **Loadstar installieren** antippen oder im Chrome-Menü **App installieren** wählen.
+- **iPhone:** Die Spielseite in Safari öffnen und über **Teilen → Zum Home-Bildschirm → Als Web-App öffnen** hinzufügen.
+
+Die installierte Web-App benutzt dasselbe Konto und dieselben Welten wie der Browser. Eine Internetverbindung ist zum Spielen erforderlich. Ein neuer Stand auf `main` wird vom vorhandenen GitHub-Workflow ausgerollt, sofern die VPS-Zugangsdaten in GitHub eingerichtet sind. Beim nächsten Laden öffnet die App die vom Server bereitgestellte Version. Wenn das Spiel noch geöffnet ist, erscheint nach der Versionsprüfung **Neue Version verfügbar**. Über **Neu laden** kann man wechseln, sobald der aktuelle Entwurf abgeschlossen ist.
+
 ## Lokal starten
 
 Node.js ab 22.13, npm und Git installieren. Die Anwendung nutzt Vinext, React, Leaflet, Cloudflare Workers und D1.

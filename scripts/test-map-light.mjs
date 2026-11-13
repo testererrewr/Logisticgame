@@ -1,0 +1,39 @@
+import assert from 'node:assert/strict';
+import {GAME_DAY_MS, mapClock, nightPolygon} from '../lib/logistics/map-light.ts';
+
+const midnight = Date.UTC(2026, 5, 21);
+const hour = GAME_DAY_MS / 24;
+const world = {day: 1.25, simTime: midnight + 16 * hour, status: 'running', timeScale: 24};
+assert.deepEqual(mapClock(world, 0), {day: 1.25, time: midnight + 6 * hour});
+assert.deepEqual(mapClock(world, hour / 24), {day: 1 + 7 / 24, time: midnight + 7 * hour});
+assert.deepEqual(mapClock({...world, clockDay: 1.5}, 0), {day: 1.5, time: midnight + 12 * hour});
+for (const status of ['paused', 'finished', 'draft', 'stopped']) {
+  assert.deepEqual(mapClock({...world, status}, hour), mapClock(world, 0));
+}
+assert.deepEqual(mapClock({...world, settings: {seasonEnd: 2}}, GAME_DAY_MS), {day: 2, time: midnight + GAME_DAY_MS});
+assert.equal(mapClock({...world, simTime: undefined}, 0).time, Date.UTC(2025, 0, 1, 6));
+
+function shaded(ring, lat, lon) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [aLat, aLon] = ring[i], [bLat, bLon] = ring[j];
+    if ((aLon > lon) !== (bLon > lon) && lat < (bLat - aLat) * (lon - aLon) / (bLon - aLon) + aLat) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
+for (const day of [Date.UTC(2026, 2, 20), midnight, Date.UTC(2026, 11, 21)]) {
+  const utcMidnight = nightPolygon(day);
+  const utcNoon = nightPolygon(day + 12 * hour);
+  assert.equal(shaded(utcMidnight, 0, 0), true);
+  assert.equal(shaded(utcMidnight, 0, 179), false);
+  assert.equal(shaded(utcMidnight, 0, -179), false);
+  assert.equal(shaded(utcNoon, 0, 0), false);
+  assert.equal(shaded(utcNoon, 0, 179), true);
+  assert.equal(shaded(utcNoon, 0, -179), true);
+}
+assert.equal(shaded(nightPolygon(midnight), 80, 0), false);
+assert.equal(shaded(nightPolygon(midnight + 12 * hour), -80, 0), true);
+console.log('PASS map clock: speed, paused states, season end, equinox, solstices and date line.');

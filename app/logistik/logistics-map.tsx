@@ -6,10 +6,11 @@ import {gridBounds,placement,gridOverlaps,type BuildGrid} from '../../lib/logist
 import {tileAt,tileCenter} from '../../lib/geography';
 import {mapBounds} from '../../lib/real-map';
 import {weatherAt,weatherSlot,WEATHER} from '../../lib/logistics/weather';
+import {nightPolygon} from '../../lib/logistics/map-light';
 import {useProjects} from './seasonal-store';
 const htmlText=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]||c));
-export default function LogisticsMap({brand=null,region=null,sites,selected,visible,lines,vehicles,tracks,borrowedTracks,buildMode,trackStart,flyTo,onSelect,onPosition,onGroundClick,day,simEpoch,pendingGrid,layoutKey,previewError,pendingTrack,routeStops,routeEligible,showOwned=false,alwaysVisible=[],onVehicle,highlighted=[],hiddenSiteIds=[],clusters=[],onCluster}:{
- simEpoch?:number;brand?:{primary:string;secondary:string}|null;region?:{rings:number[][][];bounds:[number,number,number,number]}|null;hiddenSiteIds?:string[];highlighted?:string[];clusters?:{id:string;lat:number;lon:number;count:number;kind:string}[];onCluster?:(p:Coords)=>void;onVehicle?:(id:string)=>void;alwaysVisible?:string[];showOwned?:boolean;previewError?:boolean;pendingTrack?:Coords[];routeStops?:string[];routeEligible?:string[];pendingGrid?:BuildGrid|null;layoutKey?:string;day:number;sites:Site[];selected:string;visible:string[];lines:Line[];vehicles:Vehicle[];tracks:Track[];borrowedTracks:Track[];buildMode:string;trackStart:Coords|null;flyTo:{point:Coords;zoom:number;key:number}|null;onSelect:(id:string)=>void;onPosition:(p:Coords,zoom:number)=>void;onGroundClick:(p:Coords)=>void;
+export default function LogisticsMap({brand=null,region=null,sites,selected,visible,lines,vehicles,tracks,borrowedTracks,buildMode,trackStart,flyTo,onSelect,onPosition,onGroundClick,day,simTime,pendingGrid,layoutKey,previewError,pendingTrack,routeStops,routeEligible,showOwned=false,alwaysVisible=[],onVehicle,highlighted=[],hiddenSiteIds=[],clusters=[],onCluster}:{
+ simTime:number;brand?:{primary:string;secondary:string}|null;region?:{rings:number[][][];bounds:[number,number,number,number]}|null;hiddenSiteIds?:string[];highlighted?:string[];clusters?:{id:string;lat:number;lon:number;count:number;kind:string}[];onCluster?:(p:Coords)=>void;onVehicle?:(id:string)=>void;alwaysVisible?:string[];showOwned?:boolean;previewError?:boolean;pendingTrack?:Coords[];routeStops?:string[];routeEligible?:string[];pendingGrid?:BuildGrid|null;layoutKey?:string;day:number;sites:Site[];selected:string;visible:string[];lines:Line[];vehicles:Vehicle[];tracks:Track[];borrowedTracks:Track[];buildMode:string;trackStart:Coords|null;flyTo:{point:Coords;zoom:number;key:number}|null;onSelect:(id:string)=>void;onPosition:(p:Coords,zoom:number)=>void;onGroundClick:(p:Coords)=>void;
 }){
  const [mapReady,setMapReady]=useState(false),[mapEpoch,setMapEpoch]=useState(0);
  const weatherLayer=useRef<any>(null),weatherControl=useRef<any>(null),[showWeather,setShowWeather]=useState(()=>{try{return localStorage.getItem('log-weather')!=='0';}catch{return true;}}),slot=weatherSlot(day);
@@ -35,15 +36,19 @@ export default function LogisticsMap({brand=null,region=null,sites,selected,visi
   for(const p of list){const done=p.status==='done',color=p.kind==='rescue'?'#ef4444':'#d4af37';if(!done)L.circle([p.lat,p.lon],{radius:p.radiusKm*1000,interactive:false,color,weight:1,dashArray:'6 6',fillOpacity:.04}).addTo(g);
    L.marker([p.lat,p.lon],{icon:L.divIcon({className:'log-project-marker',html:'<span>'+(p.kind==='rescue'?'🆘':done?'🏛️':'🏗️')+'</span>',iconSize:[34,34],iconAnchor:[17,17]})}).addTo(g).bindTooltip(htmlText(p.name)+'<br>'+(done?'Fertiggestellt'+(p.top?.length?' · Dank an '+htmlText(p.top.map((t:any)=>t.name).join(', ')):''):'Lieferradius '+p.radiusKm+' km · Details in der Auftragsbörse'),{direction:'top'});}
   projectLayer.current=g;return()=>{g.remove();};},[mapReady,mapEpoch,projects]);
- const [dayNight,setDayNight]=useState(()=>{try{return localStorage.getItem('log-daynight')!=='0';}catch{return true;}}),nightLayer=useRef<any>(null),[nightClock,setNightClock]=useState(()=>Math.floor(Date.now()/300000)),nightStep=Math.floor(day*96);useEffect(()=>{const t=setInterval(()=>setNightClock(Math.floor(Date.now()/300000)),60000);return ()=>clearInterval(t);},[]);
+ const [dayNight,setDayNight]=useState(()=>{try{return localStorage.getItem('log-daynight')!=='0';}catch{return true;}});
+ const nightTime=Math.floor(simTime/300000)*300000;
  useEffect(()=>{const on=()=>{try{setDayNight(localStorage.getItem('log-daynight')!=='0');setShowWeather(localStorage.getItem('log-weather')!=='0');}catch{}};window.addEventListener('log-display-change',on);return()=>window.removeEventListener('log-display-change',on);},[]);
- useEffect(()=>{const L=LRef.current,map=mapRef.current;nightLayer.current?.remove();nightLayer.current=null;if(!mapReady||!L||!map||!dayNight)return;
+ useEffect(()=>{
+  const L=LRef.current,map=mapRef.current;
+  if(!mapReady||!L||!map||!dayNight)return;
   if(!map.getPane('log-night')){const pane=map.createPane('log-night');pane.style.zIndex='340';pane.style.pointerEvents='none';}
-  const rad=Math.PI/180,doy=Math.floor((Date.now()-Date.UTC(new Date().getUTCFullYear(),0,1))/86400000),dec=-23.44*Math.cos(2*Math.PI/365*(doy+10)),hour=(()=>{const n=new Date();return n.getUTCHours()+n.getUTCMinutes()/60;})(),sunLon=-(hour-12)*15,tanD=Math.tan((Math.abs(dec)<.1?.1:dec)*rad);
-  const line:number[][]=[];for(let lon=-180;lon<=180;lon+=2){const lat=Math.atan(-Math.cos((lon-sunLon)*rad)/tanD)/rad;line.push([lat,lon]);}
-  const pole=dec>0?-90:90,ring=[...line,[pole,180],[pole,-180]],group=L.layerGroup().addTo(map);
-  for(const shift of [-360,0,360])L.polygon(ring.map(([a,b])=>[a,b+shift]),{pane:'log-night',interactive:false,stroke:false,fillColor:'#020617',fillOpacity:.32}).addTo(group);
-  nightLayer.current=group;return()=>{group.remove();};},[mapReady,mapEpoch,dayNight,nightStep,simEpoch,nightClock]);const maskLayer=useRef<any>(null);
+  const ring=nightPolygon(nightTime);
+  const layer=L.polygon([-360,0,360].map(shift=>[ring.map(([lat,lon])=>[lat,lon+shift])]),
+   {pane:'log-night',interactive:false,stroke:false,fillColor:'#020617',fillOpacity:.32}).addTo(map);
+  return()=>{layer.remove();};
+ },[mapReady,dayNight,nightTime]);
+ const maskLayer=useRef<any>(null);
  useEffect(()=>{const L=LRef.current,map=mapRef.current;if(!mapReady||!L||!map)return;if(maskLayer.current){maskLayer.current.remove();maskLayer.current=null;}map.setMaxBounds(null);if(!region?.rings?.length)return;if(!map.getPane('log-region'))map.createPane('log-region').style.zIndex='350';const world=[[-89.9,-720],[89.9,-720],[89.9,720],[-89.9,720]];maskLayer.current=L.polygon([world,...region.rings],{pane:'log-region',renderer:L.svg({pane:'log-region'}),fillRule:'evenodd',stroke:false,fillColor:'#4b5563',fillOpacity:.8,interactive:true,bubblingMouseEvents:false}).addTo(map);maskLayer.current.bindTooltip('Außerhalb der Spielregion dieser Welt',{sticky:true});if(region.bounds){const [s,w,n,e]=region.bounds,pad=Math.max(2,(n-s)*.25,(e-w)*.25);map.setMaxBounds([[Math.max(-85,s-pad),w-pad],[Math.min(85,n+pad),e+pad]]);}},[mapReady,region]);const gridLayer=useRef<any>(null),vehicleLayer=useRef<any>(null),hoverLayer=useRef<any>(null);
  const holder=useRef<HTMLDivElement>(null),mapRef=useRef<any>(null),LRef=useRef<any>(null),layers=useRef<any>(null),cb=useRef({onSelect,onPosition,onGroundClick,buildMode,sites,pendingGrid,trackStart});
  cb.current={onSelect,onPosition,onGroundClick,buildMode,sites,pendingGrid,trackStart};

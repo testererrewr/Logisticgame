@@ -1,11 +1,15 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import "./loadstar-pwa.css";
+import { LoadstarPwaRuntime } from "./loadstar-pwa";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://playloadstar.com"),
   title: "Loadstar — Dein weltweites Frachtnetz",
   description: "Loadstar: Online-Logistikspiel mit echten Unternehmen, gemeinsamer Weltzeit, eigenen Speditionen und Allianzen.",
   applicationName: "Loadstar",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "Loadstar", statusBarStyle: "black-translucent" },
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
@@ -29,7 +33,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="de">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">{children}<LoadstarPwaRuntime /></body>
     </html>
   );
 }

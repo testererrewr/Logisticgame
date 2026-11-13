@@ -1,7 +1,7 @@
 'use client';
 import {useState} from 'react';
 import {useSite,DiscordButton} from './site-config-client';
-export function BetaFeedback({worldId,tab}:{worldId:string;tab:string}){const [open,setOpen]=useState(false),[reason,setReason]=useState('Idee'),[text,setText]=useState(''),[msg,setMsg]=useState(''),[busy,setBusy]=useState(false);
+export function BetaFeedback({worldId,tab,open,setOpen}:{worldId:string;tab:string;open:boolean;setOpen:(value:boolean)=>void}){const [reason,setReason]=useState('Idee'),[text,setText]=useState(''),[msg,setMsg]=useState(''),[busy,setBusy]=useState(false);
  const send=async()=>{setBusy(true);setMsg('');try{const context=`Bereich: ${tab}\nSeite: ${location.href}\nBrowser: ${navigator.userAgent}\nFenster: ${innerWidth}×${innerHeight}\nZeit: ${new Date().toISOString()}`;const r=await fetch('/api/logistik/community',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'bug',world:worldId,reason,text,context})}),d=await r.json() as any;if(!r.ok)throw Error(d.error);setText('');setMsg('Danke für dein Feedback! 💚');setTimeout(()=>{setOpen(false);setMsg('');},1800);}catch(e:any){setMsg(e.message);}finally{setBusy(false);}};
  return <>{!open&&<div className="log-feedback-fabs"><DiscordButton className="log-feedback-fab discord" label=""/><button className="log-feedback-fab" onClick={()=>setOpen(true)} aria-label="Feedback geben">💬 Feedback</button></div>}
   {open&&<div className="log-dialog-backdrop" onClick={e=>{if(e.target===e.currentTarget)setOpen(false);}}><section className="log-feedback-dialog" role="dialog" aria-modal="true" aria-label="Beta-Feedback"><header><h2>💬 Beta-Feedback</h2><button aria-label="Schließen" onClick={()=>setOpen(false)}>×</button></header>

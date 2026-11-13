@@ -1,3 +1,7 @@
+/service-worker.js
+  Cache-Control: no-cache
+/manifest.webmanifest
+  Cache-Control: no-cache
 /logistics-vehicles/*
   Cache-Control: public, max-age=604800, stale-while-revalidate=86400
 /logistics-products/*

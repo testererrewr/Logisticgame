@@ -1,0 +1,18 @@
+{
+  "id": "/",
+  "name": "Loadstar – Logistics Tycoon",
+  "short_name": "Loadstar",
+  "description": "Gründe deine Spedition und baue ein weltweites Frachtnetz auf.",
+  "lang": "de",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0c1623",
+  "theme_color": "#101c2a",
+  "categories": ["games", "simulation"],
+  "icons": [
+    {"src": "/pwa/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/pwa/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "/pwa/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

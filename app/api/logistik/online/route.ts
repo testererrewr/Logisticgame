@@ -104,6 +104,7 @@ export async function adjustAdminCompanyCash(actor:User,body:{worldId:string;use
 const settling=new Map<string,Promise<World>>();
 const behind=new Set<string>();
 export function settleWorld(id:string,budgetMs=1500):Promise<World>{{const hs=hostedWorlds();if(hs&&!hs.has(id))return Promise.reject(Error('Diese Welt läuft auf einem anderen Server.'));}const running=settling.get(id);if(running){if(budgetMs>=10000)return running;return readWorld(id).then(w=>{if(!w)throw Error('Diese Welt existiert nicht.');return w;});}const job=settleWorldNow(id,budgetMs).finally(()=>{settling.delete(id);behind.delete(id);});settling.set(id,job);return job;}
+const SETTLE_INTERVAL_MS=4000;
 export function catchUpHours(world:World,now=Date.now()){return Math.max(0,(clockTarget(world,now)-world.day)*24);}
 const catchRate=new Map<string,number>();
 export function catchUpSeconds(world:World){const hours=catchUpHours(world);if(hours<=0)return 0;const rate=(catchRate.get(world.id)||.5)*.7,net=rate-(world.time_scale||1)/3600;return net>0?Math.ceil(hours/net):null;}
@@ -123,7 +124,7 @@ async function settleWorldNow(id:string,budgetMs:number):Promise<World>{
  const settleAt=Date.now();let latest:World|undefined,startDay:number|undefined;
  const measure=(w:World)=>{const seconds=(Date.now()-settleAt)/1000;if(startDay!==undefined&&seconds>.5){const rate=(w.day-startDay)*24/seconds,old=catchRate.get(id);catchRate.set(id,old?old*.6+rate*.4:rate);}};
  for(let attempt=0;attempt<2000;attempt++){
-  const world=await readWorld(id);if(!world)throw Error('Diese Welt existiert nicht.');latest=world;startDay??=world.day;if(settleAt-world.last_tick<4000||!ownsWorld((world as any).settings)||hostedElsewhere((world as any).host_url))return world;
+  const world=await readWorld(id);if(!world)throw Error('Diese Welt existiert nicht.');latest=world;startDay??=world.day;if(settleAt-world.last_tick<SETTLE_INTERVAL_MS||!ownsWorld((world as any).settings)||hostedElsewhere((world as any).host_url))return world;
   if(attempt>0&&Date.now()-settleAt>budgetMs){measure(world);behind.add(id);return world;}
   const seasonEnd=seasonEndDay(parseSettings(world.settings));
   const target=Math.min(clockTarget(world,settleAt),seasonEnd??Infinity);if(target<=world.day+1e-8)return world;
@@ -197,7 +198,10 @@ async function snapshot(u:User,worldId:string,geo=''){
  const rules=await readPartnerRules();const state=applyStateRules(normalizeFreightState(await decodeCompany(row.state)),rules);state.borrowedTracks=await borrowedTracks(worldId,u.id);state.sites.push(...await allianceSitesFor(worldId,u.id,state));try{state.sites.push(...await supplySitesFor(worldId,u.id,state));}catch{}state.maintenanceOff=!parseSettings(world.settings).maintenance;state.fuelOff=!parseSettings(world.settings).fuel;state.driversOff=!parseSettings(world.settings).drivers;
  const geometrySig=geometrySignature(state),geometryOmitted=!!geo&&geo===geometrySig;if(geometryOmitted){delete state.roadRoutes;for(const l of state.lines)delete l.legs;}
  try{await ensureStoredNews(world.day);}catch{}
- return {news:newsForClient(world.day),geometrySig,geometryOmitted,state,partnerRules:rules,market:{...newMarket(world.day),...JSON.parse(world.market||'{}')},companyName:row.name||state.companyName||u.name,revision:row.revision,user:u.name,userId:u.id,role:u.role,serverNow:Date.now(),world:{catchUpHours:Math.round(catchUpHours(world)*10)/10,catchUpSeconds:catchUpSeconds(world),revision:world.revision,id:world.id,name:world.name,day:world.day,timeScale:world.time_scale,simTime:world.created+(world.day-1)*86400000,status:world.status,tickMs:worldTickMs(world),settings:settingsSummary(parseSettings(world.settings))},companies:results[2].results,offers:results[3].results.map((raw:unknown)=>{const o=raw as Offer;return ({...o,quantity:Number(o.quantity)*(o.quantity_unit==='EH'?1:10)});}),permissions:results[4].results};
+ const serverNow=Date.now();
+ // Bridge the normal interval between simulation writes without jumping ahead during catch-up.
+ const clockDay=clockTarget(world,Math.min(serverNow,world.last_tick+SETTLE_INTERVAL_MS));
+ return {news:newsForClient(world.day),geometrySig,geometryOmitted,state,partnerRules:rules,market:{...newMarket(world.day),...JSON.parse(world.market||'{}')},companyName:row.name||state.companyName||u.name,revision:row.revision,user:u.name,userId:u.id,role:u.role,serverNow,world:{catchUpHours:Math.round(catchUpHours(world,serverNow)*10)/10,catchUpSeconds:catchUpSeconds(world),revision:world.revision,id:world.id,name:world.name,day:world.day,clockDay,timeScale:world.time_scale,simTime:world.created+(world.day-1)*86400000,status:world.status,tickMs:worldTickMs(world),settings:settingsSummary(parseSettings(world.settings))},companies:results[2].results,offers:results[3].results.map((raw:unknown)=>{const o=raw as Offer;return ({...o,quantity:Number(o.quantity)*(o.quantity_unit==='EH'?1:10)});}),permissions:results[4].results};
 }
 function validPoint(p:unknown):p is Coords{return Array.isArray(p)&&p.length===2&&p.every(x=>typeof x==='number'&&Number.isFinite(x))&&Math.abs(p[0])<=85&&Math.abs(p[1])<=180;}
 async function verifySites(command:OnlineAction):Promise<Site[]|undefined>{
