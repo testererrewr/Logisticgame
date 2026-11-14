@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {GAME_DAY_MS, mapClock, nightPolygon} from '../lib/logistics/map-light.ts';
+import {GAME_DAY_MS, mapClock, nightPolygon, nightWorldCopies} from '../lib/logistics/map-light.ts';
 
 const midnight = Date.UTC(2026, 5, 21);
 const hour = GAME_DAY_MS / 24;
@@ -36,4 +36,14 @@ for (const day of [Date.UTC(2026, 2, 20), midnight, Date.UTC(2026, 11, 21)]) {
 }
 assert.equal(shaded(nightPolygon(midnight), 80, 0), false);
 assert.equal(shaded(nightPolygon(midnight + 12 * hour), -80, 0), true);
+for (const [lat, lon] of [[48.2,16.4],[52.5,13.4],[51.5,-0.1]]) {
+  const winter = Date.UTC(2026, 11, 21);
+  assert.equal(shaded(nightPolygon(winter), lat, lon), true);
+  assert.equal(shaded(nightPolygon(winter + 12 * hour), lat, lon), false);
+}
+const equinox = Date.UTC(2026, 2, 20);
+assert.equal(shaded(nightPolygon(equinox + 6 * hour), 35.7, 139.7), false);
+assert.equal(shaded(nightPolygon(equinox + 18 * hour), 35.7, 139.7), true);
+assert.deepEqual(nightWorldCopies(-850, 850), [-720, -360, 0, 360, 720]);
+assert.deepEqual(nightWorldCopies(170, 190), [0, 360]);
 console.log('PASS map clock: speed, paused states, season end, equinox, solstices and date line.');

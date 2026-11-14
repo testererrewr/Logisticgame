@@ -6,7 +6,7 @@ import {gridBounds,placement,gridOverlaps,type BuildGrid} from '../../lib/logist
 import {tileAt,tileCenter} from '../../lib/geography';
 import {mapBounds} from '../../lib/real-map';
 import {weatherAt,weatherSlot,WEATHER} from '../../lib/logistics/weather';
-import {nightPolygon} from '../../lib/logistics/map-light';
+import {nightPolygon,nightWorldCopies} from '../../lib/logistics/map-light';
 import {useProjects} from './seasonal-store';
 const htmlText=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]||c));
 export default function LogisticsMap({brand=null,region=null,sites,selected,visible,lines,vehicles,tracks,borrowedTracks,buildMode,trackStart,flyTo,onSelect,onPosition,onGroundClick,day,simTime,pendingGrid,layoutKey,previewError,pendingTrack,routeStops,routeEligible,showOwned=false,alwaysVisible=[],onVehicle,highlighted=[],hiddenSiteIds=[],clusters=[],onCluster}:{
@@ -37,16 +37,26 @@ export default function LogisticsMap({brand=null,region=null,sites,selected,visi
    L.marker([p.lat,p.lon],{icon:L.divIcon({className:'log-project-marker',html:'<span>'+(p.kind==='rescue'?'🆘':done?'🏛️':'🏗️')+'</span>',iconSize:[34,34],iconAnchor:[17,17]})}).addTo(g).bindTooltip(htmlText(p.name)+'<br>'+(done?'Fertiggestellt'+(p.top?.length?' · Dank an '+htmlText(p.top.map((t:any)=>t.name).join(', ')):''):'Lieferradius '+p.radiusKm+' km · Details in der Auftragsbörse'),{direction:'top'});}
   projectLayer.current=g;return()=>{g.remove();};},[mapReady,mapEpoch,projects]);
  const [dayNight,setDayNight]=useState(()=>{try{return localStorage.getItem('log-daynight')!=='0';}catch{return true;}});
- const nightTime=Math.floor(simTime/300000)*300000;
+ const nightTime=Math.floor(simTime/60000)*60000;
  useEffect(()=>{const on=()=>{try{setDayNight(localStorage.getItem('log-daynight')!=='0');setShowWeather(localStorage.getItem('log-weather')!=='0');}catch{}};window.addEventListener('log-display-change',on);return()=>window.removeEventListener('log-display-change',on);},[]);
  useEffect(()=>{
   const L=LRef.current,map=mapRef.current;
   if(!mapReady||!L||!map||!dayNight)return;
   if(!map.getPane('log-night')){const pane=map.createPane('log-night');pane.style.zIndex='340';pane.style.pointerEvents='none';}
   const ring=nightPolygon(nightTime);
-  const layer=L.polygon([-360,0,360].map(shift=>[ring.map(([lat,lon])=>[lat,lon+shift])]),
-   {pane:'log-night',interactive:false,stroke:false,fillColor:'#020617',fillOpacity:.32}).addTo(map);
-  return()=>{layer.remove();};
+  const layer=L.polygon([],{pane:'log-night',interactive:false,stroke:false,fillColor:'#020617',fillOpacity:.32}).addTo(map);
+  let rendered='';
+  const draw=()=>{
+   const bounds=map.getBounds();
+   const copies=nightWorldCopies(bounds.getWest()-45,bounds.getEast()+45);
+   const key=copies.join(',');
+   if(key===rendered)return;
+   rendered=key;
+   layer.setLatLngs(copies.map(shift=>[ring.map(([lat,lon])=>[lat,lon+shift])]));
+  };
+  draw();
+  map.on('moveend resize',draw);
+  return()=>{map.off('moveend resize',draw);layer.remove();};
  },[mapReady,dayNight,nightTime]);
  const maskLayer=useRef<any>(null);
  useEffect(()=>{const L=LRef.current,map=mapRef.current;if(!mapReady||!L||!map)return;if(maskLayer.current){maskLayer.current.remove();maskLayer.current=null;}map.setMaxBounds(null);if(!region?.rings?.length)return;if(!map.getPane('log-region'))map.createPane('log-region').style.zIndex='350';const world=[[-89.9,-720],[89.9,-720],[89.9,720],[-89.9,720]];maskLayer.current=L.polygon([world,...region.rings],{pane:'log-region',renderer:L.svg({pane:'log-region'}),fillRule:'evenodd',stroke:false,fillColor:'#4b5563',fillOpacity:.8,interactive:true,bubblingMouseEvents:false}).addTo(map);maskLayer.current.bindTooltip('Außerhalb der Spielregion dieser Welt',{sticky:true});if(region.bounds){const [s,w,n,e]=region.bounds,pad=Math.max(2,(n-s)*.25,(e-w)*.25);map.setMaxBounds([[Math.max(-85,s-pad),w-pad],[Math.min(85,n+pad),e+pad]]);}},[mapReady,region]);const gridLayer=useRef<any>(null),vehicleLayer=useRef<any>(null),hoverLayer=useRef<any>(null);
