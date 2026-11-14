@@ -606,7 +606,7 @@ html:has(.log-lobby)::-webkit-scrollbar,body:has(.log-lobby)::-webkit-scrollbar,
 @keyframes log-orb{to{transform:translate3d(6vmax,4vmax,0) scale(1.15)}}
 .log-lobby>:is(.log-lobby-nav,.log-lobby-grid,.log-worlds-page,.log-lobby-subpage,.log-lobby-footer,.log-invite,.log-page-hero,.log-site-content){position:relative;z-index:1}.log-lobby>.log-cookie-notice,.log-lobby .log-dialog-backdrop{z-index:50}
 .log-anim{animation:log-rise .6s cubic-bezier(.2,.8,.2,1) both}.log-lobby-intro.log-anim{animation-delay:.05s}.log-lobby-card.log-anim{animation-delay:.15s}
-.log-lobby-brand{display:inline-flex;align-items:center;gap:.65rem;font-size:22px;font-weight:900;letter-spacing:3px;color:#fff;text-decoration:none}.log-lobby-brand i{color:#35d5b6;font-style:normal}.log-logo-mark{flex:none;filter:drop-shadow(0 6px 16px #35d5b644);transition:transform .3s}.log-lobby-brand:hover .log-logo-mark{transform:rotate(-8deg) scale(1.06)}
+.log-lobby-brand{display:inline-flex;align-items:center;gap:.65rem;font-size:22px;font-weight:900;letter-spacing:3px;color:#fff;text-decoration:none}.log-lobby-brand i{color:#35d5b6;font-style:normal}.log-logo-mark{display:block;flex:none;object-fit:contain}
 .log-site-links a{position:relative;padding:.3rem 0;transition:color .2s}.log-site-links a:not(.log-discord-btn)::after{content:'';position:absolute;left:0;right:0;bottom:-2px;height:2px;border-radius:2px;background:#35d5b6;transform:scaleX(0);transition:transform .25s}.log-site-links a:not(.log-discord-btn):hover::after,.log-site-links a.on::after{transform:scaleX(1)}.log-site-links a.on{color:#fff!important}
 .log-nav-user{display:flex;align-items:center;gap:1rem;font-size:13px}.log-nav-user span{color:#cfdbe5;font-weight:700}.log-nav-user button,.log-nav-user a{background:none;border:0;color:#44d8ba;cursor:pointer;font-size:13px;padding:.3rem 0;text-decoration:none}
 .log-lobby-card{transition:box-shadow .3s,border-color .3s;box-shadow:0 20px 50px #0005}.log-lobby-card:hover{border-color:#35d5b655}
@@ -626,3 +626,65 @@ html:has(.log-lobby)::-webkit-scrollbar,body:has(.log-lobby)::-webkit-scrollbar,
 .log-world-grid .log-world-summary{display:grid!important;grid-template-columns:auto 1fr;gap:.35rem .8rem;margin:.8rem 0 0}.log-world-grid .log-world-summary>div{display:contents}.log-world-grid .log-world-summary dt{color:#8fa4b5;font-size:12px}.log-world-grid .log-world-summary dd{margin:0;font-size:13px;font-weight:700;color:#e9f0f5}
 .log-lobby-subpage{max-width:60rem;margin:0 auto;padding-bottom:3rem}.log-lobby-subpage .log-page-hero{padding-top:2.4rem}
 a.log-lang-switch{text-decoration:none;display:inline-block}
+
+.log-game .log-brand-icon { background: transparent; }
+.log-lobby .log-play-start { margin-block: 32px 24px; gap: 26px; }
+.log-play-start .log-lobby-intro h1 { font-size: clamp(30px, 4vw, 48px); line-height: 1.12; margin: 0 0 8px; }
+.log-play-start .log-lobby-intro > p { font-size: 16px; line-height: 1.5; margin: 0; }
+.log-play-start .log-lobby-card { scroll-margin-top: 16px; }
+.log-play-start .log-lobby-card h2 { margin: 0 0 12px; }
+.log-play-start .log-lobby-card form { margin-top: 0; }
+.log-home-world-list article {
+ display: flex;
+ align-items: center;
+ justify-content: space-between;
+ flex-wrap: wrap;
+ gap: 10px 18px;
+ padding: 12px 0;
+ border-bottom: 1px solid #2b3b4b;
+}
+@media (max-width: 760px) {
+ .log-play-start .log-lobby-card { padding: 16px; }
+ .log-home-world-list button { min-height: 44px; }
+}
+
+@font-face {
+ font-family: "Barlow Condensed";
+ src: url("/fonts/barlow-condensed-700.woff2") format("woff2");
+ font-weight: 700;
+ font-style: normal;
+ font-display: swap;
+}
+.log-lobby .log-lobby-brand,
+.log-game .log-topbar .log-brand b {
+ font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+ font-weight: 700;
+ letter-spacing: .1em;
+}
+.log-lobby .log-lobby-brand { font-size: 29px; }
+.log-game .log-topbar .log-brand b { font-size: 25px; line-height: 1; }
+.log-play-world-link { display: inline-flex; align-items: center; min-height: 44px; }
+@media (max-width: 900px) {
+ .log-game .log-topbar .log-brand b { font-size: clamp(17px, 5vw, 23px); }
+}
+.log-vehicle-target { display: grid; place-items: center; }
+.log-vehicle-target:focus-visible { outline: 2px solid #163b57; outline-offset: 1px; border-radius: 50%; }
+.log-vehicle-chooser button { min-height: 44px; }
+.log-vehicle-chooser > strong { display: block; padding-right: 24px; }
+.log-leaflet .log-vehicle-popup .leaflet-popup-close-button { width: 44px; height: 44px; line-height: 44px; font-size: 22px; }
+.log-vehicle-marker { position: relative; }
+.log-vehicle-stack {
+ position: absolute;
+ left: 50%;
+ bottom: calc(100% - 1px);
+ transform: translateX(-50%);
+ min-width: 17px;
+ padding: 2px 4px;
+ border: 1px solid #6edcc4;
+ border-radius: 8px;
+ background: #101c2a;
+ color: #fff;
+ font: 700 11px/1 system-ui, sans-serif;
+ text-align: center;
+ pointer-events: none;
+}

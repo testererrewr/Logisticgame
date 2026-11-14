@@ -28,7 +28,7 @@ const radians = Math.PI / 180;
 const latitudeLimit = 85.05112878;
 const wrapLongitude = (lon: number) => ((lon + 180) % 360 + 360) % 360 - 180;
 
-export function nightPolygon(time: number): [number, number][] {
+export function solarPosition(time: number) {
   const date = new Date(time);
   const year = date.getUTCFullYear();
   const yearStart = Date.UTC(year, 0, 1);
@@ -42,13 +42,34 @@ export function nightPolygon(time: number): [number, number][] {
     - 0.002697 * Math.cos(3 * gamma) + 0.00148 * Math.sin(3 * gamma);
   const utcMinutes = ((time % GAME_DAY_MS + GAME_DAY_MS) % GAME_DAY_MS) / 60_000;
   const sunLongitude = (720 - utcMinutes - equationOfTime) / 4;
+  return { declination, sunLongitude };
+}
+
+export function isNightAt(time: number, lat: number, lon: number) {
+  const { declination, sunLongitude } = solarPosition(time);
+  const latitude = lat * radians;
+  const hourAngle = wrapLongitude(lon - sunLongitude) * radians;
+  return Math.sin(latitude) * Math.sin(declination)
+    + Math.cos(latitude) * Math.cos(declination) * Math.cos(hourAngle) < 0;
+}
+
+export function mapLightMinute(time: number) {
+  return Math.floor(time / 60_000 + 1e-8) * 60_000;
+}
+
+export function nightPolygon(time: number): [number, number][] {
+  const { declination, sunLongitude } = solarPosition(time);
   const pole = declination >= 0 ? -latitudeLimit : latitudeLimit;
   const tangent = Math.tan(declination) || Number.EPSILON;
   const longitudes = Array.from({ length: 181 }, (_, i) => -180 + 2 * i);
   // Add samples near the equator crossings, where the boundary steepens at equinox.
-  for (const crossing of [sunLongitude - 90, sunLongitude + 90]) {
-    for (const offset of [-0.5, -0.05, 0, 0.05, 0.5]) {
-      longitudes.push(wrapLongitude(crossing + offset));
+  // Sample by latitude as well as longitude. Near the equinox, the whole
+  // north/south transition can fit between two longitude samples.
+  for (const latitude of Array.from({length:171}, (_, index) => index - 85).concat(-latitudeLimit, latitudeLimit)) {
+    const cosine = -Math.tan(latitude * radians) * tangent;
+    if (Math.abs(cosine) <= 1) {
+      const angle = Math.acos(cosine) / radians;
+      longitudes.push(wrapLongitude(sunLongitude - angle), wrapLongitude(sunLongitude + angle));
     }
   }
   const boundary = longitudes.sort((a, b) => a - b).map((lon): [number, number] => {

@@ -1,62 +1,6 @@
 'use client';
 
-import {Download} from 'lucide-react';
 import {useEffect, useState} from 'react';
-
-interface InstallPrompt extends Event {
-  prompt(): Promise<{outcome: 'accepted' | 'dismissed'}>;
-}
-
-export function InstallLoadstar() {
-  const [prompt, setPrompt] = useState<InstallPrompt | null>(null);
-  const [android, setAndroid] = useState(false);
-  const [installed, setInstalled] = useState(false);
-  const [help, setHelp] = useState(false);
-
-  useEffect(() => {
-    const standalone = matchMedia('(display-mode: standalone)');
-    const update = () => setInstalled(standalone.matches);
-    const onPrompt = (event: Event) => {
-      event.preventDefault();
-      setPrompt(event as InstallPrompt);
-    };
-    const onInstalled = () => {setInstalled(true);setPrompt(null);};
-    update();
-    setAndroid(/Android/i.test(navigator.userAgent));
-    standalone.addEventListener('change', update);
-    window.addEventListener('beforeinstallprompt', onPrompt);
-    window.addEventListener('appinstalled', onInstalled);
-    return () => {
-      standalone.removeEventListener('change', update);
-      window.removeEventListener('beforeinstallprompt', onPrompt);
-      window.removeEventListener('appinstalled', onInstalled);
-    };
-  }, []);
-
-  if (installed || (!prompt && !android)) return null;
-
-  async function install() {
-    if (!prompt) {
-      setHelp(value => !value);
-      return;
-    }
-    const available = prompt;
-    setPrompt(null);
-    try {
-      const choice = await available.prompt();
-      if (choice.outcome === 'accepted') setInstalled(true);
-    } catch {
-      setHelp(true);
-    }
-  }
-
-  return <div className="loadstar-install">
-    <button type="button" className="log-secondary" onClick={() => void install()} aria-expanded={prompt ? undefined : help}>
-      <Download size={18} aria-hidden="true"/> Loadstar installieren
-    </button>
-    {help && <p role="status">Öffne in Chrome das Menü ⋮ und wähle „App installieren“ oder „Zum Startbildschirm hinzufügen“.</p>}
-  </div>;
-}
 
 export function LoadstarPwaRuntime() {
   const [newRelease, setNewRelease] = useState(false);

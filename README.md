@@ -1,5 +1,14 @@
 # Weltverbund Logistik
 
+## Update 69
+
+Dieses vollständige Quellcodepaket enthält auch die Änderungen aus Update 68 und kann direkt auf Update 64 eingespielt werden. Es enthält keine Sicherung der Live-Spielstände.
+
+- Neues Loadstar-Artwork mit einem gemalten Frachtcontainer und einem Nordstern.
+- Übereinanderliegende Fahrzeuge zeigen ihre Anzahl einmal über dem obersten Marker. Eine Auswahl öffnet jedes Fahrzeug im Stapel.
+- Fahrzeuge lassen sich bis zur Weltübersicht mit einer 44 × 44 Pixel großen Trefferfläche anklicken oder antippen. Überlappende Trefferflächen wählen das dem Zeiger nächste Fahrzeug; Standortmarker verdecken die Fahrzeuge nicht.
+- Die Auftragssuche gleicht Akzente und bekannte fremdsprachige Ortsnamen ab, etwa Emöd / Emőd und Wien / Vienna. Ortsvorschläge werden nach der Suche begrenzt. Es werden nur vorhandene Aufträge gefunden.
+
 **Eigener Server:** Installation auf einem Linux-VPS mit Caddy und GitHub-Updates → siehe [VPS-INSTALLATION.md](VPS-INSTALLATION.md).
 
 ---
@@ -90,7 +99,7 @@ Noch kein E-Mail-Versand oder Passwort-Reset. Diese erste Version wurde lokal fu
 
 ## Loadstar auf dem Handy installieren
 
-- **Android:** Die Spielseite über HTTPS in Chrome öffnen. Auf der Startseite **Loadstar installieren** antippen oder im Chrome-Menü **App installieren** wählen.
+- **Android:** Die Spielseite über HTTPS in Chrome öffnen. Im Chrome-Menü **App installieren** wählen, sofern Chrome die Option anbietet.
 - **iPhone:** Die Spielseite in Safari öffnen und über **Teilen → Zum Home-Bildschirm → Als Web-App öffnen** hinzufügen.
 
 Die installierte Web-App benutzt dasselbe Konto und dieselben Welten wie der Browser. Eine Internetverbindung ist zum Spielen erforderlich. Ein neuer Stand auf `main` wird vom vorhandenen GitHub-Workflow ausgerollt, sofern die VPS-Zugangsdaten in GitHub eingerichtet sind. Beim nächsten Laden öffnet die App die vom Server bereitgestellte Version. Wenn das Spiel noch geöffnet ist, erscheint nach der Versionsprüfung **Neue Version verfügbar**. Über **Neu laden** kann man wechseln, sobald der aktuelle Entwurf abgeschlossen ist.

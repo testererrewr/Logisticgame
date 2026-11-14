@@ -11,8 +11,8 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, title: "Loadstar", statusBarStyle: "black-translucent" },
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
+    icon: "/loadstar-emblem.png",
+    shortcut: "/loadstar-emblem.png",
     apple: "/apple-touch-icon.png",
   },
   openGraph: {title: "Loadstar", description: "Baue dein weltweites Frachtnetz – mit echten Unternehmen auf der echten Weltkarte.", url: "https://playloadstar.com", siteName: "Loadstar", images: ["/og-image.png"], type: "website"},

@@ -239,6 +239,16 @@ const lobbyMine=new Map<string,{at:number;map:Map<string,any>}>();
 const slow=(kind:string,t0:number,ctx:Record<string,unknown>)=>{const ms=Date.now()-t0;if(ms>6000)void logError('perf:'+kind,new Error(`Anfrage dauerte ${(ms/1000).toFixed(1)} s`),ctx,'warn');};
 function viewAsTarget(req:Request,u:User,world:string){if(!['owner','admin'].includes(u.role))return null;const c=(req.headers.get('cookie')||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('lgx_as='))?.slice(7);if(!c)return null;const [w,id]=decodeURIComponent(c).split(':');return w===world&&/^[\w-]{8,80}$/.test(id||'')?id:null;}
 export async function GET(req:NextRequest){const ctx:Record<string,unknown>={},t0=Date.now();try{
+ if(req.nextUrl.searchParams.get('lobby')==='public'&&!req.nextUrl.searchParams.has('world')){
+  await ensureWorldSettingsColumn();
+  const {results}=await db().prepare("SELECT id,name,status,settings FROM logistics_worlds WHERE status='running' ORDER BY created DESC LIMIT 100").all<Pick<World,'id'|'name'|'status'|'settings'>>();
+  const worlds=results.flatMap(row=>{
+   const settings=parseSettings(row.settings);
+   if(settings.private||isTestWorld(row.settings))return [];
+   return [{id:row.id,name:row.name,status:row.status}];
+  });
+  return reply({worlds});
+ }
  const u=await currentUser(req);if(!u||u.status!=='active')return reply({error:'Bitte anmelden.'},401);ctx.user=u.id;
  const id=req.nextUrl.searchParams.get('world');ctx.world=id||undefined;
  if(!id){

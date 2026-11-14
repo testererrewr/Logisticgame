@@ -1,3 +1,4 @@
+import {matchingOrderCities} from '../../../../lib/logistics/order-city';
 import {logError} from '../../../../lib/logistics/error-log';
 import {kmBetween,GOODS} from '../../../../lib/logistics/engine';
 import {worldSettings} from '../../../../lib/logistics/world-region-server';
@@ -25,13 +26,55 @@ export async function GET(req:NextRequest){try{
  if(siteId){where.push('o.source_id=?');args.push(siteId);}
  const regionAllowed=allowedCountries(await worldSettings(worldId));{const allowed=regionAllowed;if(allowed){const list=JSON.stringify([...allowed]);where.push('o.source_country IN (SELECT value FROM json_each(?))','o.destination_country IN (SELECT value FROM json_each(?))');args.push(list,list);}}
  if(params.get('rush')==='1')where.push('o.rush=1');if(params.get('special')==='1')where.push('o.special IS NOT NULL');const goodFilter=text('good');if(goodFilter&&goodFilter!=='all'){if(goodFilter==='containers'){where.push("o.good='containers'");}else if(goodFilter==='goods'){where.push("o.good<>'containers'");}else if(goodFilter.startsWith('type:')){const ids=GOODS.filter(g=>g.type===goodFilter.slice(5)&&g.id!=='containers').map(g=>g.id);where.push('o.good IN (SELECT value FROM json_each(?))');args.push(JSON.stringify(ids));}else{where.push('o.good=?');args.push(goodFilter);}}
- if(q){where.push('(a.name LIKE ? OR b.name LIKE ? OR o.source_city LIKE ? OR o.destination_city LIKE ? OR o.id LIKE ?)');args.push(...Array(5).fill('%'+q+'%'));}
- const radiusKm=number('radiusKm',0,5000);let center:{lat:number;lon:number}|null=null;
- const nearLat=Number(params.get('nearLat')),nearLon=Number(params.get('nearLon')),near=Number.isFinite(nearLat)&&Number.isFinite(nearLon)&&params.get('nearLat')!==null&&Math.abs(nearLat)<=90&&Math.abs(nearLon)<=180;
- if(radiusKm>0&&(sourceCity||near)){const c=near?{lat:nearLat,lon:nearLon,n:1}:await env.DB!.prepare("SELECT avg(a.lat) AS lat,avg(a.lon) AS lon,count(*) AS n FROM logistics_container_offers o JOIN logistics_partner_registry a ON a.id=o.source_id WHERE o.world_id=? AND o.day<=? AND o.day>? AND o.source_city LIKE ? COLLATE NOCASE").bind(worldId,world.day,world.day-ORDER_PERIOD_DAYS,'%'+sourceCity+'%').first<{lat:number;lon:number;n:number}>();if(c?.n){center={lat:c.lat,lon:c.lon};const dLat=radiusKm/111,dLon=radiusKm/(111*Math.max(.05,Math.cos(c.lat*Math.PI/180))),k=Math.cos(c.lat*Math.PI/180);where.push('a.lat BETWEEN ? AND ?','a.lon BETWEEN ? AND ?','((a.lat-?)*111)*((a.lat-?)*111)+((a.lon-?)*111*?)*((a.lon-?)*111*?)<=?');args.push(c.lat-dLat,c.lat+dLat,c.lon-dLon,c.lon+dLon,c.lat,c.lat,c.lon,k,c.lon,k,radiusKm*radiusKm);}}
- const destRadiusKm=number('destRadiusKm',0,5000);let destCenter:{lat:number;lon:number}|null=null;
- if(destRadiusKm>0&&destinationCity){const c=await env.DB!.prepare("SELECT avg(b.lat) AS lat,avg(b.lon) AS lon,count(*) AS n FROM logistics_container_offers o JOIN logistics_partner_registry b ON b.id=o.destination_id WHERE o.world_id=? AND o.day<=? AND o.day>? AND o.destination_city LIKE ? COLLATE NOCASE").bind(worldId,world.day,world.day-ORDER_PERIOD_DAYS,'%'+destinationCity+'%').first<{lat:number;lon:number;n:number}>();if(c?.n){destCenter={lat:c.lat,lon:c.lon};const dLat=destRadiusKm/111,dLon=destRadiusKm/(111*Math.max(.05,Math.cos(c.lat*Math.PI/180))),k=Math.cos(c.lat*Math.PI/180);where.push('b.lat BETWEEN ? AND ?','b.lon BETWEEN ? AND ?','((b.lat-?)*111)*((b.lat-?)*111)+((b.lon-?)*111*?)*((b.lon-?)*111*?)<=?');args.push(c.lat-dLat,c.lat+dLat,c.lon-dLon,c.lon+dLon,c.lat,c.lat,c.lon,k,c.lon,k,destRadiusKm*destRadiusKm);}}
- for(const [column,value,partial]of [['source_country',sourceCountry,false],['destination_country',destinationCountry,false],['source_city',center?'':sourceCity,true],['destination_city',destCenter?'':destinationCity,true]] as const)if(value){where.push(`o.${column} ${partial?'LIKE':'='} ? COLLATE NOCASE`);args.push(partial?'%'+value+'%':value);}
+ const sides=['source','destination'] as const;
+ const cities=(side:typeof sides[number],country:string)=>env.DB!.prepare(
+  `SELECT DISTINCT ${side}_city AS name FROM logistics_container_offers
+   WHERE world_id=? AND ((day<=? AND day>? AND status='open') OR (?=1 AND status='accepted' AND deadline>=? AND source_id=?))
+   AND ${side}_city<>'' AND (?='' OR ${side}_country=?) ORDER BY name`
+ ).bind(worldId,world.day,world.day-ORDER_PERIOD_DAYS,siteId?1:0,world.day,siteId,country,country);
+ const needsCities=!siteId||!!q||!!sourceCity||!!destinationCity;
+ const cityLists=needsCities?await env.DB!.batch<{name:string}>([
+  cities('source',sourceCountry),cities('destination',destinationCountry),
+ ]):[];
+ const sourceNames=cityLists[0]?.results.map(row=>row.name)||[];
+ const destinationNames=cityLists[1]?.results.map(row=>row.name)||[];
+ const sourceMatches=matchingOrderCities(sourceNames,sourceCity);
+ const destinationMatches=matchingOrderCities(destinationNames,destinationCity);
+ if(q){
+  where.push('(a.name LIKE ? OR b.name LIKE ? OR o.source_city IN (SELECT value FROM json_each(?)) OR o.destination_city IN (SELECT value FROM json_each(?)) OR o.id LIKE ?)');
+  args.push('%'+q+'%','%'+q+'%',JSON.stringify(matchingOrderCities(sourceNames,q)),JSON.stringify(matchingOrderCities(destinationNames,q)),'%'+q+'%');
+ }
+ const nearLat=Number(params.get('nearLat')),nearLon=Number(params.get('nearLon'));
+ const near=params.has('nearLat')&&params.has('nearLon')&&Number.isFinite(nearLat)&&Number.isFinite(nearLon)&&Math.abs(nearLat)<=90&&Math.abs(nearLon)<=180;
+ async function cityCenter(side:typeof sides[number],country:string,matches:string[]){
+  if(!matches.length)return null;
+  // Prefer the best exact (including accent-insensitive) match. Averaging
+  // places which merely share a prefix can put the radius between cities.
+  const result=await env.DB!.prepare(`SELECT avg(p.lat) AS lat,avg(p.lon) AS lon FROM logistics_container_offers o
+   JOIN logistics_partner_registry p ON p.id=o.${side}_id
+   WHERE o.world_id=? AND o.day<=? AND o.day>? AND o.status='open'
+   AND o.${side}_city=? AND (?='' OR o.${side}_country=?)`).bind(worldId,world.day,world.day-ORDER_PERIOD_DAYS,matches[0],country,country).first<{lat:number|null;lon:number|null}>();
+  return result?.lat!=null&&result.lon!=null?{lat:result.lat,lon:result.lon}:null;
+ }
+ function radiusFilter(alias:'a'|'b',center:{lat:number;lon:number},radius:number){
+  const {lat,lon}=center,k=Math.max(.05,Math.cos(lat*Math.PI/180)),dLat=radius/111,dLon=dLat/k;
+  where.push(`${alias}.lat BETWEEN ? AND ?`,`${alias}.lon BETWEEN ? AND ?`,
+   `((${alias}.lat-?)*111)*((${alias}.lat-?)*111)+((${alias}.lon-?)*111*?)*((${alias}.lon-?)*111*?)<=?`);
+  args.push(lat-dLat,lat+dLat,lon-dLon,lon+dLon,lat,lat,lon,k,lon,k,radius*radius);
+ }
+ const radiusKm=number('radiusKm',0,5000),destRadiusKm=number('destRadiusKm',0,5000);
+ const [center,destCenter]=await Promise.all([
+  radiusKm>0?(near?{lat:nearLat,lon:nearLon}:cityCenter('source',sourceCountry,sourceMatches)):null,
+  destRadiusKm>0?cityCenter('destination',destinationCountry,destinationMatches):null,
+ ]);
+ if(center)radiusFilter('a',center,radiusKm);
+ if(destCenter)radiusFilter('b',destCenter,destRadiusKm);
+ for(const [column,value] of [['source_country',sourceCountry],['destination_country',destinationCountry]] as const){
+  if(value){where.push(`o.${column}=? COLLATE NOCASE`);args.push(value);}
+ }
+ for(const [column,value,matches] of [['source_city',center?'':sourceCity,sourceMatches],['destination_city',destCenter?'':destinationCity,destinationMatches]] as const){
+  if(value){where.push(`o.${column} IN (SELECT value FROM json_each(?))`);args.push(JSON.stringify(matches));}
+ }
  const distance="CASE WHEN o.distance_km>0 THEN o.distance_km ELSE MAX(0,(o.fee-18)/.09) END";
  where.push(`${distance}>=?`,`${distance}<=?`,'o.quantity>=?','o.quantity<=?','o.deadline-?>=?','o.deadline-?<=?','o.quantity*o.fee>=?',"NOT EXISTS(SELECT 1 FROM logistics_partner_rules pr WHERE pr.id IN (o.source_id,o.destination_id) AND json_extract(pr.payload,'$.hidden')=1)");args.push(minKm,maxKm,minQty,maxQty,world.day,minDays,world.day,maxDays,minReward);
  const sorts:Record<string,string>={distanceAsc:distance+' ASC,o.quantity DESC',distanceDesc:distance+' DESC',reward:'o.fee*o.quantity DESC',rewardPerEh:'o.fee DESC',quantity:'o.quantity DESC',deadline:'o.deadline ASC'},sort=sorts[params.get('sort')||'distanceAsc']||sorts.distanceAsc;
@@ -41,9 +84,11 @@ export async function GET(req:NextRequest){try{
  let facets:unknown=undefined;if(!siteId){const hi=world.day,lo=world.day-ORDER_PERIOD_DAYS;const lists=await env.DB!.batch([
   env.DB!.prepare("SELECT DISTINCT source_country AS name FROM logistics_container_offers WHERE world_id=? AND day<=? AND day>? AND status='open' AND source_country<>'' ORDER BY name").bind(worldId,hi,lo),
   env.DB!.prepare("SELECT DISTINCT destination_country AS name FROM logistics_container_offers WHERE world_id=? AND day<=? AND day>? AND status='open' AND destination_country<>'' ORDER BY name").bind(worldId,hi,lo),
-  env.DB!.prepare("SELECT DISTINCT source_city AS name FROM logistics_container_offers WHERE world_id=? AND day<=? AND day>? AND status='open' AND source_city<>'' AND (?='' OR source_country=?) ORDER BY name LIMIT 500").bind(worldId,hi,lo,sourceCountry,sourceCountry),
-  env.DB!.prepare("SELECT DISTINCT destination_city AS name FROM logistics_container_offers WHERE world_id=? AND day<=? AND day>? AND status='open' AND destination_city<>'' AND (?='' OR destination_country=?) ORDER BY name LIMIT 500").bind(worldId,hi,lo,destinationCountry,destinationCountry)
- ]);const names=(i:number)=>lists[i].results.map((r:any)=>r.name).filter((n:string)=>i>1||!regionAllowed||regionAllowed.has(n));facets={sourceCountries:names(0),destinationCountries:names(1),sourceCities:names(2),destinationCities:names(3)};}
+ ]);const names=(i:number)=>lists[i].results.map((r:any)=>r.name).filter((n:string)=>!regionAllowed||regionAllowed.has(n));
+ facets={sourceCountries:names(0),destinationCountries:names(1),
+  sourceCities:(sourceCity?sourceMatches:sourceNames).slice(0,500),
+  destinationCities:(destinationCity?destinationMatches:destinationNames).slice(0,500)};
+ }
  let genStatus:any=null;try{const {containerGenerationStatus,lastGenError}=await import('../../../../lib/logistics/container-market');genStatus={...await containerGenerationStatus(worldId,world.day),error:lastGenError.get(worldId)?.message||null};}catch{}
  return NextResponse.json({genStatus,day:Math.floor(world.day),periodDay:orderPeriodDay(world.day),periodDays:ORDER_PERIOD_DAYS,nextRefreshDay:orderPeriodDay(world.day)+ORDER_PERIOD_DAYS,offers:rows.filter(r=>lookup.has(r.source_id)&&lookup.has(r.destination_id)).map(r=>({...r,km:Math.round(kmBetween([r.sourceLat,r.sourceLon],[r.destinationLat,r.destinationLon])*10)/10,sourceName:lookup.get(r.source_id)!.name,destinationName:lookup.get(r.destination_id)!.name,mine:r.accepted_by===u.id})),sites:partners,totalOffers:total?.n||0,offset,hasMore:offset+rows.length<(total?.n||0),facets},{headers:{'Cache-Control':'no-store'}});
  }catch(e:any){await logError('api:containers',e,{url:req.url});return NextResponse.json({error:e.message},{status:422});}}

@@ -37,14 +37,14 @@ export default function LogisticsMap({brand=null,region=null,sites,selected,visi
    L.marker([p.lat,p.lon],{icon:L.divIcon({className:'log-project-marker',html:'<span>'+(p.kind==='rescue'?'🆘':done?'🏛️':'🏗️')+'</span>',iconSize:[34,34],iconAnchor:[17,17]})}).addTo(g).bindTooltip(htmlText(p.name)+'<br>'+(done?'Fertiggestellt'+(p.top?.length?' · Dank an '+htmlText(p.top.map((t:any)=>t.name).join(', ')):''):'Lieferradius '+p.radiusKm+' km · Details in der Auftragsbörse'),{direction:'top'});}
   projectLayer.current=g;return()=>{g.remove();};},[mapReady,mapEpoch,projects]);
  const [dayNight,setDayNight]=useState(()=>{try{return localStorage.getItem('log-daynight')!=='0';}catch{return true;}});
- const nightTime=Math.floor(simTime/60000)*60000;
+
  useEffect(()=>{const on=()=>{try{setDayNight(localStorage.getItem('log-daynight')!=='0');setShowWeather(localStorage.getItem('log-weather')!=='0');}catch{}};window.addEventListener('log-display-change',on);return()=>window.removeEventListener('log-display-change',on);},[]);
  useEffect(()=>{
   const L=LRef.current,map=mapRef.current;
   if(!mapReady||!L||!map||!dayNight)return;
   if(!map.getPane('log-night')){const pane=map.createPane('log-night');pane.style.zIndex='340';pane.style.pointerEvents='none';}
-  const ring=nightPolygon(nightTime);
-  const layer=L.polygon([],{pane:'log-night',interactive:false,stroke:false,fillColor:'#020617',fillOpacity:.32}).addTo(map);
+  const ring=nightPolygon(simTime);
+  const layer=L.polygon([],{pane:'log-night',interactive:false,smoothFactor:0,stroke:false,fillColor:'#020617',fillOpacity:.32}).addTo(map);
   let rendered='';
   const draw=()=>{
    const bounds=map.getBounds();
@@ -57,7 +57,7 @@ export default function LogisticsMap({brand=null,region=null,sites,selected,visi
   draw();
   map.on('moveend resize',draw);
   return()=>{map.off('moveend resize',draw);layer.remove();};
- },[mapReady,dayNight,nightTime]);
+ },[mapReady,dayNight,simTime]);
  const maskLayer=useRef<any>(null);
  useEffect(()=>{const L=LRef.current,map=mapRef.current;if(!mapReady||!L||!map)return;if(maskLayer.current){maskLayer.current.remove();maskLayer.current=null;}map.setMaxBounds(null);if(!region?.rings?.length)return;if(!map.getPane('log-region'))map.createPane('log-region').style.zIndex='350';const world=[[-89.9,-720],[89.9,-720],[89.9,720],[-89.9,720]];maskLayer.current=L.polygon([world,...region.rings],{pane:'log-region',renderer:L.svg({pane:'log-region'}),fillRule:'evenodd',stroke:false,fillColor:'#4b5563',fillOpacity:.8,interactive:true,bubblingMouseEvents:false}).addTo(map);maskLayer.current.bindTooltip('Außerhalb der Spielregion dieser Welt',{sticky:true});if(region.bounds){const [s,w,n,e]=region.bounds,pad=Math.max(2,(n-s)*.25,(e-w)*.25);map.setMaxBounds([[Math.max(-85,s-pad),w-pad],[Math.min(85,n+pad),e+pad]]);}},[mapReady,region]);const gridLayer=useRef<any>(null),vehicleLayer=useRef<any>(null),hoverLayer=useRef<any>(null);
  const holder=useRef<HTMLDivElement>(null),mapRef=useRef<any>(null),LRef=useRef<any>(null),layers=useRef<any>(null),cb=useRef({onSelect,onPosition,onGroundClick,buildMode,sites,pendingGrid,trackStart});
@@ -111,6 +111,8 @@ export default function LogisticsMap({brand=null,region=null,sites,selected,visi
   }
  },[sites,selected,visible,lines,tracks,borrowedTracks,trackStart,pendingGrid,previewError,pendingTrack,routeStops,routeEligible,showOwned,alwaysVisible,highlighted,hiddenSiteIds,mapReady,mapEpoch,clusters,onCluster]);
  useEffect(()=>{const L=LRef.current,map=mapRef.current,layer=vehicleLayer.current;if(!L||!map||!layer)return;layer.clearLayers();const lookup=new Map(sites.map(s=>[s.id,s]));
+  if(!map.getPane('log-vehicles')){const pane=map.createPane('log-vehicles');pane.style.zIndex='610';pane.style.pointerEvents='none';}
+  const markers:{vehicle:Vehicle;position:Coords;x:number;y:number;count:number;members:Vehicle[]}[]=[];
   for(const v of vehicles){const origin=lookup.get(v.locationId);if(!origin)continue;
    let position:[number,number]=[origin.lat,origin.lon];
    if((v.status==='enroute'||v.status==='returning')&&v.targetId&&v.etaDay&&v.departDay!==undefined){const target=lookup.get(v.targetId),line=lines.find(l=>l.id===v.lineId);const route=v.currentLeg||line?.legs?.find(l=>l.fromId===origin.id&&l.toId===target?.id);const path=route?.path;
@@ -118,7 +120,58 @@ export default function LogisticsMap({brand=null,region=null,sites,selected,visi
      if(path&&path.length>1){const distances=path.slice(1).map((p,i)=>Math.hypot((p[0]-path[i][0])*111,(p[1]-path[i][1])*111*Math.cos(p[0]*Math.PI/180)));const total=distances.reduce((a,b)=>a+b,0);let remaining=progress*total;for(let i=0;i<distances.length;i++){if(remaining<=distances[i]||i===distances.length-1){const frac=distances[i]?remaining/distances[i]:0;position=[path[i][0]+(path[i+1][0]-path[i][0])*frac,path[i][1]+(path[i+1][1]-path[i][1])*frac];break;}remaining-=distances[i];}}
      else if(target&&['ship','air'].includes(VEHICLES.find(m=>m.id===v.modelId)?.mode||''))position=[origin.lat+(target.lat-origin.lat)*progress,origin.lon+(target.lon-origin.lon)*progress];
    }
-   const icon=L.divIcon({className:'log-marker-wrap',html:`<span class="log-vehicle-marker">${VEHICLES.find(x=>x.id===v.modelId)?.icon||'📦'}</span>`,iconSize:[27,27],iconAnchor:[13,13]});L.marker(position,{icon,zIndexOffset:onVehicle?650:0,interactive:!!onVehicle}).addTo(layer).bindTooltip(htmlText(`${v.name||VEHICLES.find(m=>m.id===v.modelId)?.name} · ${v.restReason||v.status}`)).on('click',()=>onVehicle?.(v.id));}
- },[vehicles,lines,sites,day,mapReady,onVehicle,brand?.primary,brand?.secondary]);
+   if(!position.every(Number.isFinite))continue;
+   const {x,y}=map.latLngToLayerPoint(position);
+   markers.push({vehicle:v,position,x,y,count:1,members:[v]});
+  }
+  // Leaflet places markers with larger y on top. Equal values draw in
+  // insertion order, so visit the last inserted marker first for ties.
+  const radius=12;
+  const cells=new Map<string,typeof markers>();
+  for(const marker of markers.slice().reverse().sort((a,b)=>b.y-a.y)){
+   const column=Math.floor(marker.x/radius),row=Math.floor(marker.y/radius);
+   let top:typeof marker|undefined;
+   for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+    for(const candidate of cells.get(`${column+dx}:${row+dy}`)||[]){
+     if(Math.hypot(marker.x-candidate.x,marker.y-candidate.y)<=radius&&(!top||candidate.y>top.y))top=candidate;
+    }
+   }
+   if(top){top.count++;top.members.push(marker.vehicle);marker.members=top.members;marker.count=0;continue;}
+   const key=`${column}:${row}`;
+   const cell=cells.get(key);
+   if(cell)cell.push(marker);
+   else cells.set(key,[marker]);
+  }
+  const selectVehicle=(position:Coords,members:Vehicle[])=>{
+   if(!onVehicle)return;
+   if(members.length===1){onVehicle(members[0].id);return;}
+   const box=document.createElement('div');box.className='log-site-chooser log-vehicle-chooser';
+   const heading=document.createElement('strong');heading.textContent=`${members.length} Fahrzeuge · Fahrzeug auswählen`;box.appendChild(heading);
+   for(const vehicle of members){
+    const button=document.createElement('button');button.type='button';
+    button.textContent=vehicle.name||VEHICLES.find(m=>m.id===vehicle.modelId)?.name||'Fahrzeug';
+    button.onclick=()=>{map.closePopup();onVehicle(vehicle.id);};box.appendChild(button);
+   }
+   L.DomEvent.disableClickPropagation(box);L.DomEvent.disableScrollPropagation(box);
+   L.popup({className:'log-vehicle-popup',maxWidth:280,maxHeight:240,offset:[0,-14],autoPanPaddingTopLeft:[12,map.getSize().x<600?130:80],autoPanPaddingBottomRight:[12,90]}).setLatLng(position).setContent(box).openOn(map);
+  };
+  for(const {vehicle:v,position,count,members} of markers){
+   const model=VEHICLES.find(m=>m.id===v.modelId);
+   const badge=count>1?`<span class="log-vehicle-stack" aria-hidden="true">${count}</span>`:'';
+   const icon=L.divIcon({className:'log-marker-wrap log-vehicle-target',html:`<span class="log-vehicle-marker">${model?.icon||'📦'}${badge}</span>`,iconSize:[44,44],iconAnchor:[22,22]});
+   const tooltip=`${v.name||model?.name} · ${v.restReason||v.status}`+(count>1?` · ${count} Fahrzeuge`:'');
+   L.marker(position,{icon,pane:'log-vehicles',title:tooltip,alt:tooltip,keyboard:!!onVehicle,interactive:!!onVehicle,bubblingMouseEvents:false}).addTo(layer).bindTooltip(htmlText(tooltip)).on('click',(event:any)=>{
+    // Expanded hit areas can overlap. A pointer selects the closest visible
+    // vehicle, while Enter keeps the vehicle that has keyboard focus.
+    if(Number.isFinite(event.originalEvent?.clientX)&&Number.isFinite(event.originalEvent?.clientY)){
+     const point=map.mouseEventToLayerPoint(event.originalEvent);
+     let nearest:typeof markers[number]|undefined,distance=Infinity;
+     for(let i=markers.length-1;i>=0;i--){const candidate=markers[i],d=Math.hypot(candidate.x-point.x,candidate.y-point.y);if(d<distance){nearest=candidate;distance=d;}}
+     if(nearest){selectVehicle(nearest.position,nearest.members);return;}
+    }
+    selectVehicle(position,members);
+   });
+  }
+ },[vehicles,lines,sites,day,mapReady,mapEpoch,onVehicle]);
  return <div ref={holder} className="log-leaflet" aria-label="Interaktive Weltkarte mit echten Unternehmen und eigener Infrastruktur"/>;
 }
