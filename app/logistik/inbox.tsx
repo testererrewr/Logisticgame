@@ -3,6 +3,8 @@ import {currencyCode,currencySymbol} from '../../lib/logistics/currency';
 import {TIER_GROUPS,TIER_NAMES,TIER_ICONS,TIERED,tierOf} from '../../lib/logistics/progression';
 import {quizFor,quizDay,answerQuiz,claimDailyTask,taskProgress,QUIZ_REWARD,type DailyTask} from '../../lib/logistics/daily';
 import {useEffect,useState,useCallback,useRef} from 'react';
+import {createPortal} from 'react-dom';
+import {X} from 'lucide-react';
 import {openProfile} from './profile-dialog';
 export {openMessage} from './profile-dialog';
 import {GOODS,expiringContracts,extendContracts,good,RECIPES,EXPIRY_WARN_DAYS,CONTRACT_TERM_DAYS,type State} from '../../lib/logistics/engine';
@@ -52,12 +54,28 @@ function pickupReason(state:State,siteId:string,goods:string[]){const ls=state.l
 function Pickups({state,onSite}:{state:State;onSite:(id:string)=>void}){const all=state.progress?.pickups||[],last=all.reduce((m,w)=>Math.max(m,w.day),0),groups=new Map<string,typeof all>();for(const w of all.filter(w=>w.day===last))(groups.get(w.siteId)??groups.set(w.siteId,[]).get(w.siteId)!).push(w);
  return <div><p className="log-help">Nicht vollständig abgeholt am Vortag (Tag {last||'–'}).</p>{groups.size?<div className="log-pickups"><table className="log-exchange-table"><thead><tr><th>Betrieb</th><th>Wartet</th><th>Linie</th><th>Grund</th><th></th></tr></thead><tbody>{[...groups.entries()].map(([siteId,ws])=><tr key={siteId}><td>{ws[0].siteName}</td><td>{ws.map(w=><div key={w.contractId}><b>{w.stock.toLocaleString('de-DE')} EH</b> {w.good} <small className="log-muted">({(w.picked||0).toLocaleString('de-DE')} / {w.daily.toLocaleString('de-DE')} abgeholt)</small></div>)}</td><td>{(()=>{const ls=state.lines.filter(l=>!l.deleted&&l.stops.some((x:any)=>(x.siteId??x)===siteId));return ls.length?ls.map(l=>l.name).join(', '):<span className="log-muted">keine Linie</span>;})()}</td><td><small>{pickupReason(state,siteId,ws.map(w=>w.good))}</small></td><td><button className="log-secondary log-pick-go" onClick={()=>onSite(siteId)} title="Zum Ort">📍</button></td></tr>)}</tbody></table></div>:<p className="log-muted">Alles abgeholt. 👍</p>}</div>;}
 
-function notifyMessage(n:number){try{if(localStorage.getItem('log-sound')!=='0'){const C=(window as any).AudioContext||(window as any).webkitAudioContext;if(C){const ctx=new C(),o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.setValueAtTime(880,ctx.currentTime);o.frequency.setValueAtTime(1320,ctx.currentTime+.12);g.gain.setValueAtTime(.0001,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.15,ctx.currentTime+.02);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+.35);o.connect(g).connect(ctx.destination);o.start();o.stop(ctx.currentTime+.4);setTimeout(()=>ctx.close?.(),600);}}}catch{}
- try{const el=document.createElement('div');el.className='log-msg-toast';el.textContent=n===1?'✉️ Neue Nachricht im Postfach':'✉️ '+n+' neue Nachrichten im Postfach';document.body.appendChild(el);setTimeout(()=>el.classList.add('out'),4200);setTimeout(()=>el.remove(),5000);}catch{}}
+function playMessageSound(){try{if(localStorage.getItem('log-sound')!=='0'){const C=(window as any).AudioContext||(window as any).webkitAudioContext;if(C){const ctx=new C(),o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.setValueAtTime(880,ctx.currentTime);o.frequency.setValueAtTime(1320,ctx.currentTime+.12);g.gain.setValueAtTime(.0001,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.15,ctx.currentTime+.02);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+.35);o.connect(g).connect(ctx.destination);o.start();o.stop(ctx.currentTime+.4);setTimeout(()=>ctx.close?.(),600);}}}catch{}}
 export default function Inbox({state,commit,busy,worldId,onSite}:{state:State;commit:Commit;busy:boolean;worldId:string;onSite:(id:string)=>void}){
  const [open,setOpen]=useState(false),[tab,setTab]=useState<'contracts'|'report'|'weekly'|'achievements'|'messages'|'pickups'|'daily'>('report'),[unread,setUnread]=useState(0),[msgTo,setMsgTo]=useState(''),[seen,setSeen]=useState<any>({}),[days,setDays]=useState(CONTRACT_TERM_DAYS),[within,setWithin]=useState(EXPIRY_WARN_DAYS),[sel,setSel]=useState<string[]>([]);
  const soon=expiringContracts(state,EXPIRY_WARN_DAYS),list=expiringContracts(state,within);
- const prevUnread=useRef(-1);const refreshUnread=useCallback(async()=>{try{const r=await fetch('/api/logistik/messages?count=1&world='+encodeURIComponent(worldId),{cache:'no-store'}),d=await r.json() as any;if(r.ok){const n=d.unread||0;if(prevUnread.current>=0&&n>prevUnread.current)notifyMessage(n-prevUnread.current);prevUnread.current=n;setUnread(n);}}catch{}},[worldId]);
+ const trigger=useRef<HTMLButtonElement>(null);
+ const closeButton=useRef<HTMLButtonElement>(null);
+ const content=useRef<HTMLDivElement>(null);
+ const [messageNotice,setMessageNotice]=useState<{count:number}|null>(null);
+ const close=useCallback(()=>{
+  setOpen(false);
+  trigger.current?.focus({preventScroll:true});
+ },[]);
+ useEffect(()=>{
+  if(open)closeButton.current?.focus({preventScroll:true});
+ },[open]);
+ useEffect(()=>{
+  if(!messageNotice)return;
+  const timer=setTimeout(()=>setMessageNotice(null),5000);
+  return()=>clearTimeout(timer);
+ },[messageNotice]);
+ useEffect(()=>{content.current?.scrollTo({top:0});},[tab]);
+ const prevUnread=useRef(-1);const refreshUnread=useCallback(async()=>{try{const r=await fetch('/api/logistik/messages?count=1&world='+encodeURIComponent(worldId),{cache:'no-store'}),d=await r.json() as any;if(r.ok){const n=d.unread||0;if(prevUnread.current>=0&&n>prevUnread.current){playMessageSound();setMessageNotice({count:n-prevUnread.current});}prevUnread.current=n;setUnread(n);}}catch{}},[worldId]);
  useEffect(()=>{setSeen(readSeen(worldId));void refreshUnread();const t=setInterval(()=>void refreshUnread(),30000);const on=(e:Event)=>{setMsgTo(String((e as CustomEvent).detail||''));setTab('messages');setOpen(true);};window.addEventListener('log-open-message',on);return()=>{clearInterval(t);window.removeEventListener('log-open-message',on);};},[worldId,refreshUnread]);
  const reportDay=state.progress?.reports?.[0]?.day||0,achCount=Object.keys(state.progress?.achievements||{}).length,lastDay=Math.floor(state.day)-1,pickups=new Set((state.progress?.pickups||[]).filter(w=>w.day===lastDay).map(w=>w.siteId)).size;
  const newReport=reportDay>(seen.report||0)?1:0,newAch=Math.max(0,achCount-(seen.ach??achCount)),newPick=lastDay>(seen.pickDay||0)?pickups:0;
@@ -67,17 +85,29 @@ export default function Inbox({state,commit,busy,worldId,onSite}:{state:State;co
  const extend=(ids:string[])=>{if(!ids.length)return;commit(s=>{extendContracts(s,ids,days);},`${ids.length} ${ids.length===1?'Vertrag':'Verträge'} um ${days} Tage verlängert.`,{type:'extendContracts',contractIds:ids,days});setSel(x=>x.filter(id=>!ids.includes(id)));};
  const left=(d:number)=>{const n=Math.max(0,d-state.day);return n<1?Math.round(n*24)+' Std.':Math.ceil(n)+' '+(Math.ceil(n)===1?'Tag':'Tage');};
  return <>
-  <button className={'log-inbox-button'+(badge?' alert':'')} onClick={()=>setOpen(true)} aria-label={`Postfach: ${badge} neue Einträge`}>📬{badge>0&&<span className="log-inbox-badge">{badge>99?'99+':badge}</span>}</button>
-  {open&&<div className="log-dialog-backdrop" onClick={e=>{if(e.target===e.currentTarget)setOpen(false);}}><section className="log-ranking-dialog log-inbox" role="dialog" aria-modal="true" aria-label="Postfach">
-   <button className="log-dialog-close" aria-label="Postfach schließen" onClick={()=>setOpen(false)}>×</button>
-   <h2>📬 Postfach</h2>
-   <div className="log-tabs" role="tablist">{([['report','📰 Tagesbericht'+(newReport?' •':'')],['messages','✉️ Nachrichten'+(unread?' ('+unread+')':'')],['pickups','⚠️ Abholung'+(pickups?' ('+pickups+')':'')],['contracts','📄 Verträge'+(soon.length?' ('+soon.length+')':'')],['daily','📅 Täglich'+((state as any).dailyQuiz?.day===Math.floor(state.day)?'':' ●')],['weekly','🎯 Herausforderungen'],['achievements','🏅 Erfolge'+(newAch?' ('+newAch+' neu)':'')]] as const).map(([id,n])=><button key={id} role="tab" aria-selected={tab===id} className={tab===id?'on':''} onClick={()=>setTab(id)}>{n}</button>)}</div>
+  <button ref={trigger} type="button" aria-haspopup="dialog" aria-expanded={open} className={'log-inbox-button'+(badge?' alert':'')} onClick={()=>setOpen(true)} aria-label={`Postfach: ${badge} neue Einträge`}>📬{badge>0&&<span className="log-inbox-badge">{badge>99?'99+':badge}</span>}</button>
+  {messageNotice&&!open&&createPortal(<div className="log-msg-toast">
+   <span role="status">{messageNotice.count===1?'Neue Nachricht im Postfach':messageNotice.count+' neue Nachrichten im Postfach'}</span>
+   <button type="button" aria-label="Nachrichtenhinweis schließen" onClick={()=>setMessageNotice(null)}><X size={19} aria-hidden="true"/></button>
+  </div>,document.body)}
+  {open&&<div className="log-dialog-backdrop log-inbox-backdrop" onClick={e=>{if(e.target===e.currentTarget)close();}}>
+   <section className="log-ranking-dialog log-inbox" role="dialog" aria-modal="true" aria-labelledby="log-inbox-title" onKeyDown={e=>{
+    if(e.key==='Escape'&&!e.defaultPrevented){e.preventDefault();e.stopPropagation();close();}
+   }}>
+    <header className="log-inbox-header">
+     <h2 id="log-inbox-title">Postfach</h2>
+     <button ref={closeButton} type="button" aria-label="Postfach schließen" onClick={close}>Schließen <X size={18} aria-hidden="true"/></button>
+    </header>
+    <div className="log-inbox-content" ref={content}>
+   <div className="log-tabs" role="tablist" aria-label="Postfachbereiche">{([['report','📰 Tagesbericht'+(newReport?' •':'')],['messages','✉️ Nachrichten'+(unread?' ('+unread+')':'')],['pickups','⚠️ Abholung'+(pickups?' ('+pickups+')':'')],['contracts','📄 Verträge'+(soon.length?' ('+soon.length+')':'')],['daily','📅 Täglich'+((state as any).dailyQuiz?.day===Math.floor(state.day)?'':' ●')],['weekly','🎯 Herausforderungen'],['achievements','🏅 Erfolge'+(newAch?' ('+newAch+' neu)':'')]] as const).map(([id,n])=><button key={id} role="tab" aria-selected={tab===id} className={tab===id?'on':''} onClick={()=>setTab(id)}>{n}</button>)}</div>
    {tab==='report'&&<Reports state={state}/>}{tab==='messages'&&<Messages worldId={worldId} to={msgTo} onRead={()=>void refreshUnread()}/>}{tab==='pickups'&&<Pickups state={state} onSite={id=>{setOpen(false);onSite(id);}}/>}{tab==='daily'&&<Daily state={state} commit={commit} busy={busy}/>}{tab==='weekly'&&<Weekly state={state}/>}{tab==='achievements'&&<Achievements state={state}/>}
    {tab==='contracts'&&<>
    <p className="log-help">Abnahme- und Verarbeitungsverträge laufen nach {CONTRACT_TERM_DAYS} Tagen aus. {EXPIRY_WARN_DAYS} und 3 Tage vorher kommt ein Hinweis. Beim Verlängern bleiben Menge und Preis gleich; liefert ein Betrieb inzwischen weniger, wird die Menge angepasst.</p>
    <div className="log-trailer-toolbar"><label>Anzeigen: Ablauf in<select value={within} onChange={e=>setWithin(Number(e.target.value))}>{[3,7,14,30,60,180].map(n=><option key={n} value={n}>≤ {n} Tagen</option>)}</select></label><label>Verlängern um<select value={days} onChange={e=>setDays(Number(e.target.value))}>{[30,90,180,365].map(n=><option key={n} value={n}>{n} Tage</option>)}</select></label>
     <button className="log-primary" disabled={busy||!list.length} onClick={()=>extend(list.map(c=>c.id))}>Alle {list.length} verlängern</button><button className="log-secondary" disabled={busy||!sel.length} onClick={()=>extend(sel)}>Auswahl verlängern ({sel.length})</button></div>
    <div className="log-ranking-scroll"><table className="log-exchange-table"><thead><tr><th><input type="checkbox" aria-label="Alle auswählen" checked={!!list.length&&list.every(c=>sel.includes(c.id))} onChange={e=>setSel(e.target.checked?list.map(c=>c.id):[])}/></th><th>Betrieb</th><th>Vertrag</th><th>Menge</th><th>Endet in</th><th></th></tr></thead><tbody>{list.map(c=>{const site=state.sites.find(p=>p.id===c.siteId);return <tr key={c.id} className={c.endDay-state.day<=3?'log-inbox-urgent':''}><td><input type="checkbox" checked={sel.includes(c.id)} onChange={e=>setSel(x=>e.target.checked?[...x,c.id]:x.filter(y=>y!==c.id))}/></td><td>{site?.name||'Betrieb'}</td><td>{c.kind==='supply'?'Abnahme · '+good(c.good!).name:'Verarbeitung · '+(RECIPES.find(r=>r.id===c.recipeId)?.name||'')}</td><td>{c.daily.toLocaleString('de-DE')} EH/Tag</td><td><b>{left(c.endDay)}</b></td><td><button className="log-secondary" disabled={busy} onClick={()=>extend([c.id])}>Verlängern</button></td></tr>;})}</tbody></table>{!list.length&&<p className="log-muted">Keine Verträge laufen in diesem Zeitraum aus. 🎉</p>}</div></>}
-  </section></div>}
+    </div>
+   </section>
+  </div>}
  </>;
 }
