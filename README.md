@@ -1,5 +1,17 @@
 # Weltverbund Logistik
 
+## Update 70
+
+Enthält auch alle Änderungen aus Update 69. Vollständiger Quellcode, keine Sicherung der Live-Spielstände.
+
+- Die öffentliche Weltliste zeigt auch öffentliche Testwelten, pausierte Welten und abgeschlossene Saisons mit ihrem Status. Private Welten und Entwürfe bleiben geschützt. Die Listen werden nicht mehr vor der Sichtbarkeitsprüfung auf 100 Einträge begrenzt.
+- Der Footer steht auf kurzen öffentlichen Seiten am unteren Fensterrand und auf langen Seiten hinter dem Inhalt. Die Startseite erklärt den Spieleinstieg und zeigt ein Fahrzeug aus dem Katalog.
+- Die Fahrzeuganzahl erscheint als kleine Zahl ohne Hintergrund oder Rahmen. Die Auswahl überlappender Fahrzeuge bleibt erhalten.
+- Tag und Nacht folgen der echten aktuellen Uhrzeit mit Serverabgleich. Die Spielzeit für Wirtschaft, Fahrzeuge und Fristen bleibt unabhängig davon. Die Kartenlegende zeigt die verwendete Echtzeit in UTC.
+- Güter und Frachtarten stehen ausschließlich im Wiki. Alte Links auf den früheren Gütertab öffnen das Wiki.
+- Die Ortsvorschläge in der Auftragsbörse nutzen denselben Akzentabgleich wie die Suche. Emöd, Emod und Emőd liefern dieselben vorhandenen Aufträge. Beim Ändern der Startstadt werden alte Koordinaten einer Retoursuche verworfen. Die Retoursuche in Verträgen bleibt erhalten.
+- Die Stadtfelder bieten zusätzlich die unabhängige Ortssuche an, etwa für Linz oder Emőd, selbst wenn diese Namen in aktuellen Aufträgen fehlen. Die Auswahl eines geografischen Orts durchsucht den sichtbaren Umkreis (standardmäßig 25 km), anhand der Koordinaten auch bei Aufträgen ohne Stadtangabe. Start und Ziel haben getrennte Mittelpunkte und Radien.
+
 ## Update 69
 
 Dieses vollständige Quellcodepaket enthält auch die Änderungen aus Update 68 und kann direkt auf Update 64 eingespielt werden. Es enthält keine Sicherung der Live-Spielstände.

@@ -59,7 +59,7 @@ export default function OnlineLobby(){
   return()=>removeEventListener('popstate',updatePage);
  },[]);
  const [lobbyTab,setLobbyTab]=useState<'worlds'|'order'>('worlds'),[ordersEnabled,setOrdersEnabled]=useState(false),[user,setUser]=useState<any>(undefined),[worlds,setWorlds]=useState<World[]>([]),[active,setActive]=useState<any>(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[register,setRegister]=useState(false);
- const [publicWorlds,setPublicWorlds]=useState<{id:string;name:string}[]|null>(null),[publicWorldError,setPublicWorldError]=useState(false);
+ const [publicWorlds,setPublicWorlds]=useState<{id:string;name:string;status:string;testWorld:boolean}[]|null>(null),[publicWorldError,setPublicWorldError]=useState(false);
  const [name,setName]=useState(''),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[companyName,setCompanyName]=useState(''),[joinTarget,setJoinTarget]=useState<World|null>(null),[adminOpen,setAdminOpen]=useState(false),[results,setResults]=useState<{world:World;rows:any[];me:string}|null>(null),[badges,setBadges]=useState<any[]>([]);
  async function refresh(){const data=await api('logistik/online');setWorlds(data.worlds);setOrdersEnabled(!!data.ordersEnabled);setBanner(data.lobbyBanner||null);api('logistik/season').then(d=>setBadges(d.badges||[])).catch(()=>{});}
  async function run(work:()=>Promise<void>){setBusy(true);setError('');try{await work();}catch(e:any){setError(e.message);}finally{setBusy(false);}}
@@ -68,10 +68,13 @@ export default function OnlineLobby(){
   if(user!==null||view!=='worlds')return;
   let current=true;
   setPublicWorldError(false);
-  void api('logistik/online?lobby=public').then(data=>{
+  const load=()=>api('logistik/online?lobby=public').then(data=>{
+   if(current)setPublicWorldError(false);
    if(current)setPublicWorlds(data.worlds);
   }).catch(()=>{if(current)setPublicWorldError(true);});
-  return()=>{current=false;};
+  void load();
+  const timer=setInterval(()=>{if(!document.hidden)void load();},10000);
+  return()=>{current=false;clearInterval(timer);};
  },[user,view]);
  useEffect(()=>{if(!user||active)return;let busy=false;const timer=setInterval(()=>{if(busy||document.hidden)return;busy=true;void refresh().catch(()=>{}).finally(()=>{busy=false;});},10000);return()=>clearInterval(timer);},[user,active]);
  async function openWorld(worldId:string,foundName?:string){const wantTest=!!(worlds||[]).find((x:any)=>x.id===worldId)?.testWorld,isTest=document.cookie.includes('lgx_inst=test');if(!foundName&&wantTest!==isTest){setOpening(true);document.cookie='lgx_inst='+(wantTest?'test':'')+'; path=/; SameSite=Lax; max-age='+(wantTest?2592000:0);location.assign('/logistik?welt='+encodeURIComponent(worldId));return;}setOpening(true);let data:any;try{data=foundName?await api('logistik/online',{worldId,command:{type:'joinWorld',name:foundName}}):await api('logistik/online?world='+encodeURIComponent(worldId));}finally{setOpening(false);}if(wantTest!==isTest){document.cookie='lgx_inst='+(wantTest?'test':'')+'; path=/; SameSite=Lax; max-age='+(wantTest?2592000:0);location.assign('/logistik?welt='+encodeURIComponent(worldId));return;}setActive({...data,worldId});history.replaceState(null,'','/logistik?welt='+encodeURIComponent(worldId));}
@@ -98,11 +101,11 @@ export default function OnlineLobby(){
  }
  const guestWorlds=<div className="log-home-world-list">
   {publicWorldError?<p>Die Spielwelten konnten nicht geladen werden.</p>:publicWorlds===null?<p role="status">Spielwelten werden geladen …</p>:publicWorlds.length?publicWorlds.map(w=>
-   <article key={w.id}><strong>{w.name}</strong><button type="button" className="log-secondary" onClick={showLogin}>Zum Spielen anmelden</button></article>
-  ):<p>Momentan ist keine öffentliche Welt geöffnet.</p>}
+   <article key={w.id}><div><strong>{w.name}</strong><small>{w.testWorld?'Testwelt · ':''}{w.status==='running'?'Geöffnet':w.status==='paused'?'Pausiert':w.status==='finished'?'Saison beendet':'Geschlossen'}</small></div>{w.status==='running'?<button type="button" className="log-secondary" onClick={showLogin}>Zum Spielen anmelden</button>:<span className="log-muted">Aktuell kein Beitritt</span>}</article>
+  ):<p>Momentan sind keine öffentlichen Spielwelten vorhanden.</p>}
  </div>;
  const worldList=(entries:World[])=><div className="log-world-grid">{entries.length?entries.map((w,i)=><article className={'log-world log-anim'+(w.joined?' joined':'')} key={w.id} style={{animationDelay:i*60+'ms'}}><div><b>{(w.settings as any)?.private&&'🔒 '}{w.name}{(w as any).testWorld&&<span className="log-test-badge" title="Testwelt: bekommt neue Updates zuerst"> 🧪 Test</span>}</b>{status(w)}{(w as any).mine&&<div className="log-lobby-mine"><b>🚚 {(w as any).mine.company}</b><span>Firmenwert <b>{eur((w as any).mine.value)}</b></span></div>}<SettingsSummary settings={w.settings} day={w.day}/></div><div className="log-world-actions">{w.status==='finished'&&<button className="log-secondary" disabled={busy} onClick={()=>void run(async()=>{const d=await api('logistik/season?world='+encodeURIComponent(w.id));setResults({world:w,rows:d.rows,me:d.me});})}>Endwertung</button>}{user?playButton(w):<a className="log-primary" href="/" onClick={e=>go('/',e)}>Anmelden</a>}</div></article>):<p>Keine weiteren Spielwelten verfügbar.</p>}</div>;
- const worldsPage=<section className="log-worlds-page"><header className="log-page-hero"><h1>Spielwelten</h1></header>
+ const worldsPage=<section className="log-worlds-page"><header className="log-page-hero"><h1>Spielwelten</h1><p>Wähle eine Welt für deine Spedition. Jede Welt hat ihre eigenen Unternehmen, Regeln und Transportnetze.</p></header>
   {error&&<p role="alert" className="log-lobby-error">{error}</p>}
   {user?worldList(worlds):guestWorlds}
  </section>;
@@ -115,9 +118,18 @@ export default function OnlineLobby(){
     <h1>Loadstar spielen</h1>
     <p>Gründe eine Spedition und beliefere echte Betriebe auf der Weltkarte.</p>
     <a className="log-lobby-link log-play-world-link" href="/welten" onClick={e=>go('/welten',e)}>Spielwelten ansehen</a>
+    <figure className="log-start-photo"><img src="/logistics-vehicles/man-tgs.webp" alt="MAN TGS, ein Lkw aus dem Fahrzeugkatalog" width="640" height="420"/><figcaption>Flotte aufbauen und selbst disponieren. <a href="/bildnachweise">Fahrzeugfoto: Alf van Beem, CC0</a></figcaption></figure>
    </section>
    {user===undefined?<section className="log-lobby-card" id="spielen"><p role="status">Verbindung wird hergestellt …</p>{error&&<p role="alert">{error}</p>}</section>:user?companiesCard:loginCard}
   </div>
+  <section className="log-start-guide" aria-labelledby="log-start-guide-title">
+   <div><h2 id="log-start-guide-title">Vom ersten Auftrag zum eigenen Transportnetz</h2><p>Du entscheidest, was transportiert wird, welche Fahrzeuge fahren und wo du investierst. Deine Spedition arbeitet in einer gemeinsamen Spielwelt mit anderen Unternehmen.</p><p className="log-start-modes">Lkw &amp; Transporter · Güterzüge · Schiffe · Flugzeuge</p></div>
+   <ol>
+    <li><h3>Aufträge auswählen</h3><p>Suche Fracht nach Startort, Zielort und Entfernung. Vergleiche Vergütung, Menge und Lieferfrist.</p></li>
+    <li> <h3>Transport organisieren</h3><p>Kaufe passende Fahrzeuge, richte Linien ein und verbinde Betriebe mit deinen Depots und Terminals.</p></li>
+    <li><h3>Die Spedition weiterentwickeln</h3><p>Behalte Einnahmen und Betriebskosten im Blick. Baue Lager aus, schließe Verträge und erweitere deine Flotte.</p></li>
+   </ol>
+  </section>
  </>}
  {joinDialog}
  {results&&<div className="log-dialog-backdrop" onClick={e=>{if(e.target===e.currentTarget)setResults(null);}}><section className="log-ranking-dialog" role="dialog" aria-modal="true" aria-label="Endwertung"><button className="log-dialog-close" aria-label="Schließen" onClick={()=>setResults(null)}>×</button><h2>🏁 Endwertung · {results.world.name}</h2><p className="log-help">Endstand nach Firmenwert (Kontostand + Händlerwert der Flotte + 60 % der Gebäudewerte).</p><div className="log-ranking-scroll"><table className="log-exchange-table"><thead><tr><th>#</th><th>Spedition</th><th>Firmenwert</th><th>Gewinn 30 Tage</th><th>Transportiert</th><th>Aufträge</th><th>Fahrzeuge</th></tr></thead><tbody>{results.rows.map((r:any)=><tr key={r.id} className={r.id===results.me?'log-ranking-me':''}><td><b>{r.rank===1?'🥇':r.rank===2?'🥈':r.rank===3?'🥉':r.rank}</b></td><td>{r.tag&&<span className="log-alliance-tag">[{r.tag}]</span>} <b>{r.name}</b></td><td>{Math.round(r.value).toLocaleString('de-DE')} {currencySymbol()}</td><td>{Math.round(r.profit30).toLocaleString('de-DE')} {currencySymbol()}</td><td>{Math.round(r.transported).toLocaleString('de-DE')} EH</td><td>{r.orders}</td><td>{r.vehicles}</td></tr>)}</tbody></table>{!results.rows.length&&<p className="log-muted">Keine Teilnehmer.</p>}</div></section></div>}

@@ -241,18 +241,18 @@ function viewAsTarget(req:Request,u:User,world:string){if(!['owner','admin'].inc
 export async function GET(req:NextRequest){const ctx:Record<string,unknown>={},t0=Date.now();try{
  if(req.nextUrl.searchParams.get('lobby')==='public'&&!req.nextUrl.searchParams.has('world')){
   await ensureWorldSettingsColumn();
-  const {results}=await db().prepare("SELECT id,name,status,settings FROM logistics_worlds WHERE status='running' ORDER BY created DESC LIMIT 100").all<Pick<World,'id'|'name'|'status'|'settings'>>();
+  const {results}=await db().prepare("SELECT id,name,status,settings FROM logistics_worlds WHERE status<>'draft' ORDER BY created DESC").all<Pick<World,'id'|'name'|'status'|'settings'>>();
   const worlds=results.flatMap(row=>{
    const settings=parseSettings(row.settings);
-   if(settings.private||isTestWorld(row.settings))return [];
-   return [{id:row.id,name:row.name,status:row.status}];
+   if(settings.private)return [];
+   return [{id:row.id,name:row.name,status:row.status,testWorld:isTestWorld(row.settings)}];
   });
   return reply({worlds});
  }
  const u=await currentUser(req);if(!u||u.status!=='active')return reply({error:'Bitte anmelden.'},401);ctx.user=u.id;
  const id=req.nextUrl.searchParams.get('world');ctx.world=id||undefined;
  if(!id){
-  await ensureWorldSettingsColumn();const rows=await db().prepare('SELECT w.*,(SELECT count(*) FROM logistics_world_companies c WHERE c.world_id=w.id) AS companies,EXISTS(SELECT 1 FROM logistics_world_companies c WHERE c.world_id=w.id AND c.user_id=?) AS joined FROM logistics_worlds w ORDER BY created DESC LIMIT 100').bind(u.id).all<World&{companies:number;joined:number}>();
+  await ensureWorldSettingsColumn();const rows=await db().prepare('SELECT w.*,(SELECT count(*) FROM logistics_world_companies c WHERE c.world_id=w.id) AS companies,EXISTS(SELECT 1 FROM logistics_world_companies c WHERE c.world_id=w.id AND c.user_id=?) AS joined FROM logistics_worlds w ORDER BY created DESC').bind(u.id).all<World&{companies:number;joined:number}>();
   const cachedMine=lobbyMine.get(u.id),mine:Map<string,any>=cachedMine&&Date.now()-cachedMine.at<60000?cachedMine.map:new Map<string,any>();if(!cachedMine||Date.now()-cachedMine.at>=60000)try{const own=(await db().prepare('SELECT world_id,name,state FROM logistics_world_companies WHERE user_id=? LIMIT 30').bind(u.id).all<{world_id:string;name:string;state:string}>()).results;const {rowFor}=await import('../../../../lib/logistics/ranking');for(const c of own){try{const st=await decodeCompany(c.state),r=rowFor(u.id,c.name||u.name,st);mine.set(c.world_id,{company:c.name||u.name,value:r.value,cash:r.cash,vehicles:r.vehicles,lines:r.lines,transported:r.transported,profit30:r.profit30});}catch{}}lobbyMine.set(u.id,{at:Date.now(),map:mine});if(lobbyMine.size>500)lobbyMine.clear();}catch{}
   const site=await db().prepare("SELECT payload FROM logistics_runtime WHERE id='site-settings'").first<{payload:string}>().catch(()=>null);let siteCfg:any={};try{siteCfg=JSON.parse(site?.payload||'{}');}catch{}
   return reply({lobbyBanner:siteCfg.lobbyBanner&&(!siteCfg.lobbyBanner.until||siteCfg.lobbyBanner.until>Date.now())?siteCfg.lobbyBanner:null,ordersEnabled:!!siteCfg.ordersEnabled,user:u.name,worlds:rows.results.filter(w=>{const st=parseSettings(w.settings);if(st.private&&!['owner','admin'].includes(u.role)&&st.ownerId!==u.id&&!(st.members||[]).includes(u.id)&&!w.joined)return false;return ['owner','admin'].includes(u.role)||w.status!=='draft'||st.ownerId===u.id;}).map(w=>({...w,external:!hostedHere(w.id,(w as any).host_url,new URL(req.url).origin)?(w as any).host_url||null:null,testWorld:isTestWorld(w.settings),mine:mine.get(w.id)||null,settings:settingsSummary(parseSettings(w.settings)),day:clockTarget(w,Date.now())})),singleplayerEnabled:false,isAdmin:['owner','admin'].includes(u.role)});

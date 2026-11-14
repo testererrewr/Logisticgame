@@ -46,6 +46,8 @@ export async function GET(req:NextRequest){try{
  }
  const nearLat=Number(params.get('nearLat')),nearLon=Number(params.get('nearLon'));
  const near=params.has('nearLat')&&params.has('nearLon')&&Number.isFinite(nearLat)&&Number.isFinite(nearLon)&&Math.abs(nearLat)<=90&&Math.abs(nearLon)<=180;
+ const destLat=Number(params.get('destLat')),destLon=Number(params.get('destLon'));
+ const destNear=params.has('destLat')&&params.has('destLon')&&Number.isFinite(destLat)&&Number.isFinite(destLon)&&Math.abs(destLat)<=90&&Math.abs(destLon)<=180;
  async function cityCenter(side:typeof sides[number],country:string,matches:string[]){
   if(!matches.length)return null;
   // Prefer the best exact (including accent-insensitive) match. Averaging
@@ -65,7 +67,7 @@ export async function GET(req:NextRequest){try{
  const radiusKm=number('radiusKm',0,5000),destRadiusKm=number('destRadiusKm',0,5000);
  const [center,destCenter]=await Promise.all([
   radiusKm>0?(near?{lat:nearLat,lon:nearLon}:cityCenter('source',sourceCountry,sourceMatches)):null,
-  destRadiusKm>0?cityCenter('destination',destinationCountry,destinationMatches):null,
+  destRadiusKm>0?(destNear?{lat:destLat,lon:destLon}:cityCenter('destination',destinationCountry,destinationMatches)):null,
  ]);
  if(center)radiusFilter('a',center,radiusKm);
  if(destCenter)radiusFilter('b',destCenter,destRadiusKm);
