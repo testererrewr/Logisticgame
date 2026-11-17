@@ -1,5 +1,12 @@
 # Weltverbund Logistik
 
+## Update 77
+
+Vollständiger Quellcode einschließlich Update 76 und aller früheren Änderungen. Dieses Paket enthält keine Sicherung der Live-Spielstände.
+
+- Einzelne und mehrere abgestellte Auflieger öffnen jetzt dasselbe Verkaufsfenster. Dort kann der Spieler den sofortigen Händlerverkauf oder den Gebrauchtmarkt wählen. Ein einzelner Marktpreis wird direkt eingegeben; bei mehreren Aufliegern legt ein gemeinsamer Aufschlag getrennte Angebotspreise fest. Die Sammelangebote werden mit einer serverseitig geprüften Aktion eingestellt.
+- Das Konzept für Autofähren beschreibt jetzt Routenplanung, Fahrplan, Stellplätze, Gewicht, Warteschlange, Preis, Störungen und Buchungszustände. Bei öffentlichen Frachtlinien richten sich zulässige Güter und freie EH nach den tatsächlich fahrenden Garnituren. Angrenzende Gebäude werden zunächst öffentlich und können einzeln privat gestellt werden. Der Kunde lagert Fracht zuerst am Halt ein und wählt anschließend Linie, Menge und Entladestation für jede Teilmenge.
+
 ## Update 76
 
 Vollständiger Quellcode einschließlich Update 75 und aller früheren Änderungen. Dieses Paket enthält keine Sicherung der Live-Spielstände.

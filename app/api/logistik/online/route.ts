@@ -6,7 +6,7 @@ import {sameOrigin} from '../../../../lib/same-origin';
 import {encodeCompanyParts,decodeCompany,ensureChunkTable,deleteChunks} from '../../../../lib/logistics/company-codec';
 import {publicBuildingKey,publicBuildingsStatement} from '../../../../lib/logistics/public-buildings';
 import {ensureTrailerMarket,offerTrailer,trailerOffer,buyTrailer,withdrawTrailer} from '../../../../lib/logistics/trailer-market';
-import {makeUsedOffer,leaseReturnOffer,buyUsedVehicle,withdrawUsedVehicle,dealerValue} from '../../../../lib/logistics/vehicle-sales';
+import {makeUsedOffer,leaseReturnOffer,buyUsedVehicle,withdrawUsedVehicle,dealerValue,trailerDealerValue} from '../../../../lib/logistics/vehicle-sales';
 import {readUsedVehicleOffer,readUsedVehicleOffers,saveUsedVehicleOffer} from '../../../../lib/logistics/used-vehicle-store';
 import {harborKind,checkHarborPlacement} from '../../../../lib/logistics/harbor-placement';
 import {adjustCompanyCash} from '../../../../lib/logistics/admin-cash';
@@ -385,6 +385,14 @@ async function postAttempt(req:NextRequest,attempt=0):Promise<NextResponse>{cons
  }else if(cmd.type==='offerUsedTrailer'){
   await ensureTrailerMarket();const n=await db().prepare("SELECT count(*) AS n FROM logistics_trailer_offers WHERE world_id=? AND seller_id=? AND status='open'").bind(id,u.id).first<{n:number}>();if((n?.n||0)>=100)throw Error('Höchstens 100 offene Aufliegerangebote.');
   const unit=offerTrailer(state,cmd.trailerId,Math.round(Number(cmd.price)));statements.push(await update(row,state),db().prepare("INSERT INTO logistics_trailer_offers(id,world_id,seller_id,seller_name,price,created,trailer,status) VALUES(?,?,?,?,?,?,?,'open')").bind('tr'+crypto.randomUUID().replace(/-/g,''),id,u.id,row.name||u.name,Math.round(Number(cmd.price)),now,JSON.stringify(unit)));
+ }else if(cmd.type==='offerUsedTrailers'){
+  const ids=cmd.trailerIds,percent=Number(cmd.percent);
+  if(!Array.isArray(ids)||!ids.length||ids.length>100||ids.some(x=>typeof x!=='string'||!x)||new Set(ids).size!==ids.length)throw Error('1 bis 100 unterschiedliche Auflieger auswählen.');
+  if(!Number.isFinite(percent)||percent<-90||percent>1000)throw Error('Aufschlag zwischen −90 % und 1000 % wählen.');
+  await ensureTrailerMarket();const n=await db().prepare("SELECT count(*) AS n FROM logistics_trailer_offers WHERE world_id=? AND seller_id=? AND status='open'").bind(id,u.id).first<{n:number}>();
+  if((n?.n||0)+ids.length>100)throw Error('Höchstens 100 offene Aufliegerangebote.');
+  const made=ids.map(trailerId=>{const trailer=state.trailers?.find(t=>t.id===trailerId);if(!trailer)throw Error('Abgestellten Auflieger auswählen.');const price=Math.max(1,Math.round(trailerDealerValue(trailer)*(1+percent/100))),unit=offerTrailer(state,trailerId,price);return {price,unit};});
+  statements.push(await update(row,state),...made.map(({price,unit})=>db().prepare("INSERT INTO logistics_trailer_offers(id,world_id,seller_id,seller_name,price,created,trailer,status) VALUES(?,?,?,?,?,?,?,'open')").bind('tr'+crypto.randomUUID().replace(/-/g,''),id,u.id,row.name||u.name,price,now,JSON.stringify(unit))));
  }else if(cmd.type==='buyUsedTrailer'){
   const o=await trailerOffer(id,cmd.offerId);if(o.status!=='open'||o.seller_id===u.id)throw Error('Dieses Angebot ist nicht mehr verfügbar.');const seller=await readCompany(id,o.seller_id);const sellerState=seller?applyStateRules(normalizeFreightState(await decodeCompany(seller.state)),rules):null;buyTrailer(state,sellerState,o,cmd.depotId);
   const mark=db().prepare("UPDATE logistics_trailer_offers SET status='sold',buyer_id=? WHERE id=? AND status='open'").bind(u.id,o.id);if(seller&&sellerState){checked=[row,seller];statements.push(await update(row,state),await update(seller,sellerState),mark);}else statements.push(await update(row,state),mark);

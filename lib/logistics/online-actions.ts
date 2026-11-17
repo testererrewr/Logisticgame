@@ -67,6 +67,7 @@ export type CooperationAction=
  |{type:'buyUsedVehicle';offerId:string;depotId:string}
  |{type:'withdrawUsedVehicle';offerId:string;depotId:string}
  |{type:'offerUsedTrailer';trailerId:string;price:number}
+ |{type:'offerUsedTrailers';trailerIds:string[];percent:number}
  |{type:'buyUsedTrailer';offerId:string;depotId:string}
  |{type:'withdrawUsedTrailer';offerId:string;depotId:string}
  |{type:'acceptContainer';offerId:string}
