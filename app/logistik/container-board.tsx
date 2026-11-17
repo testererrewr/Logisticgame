@@ -41,12 +41,12 @@ export default function ContainerBoard({worldId,day,busy,onAccept,onSite,onSites
    if(initial)setLoading(true);
    try{
     const query=new URLSearchParams(params);if(!initial)query.set('refresh','0');
-    const r=await fetch('/api/logistik/containers?'+query,{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(30000)])});
+    let r:Response;for(let attempt=0;;attempt++){try{r=await fetch('/api/logistik/containers?'+query,{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(30000)])});break;}catch(e:any){if(e.name!=='TimeoutError'||attempt>=1||!alive)throw e;setRefreshNotice('Die erste Serverantwort dauert länger. Suche wird automatisch erneut versucht …');}}
     const txt=await r.text();let d:any;
     try{d=JSON.parse(txt);}catch{throw Error('Ungültige Serverantwort. Bitte erneut versuchen.');}
     if(!r.ok)throw Error(d.error);
-    if(alive){setOffers(d.offers);setTotal(d.totalOffers??d.offers.length);setTotalExact(d.totalExact!==false);setGen(d.genStatus||null);setMore(d.hasMore);if(d.facets)setFacets(d.facets);onSites(d.sites);setError(d.marketError?'Aktualisierung verzögert: '+d.marketError:'');setUpdating(!!d.marketUpdating&&initial);setRegional(d.regionalStatus||null);if(d.marketUpdating&&initial)timer=setTimeout(()=>void poll(0),3000);}
-   }catch(e:any){if(alive){if(initial)setError(e.name==='TimeoutError'?'Der Server hat innerhalb von 30 Sekunden nicht geantwortet. Bitte Suche erneut starten.':e.message);else setRefreshNotice('Neue Aufträge konnten noch nicht geladen werden. Bitte später erneut suchen.');setUpdating(false);}}
+    if(alive){setOffers(d.offers);setTotal(d.totalOffers??d.offers.length);setTotalExact(d.totalExact!==false);setGen(d.genStatus||null);setMore(d.hasMore);if(d.facets)setFacets(d.facets);onSites(d.sites);setError(d.marketError?'Aktualisierung verzögert: '+d.marketError:'');setRefreshNotice('');setUpdating(!!d.marketUpdating&&initial);setRegional(d.regionalStatus||null);if(d.marketUpdating&&initial)timer=setTimeout(()=>void poll(0),3000);}
+   }catch(e:any){if(alive){if(initial){setRefreshNotice('');setError(e.name==='TimeoutError'?'Auch der automatische zweite Suchversuch hat keine Antwort erhalten. Bitte später erneut suchen.':e.message);}else setRefreshNotice('Neue Aufträge konnten noch nicht geladen werden. Bitte später erneut suchen.');setUpdating(false);}}
    finally{if(alive)setLoading(false);}
   };
   timer=setTimeout(()=>void load(true),0);

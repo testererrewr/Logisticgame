@@ -1,4 +1,5 @@
 'use client';
+import {gameConfirm} from './game-dialog';
 import {useCallback,useEffect,useState} from 'react';
 
 const LEVEL:Record<string,string>={error:'Fehler',warn:'Warnung',info:'Info'};
@@ -7,7 +8,7 @@ export default function ErrorLogPanel(){
  const [data,setData]=useState<{rows:any[];stats:any[]}|null>(null),[level,setLevel]=useState('error'),[source,setSource]=useState(''),[query,setQuery]=useState(''),[open,setOpen]=useState(''),[msg,setMsg]=useState(''),[auto,setAuto]=useState(true),[world,setWorld]=useState(''),[user,setUser]=useState(''),[worlds,setWorlds]=useState<any[]>([]);useEffect(()=>{fetch('/api/logistik/online',{cache:'no-store'}).then(r=>r.json()).then(d=>setWorlds(d.worlds||[])).catch(()=>{});},[]);
  const load=useCallback(async()=>{try{const p=new URLSearchParams({limit:'300'});if(level)p.set('level',level);if(source)p.set('source',source);if(query.trim())p.set('q',query.trim());if(world)p.set('world',world);if(user.trim())p.set('user',user.trim());const r=await fetch('/api/logistik/errors?'+p,{cache:'no-store'}),d:any=await r.json();if(!r.ok)throw Error(d.error);setData(d);setMsg('');}catch(e:any){setMsg(e.message);}},[level,source,query,world,user]);
  useEffect(()=>{void load();if(!auto)return;const t=setInterval(()=>void load(),20000);return()=>clearInterval(t);},[load,auto]);
- const clear=async(id?:string)=>{if(!id&&!confirm('Gesamtes Fehlerprotokoll löschen?'))return;const r=await fetch('/api/logistik/errors'+(id?'?id='+encodeURIComponent(id):''),{method:'DELETE'});if(r.ok)void load();};
+ const clear=async(id?:string)=>{if(!id&&!await gameConfirm('Gesamtes Fehlerprotokoll löschen?'))return;const r=await fetch('/api/logistik/errors'+(id?'?id='+encodeURIComponent(id):''),{method:'DELETE'});if(r.ok)void load();};
  const text=(r:any)=>`[${r.level}] ${r.source} · ${r.count}× · erstmals ${time(r.first)} · zuletzt ${time(r.last)}\nSpieler: ${r.user_name||r.user_id||'–'} · Welt: ${r.world_name||r.world_id||'–'}\n${r.name}: ${r.message}\nKontext: ${r.context}\n${r.stack||''}`;
  const copy=(r:any)=>void navigator.clipboard?.writeText(text(r)).then(()=>setMsg('In die Zwischenablage kopiert.'));
  const allText=()=>`Fehlerprotokoll · exportiert ${new Date().toLocaleString('de-DE')} · Filter: Stufe=${level||'alle'}, Bereich=${source||'alle'}, Suche=${query||'–'} · ${(data?.rows||[]).length} Einträge\n\n`+(data?.rows||[]).map(text).join('\n\n----------------------------------------\n\n');

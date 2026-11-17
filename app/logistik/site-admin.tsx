@@ -1,4 +1,5 @@
 'use client';
+import {gameConfirm} from './game-dialog';
 import {useEffect,useState} from 'react';
 import {loadSite} from './site-config-client';
 
@@ -43,5 +44,5 @@ export function RolloutDialog({onClose,onRollout,busy}:{onClose:()=>void;onRollo
   {!d?<p>{msg||'Wird geladen …'}</p>:<><p className="log-muted">{d.pending?.length?`Neu seit dem letzten veröffentlichten Update (${d.pending.map((u:any)=>u.id.toUpperCase()).join(', ')}). Text frei anpassen:`:'Keine neuen Einträge seit dem letzten veröffentlichten Update. Eigenen Text eintragen oder ohne Neuigkeiten ausrollen.'}</p>
    <Switch on={publish} set={setPublish} label="Als „Was ist neu“ veröffentlichen"/>{publish&&<><label>Titel<input value={title} maxLength={100} onChange={e=>setTitle(e.target.value)}/></label><label>Neuigkeiten (eine Zeile pro Punkt)<textarea className="log-chat-input" rows={12} value={text} onChange={e=>setText(e.target.value)}/></label></>}
    <div className="log-trailer-toolbar"><label>Neustart<select value={delay} onChange={e=>setDelay(Number(e.target.value))}><option value={0}>direkt nach dem Bauen</option><option value={5}>5 Minuten danach</option><option value={15}>15 Minuten danach</option><option value={30}>30 Minuten danach</option><option value={60}>1 Stunde danach</option></select></label><button className="log-primary" disabled={busy||(publish&&!text.trim())} onClick={()=>void go()}>Ausrollen{publish?' & veröffentlichen':''}</button></div>{msg&&<p className="log-lobby-error">{msg}</p>}
-   {d.published?.length>0&&<details><summary>Veröffentlichte Neuigkeiten ({d.published.length})</summary><ul className="log-published-list">{d.published.map((e:any)=><li key={e.id}><b>{e.title}</b> <small className="log-muted">{new Date(e.date).toLocaleDateString('de-DE')}</small> <button className="log-link" onClick={()=>{if(confirm('Eintrag entfernen?'))void call({action:'unpublish',id:e.id}).then(()=>call()).then(setD);}}>entfernen</button></li>)}</ul></details>}</>}
+   {d.published?.length>0&&<details><summary>Veröffentlichte Neuigkeiten ({d.published.length})</summary><ul className="log-published-list">{d.published.map((e:any)=><li key={e.id}><b>{e.title}</b> <small className="log-muted">{new Date(e.date).toLocaleDateString('de-DE')}</small> <button className="log-link" onClick={async()=>{if(await gameConfirm('Eintrag entfernen?'))void call({action:'unpublish',id:e.id}).then(()=>call()).then(setD);}}>entfernen</button></li>)}</ul></details>}</>}
  </section></div>;}

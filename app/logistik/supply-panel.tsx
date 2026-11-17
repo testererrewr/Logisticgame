@@ -1,4 +1,5 @@
 'use client';
+import {gameConfirm} from './game-dialog';
 import {currencyCode} from '../../lib/logistics/currency';
 import {useCallback,useEffect,useState} from 'react';
 import {GOODS,type State} from '../../lib/logistics/engine';
@@ -25,7 +26,7 @@ export default function SupplyContracts({worldId,state,companies,onSite}:{worldI
   <div className="log-supply-actions"><span className={'log-supply-status '+r.status}>{STATUS[r.status]||r.status}</span>
    {r.role==='offer'&&<button className="log-primary" onClick={()=>act({action:'accept',id:r.id})}>Liefervertrag annehmen</button>}
    {r.role==='requester'&&r.status==='open'&&<button onClick={()=>act({action:'withdraw',id:r.id})}>Zurückziehen</button>}
-   {r.status==='active'&&<button onClick={()=>{if(confirm(`Vertrag kündigen? Ablöse: ${eur(r.daily*r.price*(r.role==='supplier'?.5:.25))}`))act({action:'cancel',id:r.id});}}>Kündigen</button>}</div>
+   {r.status==='active'&&<button onClick={async()=>{if(await gameConfirm(`Vertrag kündigen? Ablöse: ${eur(r.daily*r.price*(r.role==='supplier'?.5:.25))}`))act({action:'cancel',id:r.id});}}>Kündigen</button>}</div>
  </div>;
  const mine=data?.mine||[],running=mine.filter((r:any)=>['open','active','cancel_req','cancel_sup'].includes(r.status)),past=mine.filter((r:any)=>!running.includes(r));
  return <section className="log-supply"><h3>📦 Lieferverträge</h3>

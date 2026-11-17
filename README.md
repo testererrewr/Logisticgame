@@ -1,5 +1,15 @@
 # Weltverbund Logistik
 
+## Update 75
+
+Vollständiger Quellcode einschließlich Update 74 und aller früheren Änderungen. Dieses Paket enthält keine Sicherung der Live-Spielstände.
+
+- Die Auftragssuche wiederholt eine ausgebliebene Serverantwort einmal selbst. Bei mindestens 20 vorhandenen Treffern startet sie keine zusätzliche Markterzeugung. Die Live-Ursache eines langsamen VPS lässt sich nur mit Serverprotokollen und Messwerten abschließend bestimmen.
+- Der Flottenfilter trennt alle, gekaufte und geleaste Fahrzeuge. Ausgewählte Leasingfahrzeuge können gemeinsam zurückgegeben oder abgelöst werden. Rückgabe ist nur leer, ohne Linie und im eigenen Depot möglich; die Aktion wird serverseitig gemeinsam geprüft.
+- „Standard bei Pannen“ liegt in den Einstellungen. Die Leasingrate wurde für neue und bestehende Verträge auf 6 % des Listenpreises pro 30 Spieltage angehoben. Die angezeigte Wochenrate folgt der neuen Berechnung.
+- Bestätigungen, Hinweise und Mengeneingaben in den Spielansichten verwenden eigene Dialoge statt Browserfenster. Die Betriebsverwaltung auf der Karte bleibt ausschließlich für Besitzer und Administratoren sichtbar; die API verlangt dieselbe Rolle.
+- Die Ausschreibung erzeugt künftig mehr Aufträge und einen höheren Anteil langer und großer Frachten. Die maximale reguläre Frachtmenge bleibt 26.400 EH. Normale Lieferfristen betragen nun mindestens 12 + Entfernung / 75 Spieltage zuzüglich Ausschreibungszeit; alte offene Aufträge und angenommene Verträge erhalten die längere Frist ebenfalls. Eilaufträge bleiben kürzer.
+
 ## Update 74
 
 Vollständiger Quellcode einschließlich Update 73 und aller früheren Änderungen. Dieses Paket enthält keine Sicherung der Live-Spielstände.

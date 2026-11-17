@@ -40,6 +40,7 @@ export type OnlineAction=
  |{type:'renameBuilding';siteId:string;name:string}
  |{type:'buyoutLease';vehicleId:string}
  |{type:'returnLease';vehicleId:string}
+ |{type:'bulkLease';vehicleIds:string[];action:'return'|'buyout'}
  |{type:'buyFleet';lease?:boolean;cooling?:boolean;modelId:VehicleModelId;trailerId?:string;depotId:string;count:number;wagons?:WagonSet[]}
  |{type:'upgradeWarehouse';siteId:string;confirmed:boolean}
  |{type:'trailer';vehicleId:string;trailerId:string}
@@ -101,6 +102,7 @@ export function applyAction(state:State,command:OnlineAction,verifiedSites?:Site
  case 'assignDepot':assignDepot(s,command.vehicleIds,command.depotId);break;
  case 'buyoutLease':buyoutLease(s,command.vehicleId);break;
  case 'returnLease':returnLease(s,command.vehicleId);break;
+ case 'bulkLease':{const ids=command.vehicleIds;if(!Array.isArray(ids)||ids.length<1||ids.length>100||new Set(ids).size!==ids.length)throw Error('1 bis 100 verschiedene Leasingfahrzeuge auswählen.');for(const id of ids){if(command.action==='return')returnLease(s,id);else if(command.action==='buyout')buyoutLease(s,id);else throw Error('Unbekannte Leasingaktion.');}break;}
  case 'requestService':requestService(s,command.vehicleIds,command.when);break;
  case 'cancelService':cancelService(s,command.vehicleIds);break;
  case 'resolveIncident':resolveIncident(s,command.incidentId,{option:command.option,replacementId:command.replacementId});break;

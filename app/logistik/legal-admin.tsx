@@ -1,4 +1,5 @@
 'use client';
+import {gameConfirm} from './game-dialog';
 import {useEffect,useState} from 'react';
 import {IMPRESSUM,DATENSCHUTZ,AGB} from '../../lib/logistics/legal-templates';
 export default function LegalAdmin(){const [kind,setKind]=useState('impressum'),[text,setText]=useState(''),[msg,setMsg]=useState(''),[loaded,setLoaded]=useState(false);
@@ -7,4 +8,4 @@ export default function LegalAdmin(){const [kind,setKind]=useState('impressum'),
  return <section className="log-admin-card"><h2>⚖️ Rechtliches</h2><div className="log-tabs">{['impressum','datenschutz','agb'].map(k=><button key={k} className={kind===k?'on':''} onClick={()=>setKind(k)}>{k==='impressum'?'Impressum':k==='agb'?'AGB':'Datenschutz'}</button>)}</div>
   <p className="log-muted">Vorlage: Alles in [eckigen Klammern] ersetzen. Bitte rechtlich prüfen lassen – das ist keine Rechtsberatung. Überschriften mit „# “, Absätze durch Leerzeilen.</p>
   {loaded&&<textarea className="log-chat-input" rows={24} value={text} onChange={e=>setText(e.target.value)}/>}
-  <div className="log-trailer-toolbar"><button className="log-primary" onClick={()=>void save()}>Speichern</button><button className="log-secondary" onClick={()=>{if(confirm('Aktuellen Text durch die österreichische Vorlage ersetzen? (Erst mit „Speichern“ übernommen)'))setText(kind==='impressum'?IMPRESSUM:kind==='agb'?AGB:DATENSCHUTZ);}}>Vorlage Österreich laden</button><a href={'/'+kind} target="_blank" rel="noreferrer">Ansehen</a>{/\[[^\]]+\]/.test(text)&&<small className="log-muted">⚠️ Es sind noch Platzhalter offen.</small>}</div>{msg&&<p>{msg}</p>}</section>;}
+  <div className="log-trailer-toolbar"><button className="log-primary" onClick={async()=>void save()}>Speichern</button><button className="log-secondary" onClick={async()=>{if(await gameConfirm('Aktuellen Text durch die österreichische Vorlage ersetzen? (Erst mit „Speichern“ übernommen)'))setText(kind==='impressum'?IMPRESSUM:kind==='agb'?AGB:DATENSCHUTZ);}}>Vorlage Österreich laden</button><a href={'/'+kind} target="_blank" rel="noreferrer">Ansehen</a>{/\[[^\]]+\]/.test(text)&&<small className="log-muted">⚠️ Es sind noch Platzhalter offen.</small>}</div>{msg&&<p>{msg}</p>}</section>;}

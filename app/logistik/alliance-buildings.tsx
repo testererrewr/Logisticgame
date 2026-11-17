@@ -1,4 +1,5 @@
 'use client';
+import {gameConfirm} from './game-dialog';
 import {useCallback,useEffect,useState} from 'react';
 import {GOODS} from '../../lib/logistics/engine';
 const eur=(n:number)=>Math.round(n).toLocaleString('de-DE')+' €';
@@ -18,7 +19,7 @@ export function AllianceBuildingsTab({worldId,a,busy,act}:{worldId:string;a:any;
  const b=a.buildings||{},list:any[]=b.list||[],[role,setRole]=useState(b.buildRole||'leader'),[fee,setFee]=useState(String(b.fee||0));
  const icon=(k:string)=>(b.types||[]).find((t:any)=>t.kind===k)?.icon||'🏢',label=(k:string)=>(b.types||[]).find((t:any)=>t.kind===k)?.name||k;
  return <section><h3>🏗️ Allianzgebäude</h3><p className="log-help">Bauen im Baumenü, bezahlt aus der Allianzkasse. Hauptquartier: +2,5 % auf Einnahmen im Land. Lager, Häfen, Flughäfen und Bahnhöfe nutzen alle Mitglieder.</p>
-  {list.length?<div className="log-ranking-scroll"><table className="log-exchange-table"><thead><tr><th>Gebäude</th><th>Typ</th><th>Land</th><th></th></tr></thead><tbody>{list.map(x=><tr key={x.id}><td>{icon(x.kind)} {x.name}</td><td>{label(x.kind)}</td><td>{x.country||'–'}</td><td>{b.canBuild&&<button className="log-secondary" disabled={busy} onClick={()=>{if(confirm(x.name+' abreißen? Das Geld wird nicht erstattet.'))void act({action:'demolish',id:x.id});}}>Abreißen</button>}</td></tr>)}</tbody></table></div>:<p className="log-muted">Noch keine Allianzgebäude.</p>}
+  {list.length?<div className="log-ranking-scroll"><table className="log-exchange-table"><thead><tr><th>Gebäude</th><th>Typ</th><th>Land</th><th></th></tr></thead><tbody>{list.map(x=><tr key={x.id}><td>{icon(x.kind)} {x.name}</td><td>{label(x.kind)}</td><td>{x.country||'–'}</td><td>{b.canBuild&&<button className="log-secondary" disabled={busy} onClick={async()=>{if(await gameConfirm(x.name+' abreißen? Das Geld wird nicht erstattet.'))void act({action:'demolish',id:x.id});}}>Abreißen</button>}</td></tr>)}</tbody></table></div>:<p className="log-muted">Noch keine Allianzgebäude.</p>}
   {a.role==='leader'&&<div className="log-trailer-box"><h4>Einstellungen</h4><div className="log-trailer-toolbar"><label>Bauen dürfen<select value={role} onChange={e=>setRole(e.target.value)}><option value="leader">Nur Owner</option><option value="officer">Owner und Admins</option></select></label><label>Nutzungsgebühr je Gebäude und Tag (€)<input type="number" min={0} value={fee} onChange={e=>setFee(e.target.value)}/></label><button className="log-primary" disabled={busy} onClick={()=>void act({action:'buildSettings',buildRole:role,fee:Number(fee)||0})}>Speichern</button></div><small className="log-muted">Pro Tag und genutztem Gebäude, geht in die Allianzkasse. 0 = gratis.</small></div>}
  </section>;}
 
