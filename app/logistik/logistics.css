@@ -730,6 +730,15 @@ a.log-lang-switch{text-decoration:none;display:inline-block}
 .log-vehicle-image-editor input{max-width:100%;margin:8px 0}
 .log-exchange-actions{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 20px}
 .log-exchange-actions button{min-height:44px}
+.log-exchange-actions{align-items:end}
+.log-exchange-actions>label{display:grid;gap:6px;min-width:min(280px,100%);font-size:12px;color:#c5dbe5}
+.log-exchange-actions>label select{min-height:44px;width:100%}
+.log-exchange-changed{margin:0 0 15px;color:#b7ced7;font-size:12px}
+.log-marker-foreign{background:#d7dde1;border-color:#8896a0;color:#788690;box-shadow:0 2px 5px #17293740;filter:grayscale(1);opacity:.82;pointer-events:none}
+.log-map-legend .log-legend-foreign{background:#929da5}
+.log-lease-manage{position:relative;display:grid;gap:7px}
+.log-lease-manage-options{display:grid;gap:7px;padding:10px;background:#1b3944;border:1px solid #3c5c69;border-radius:8px;max-width:360px}
+.log-lease-manage-options small{color:#a6bac9;line-height:1.5}
 .log-map-company-admin{margin:24px 0 8px;padding-top:18px;border-top:1px solid #36565d}
 .log-map-company-admin>h3{font-size:15px;margin:0 0 12px}
 .log-trailer-table td small,.log-exchange-table td small,.log-trailer-model{display:block;color:#9fb7c4;font-size:11px;line-height:1.45;margin-top:4px}

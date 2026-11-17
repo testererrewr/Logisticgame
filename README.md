@@ -1,5 +1,14 @@
 # Weltverbund Logistik
 
+## Update 76
+
+Vollständiger Quellcode einschließlich Update 75 und aller früheren Änderungen. Dieses Paket enthält keine Sicherung der Live-Spielstände.
+
+- Gebäude anderer Speditionen erscheinen standardmäßig grau und ohne Klickfunktion auf der Karte. Die Karte liest dafür eine kompakte Gebäudeübersicht; bestehende Spielstände werden beim ersten Kartenaufruf schrittweise erfasst.
+- In der Auftragsbörse steht die Sortierung direkt neben „Aufträge suchen“. Sie ordnet die bereits geladenen Aufträge ohne neue Anfrage. Geänderte Suchfilter lassen die letzten Treffer sichtbar, bis eine neue Suche gestartet oder die Seite neu geöffnet wird.
+- Die Sammelaktionen für geleaste Fahrzeuge liegen unter „Leasing verwalten“. Rückgabe und Ablösung behalten ihre Bestätigungsdialoge und Depotregeln.
+- Das Konzept für Autofähren und öffentliche Frachtlinien steht in `docs/autofaehren-und-oeffentliche-frachtlinien.md`. Beide Systeme sind noch nicht implementiert.
+
 ## Update 75
 
 Vollständiger Quellcode einschließlich Update 74 und aller früheren Änderungen. Dieses Paket enthält keine Sicherung der Live-Spielstände.
