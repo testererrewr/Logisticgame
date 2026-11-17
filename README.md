@@ -1,5 +1,16 @@
 # Weltverbund Logistik
 
+## Update 72
+
+Vollständiger Quellcode einschließlich Update 71 und aller früheren Änderungen. Dieses Paket enthält keine Sicherung der Live-Spielstände.
+
+- Die weltweite Auftragsbörse startet erst nach „Aufträge suchen“. Änderungen an Filtern laden keine Aufträge automatisch; die laufende Aktualisierung fragt höchstens dreimal kurz nach und endet danach. Das entlastet die Suche, ersetzt aber keine Messung von CPU, Speicher und Datenbank auf dem VPS.
+- Die Obergrenze des Mengenfilters ist 100.000 EH. Regulär erzeugte Aufträge umfassen derzeit höchstens 26.400 EH; das steht nun direkt am Feld.
+- Administratoren können Betriebe aus dem Karteninspektor heraus bearbeiten und aus allen Spielwelten ausblenden. Beim Ausblenden werden betroffene Aufträge, Verträge und Linien beim nächsten Weltabgleich beendet. Der ursprüngliche Registereintrag bleibt zur Wiederherstellung erhalten.
+- Auflieger zeigen die Art vor dem Modellnamen: in der eigenen Aufliegerliste, beim Anhängen, im Gebrauchtmarkt, in der Fahrzeugliste und bei der Fahrzeugbestellung.
+- Ablösen und Rückgabe eines Leasingfahrzeugs verlangen eine zusätzliche Bestätigung mit Preis oder Gebühr.
+- Angenommene Warenaufträge aktivieren einen Ladestopp auch dann, wenn der Zielbetrieb keinen gewöhnlichen Tagesbedarf für das Gut hat. Die Vertragsfracht wartet deshalb nicht mehr fälschlich auf einen passenden Abnehmer.
+
 ## Update 71
 
 Vollständiger Quellcode einschließlich Update 70 und aller früheren Änderungen. Dieses Paket enthält keine Sicherung der Live-Spielstände.

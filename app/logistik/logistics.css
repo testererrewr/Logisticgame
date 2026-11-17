@@ -727,3 +727,8 @@ a.log-lang-switch{text-decoration:none;display:inline-block}
 .log-vehicle-image-editor summary{cursor:pointer;font-size:14px}
 .log-vehicle-image-editor p,.log-vehicle-image-editor small{font-size:12px;line-height:1.5}
 .log-vehicle-image-editor input{max-width:100%;margin:8px 0}
+.log-exchange-actions{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 20px}
+.log-exchange-actions button{min-height:44px}
+.log-map-company-admin{margin:24px 0 8px;padding-top:18px;border-top:1px solid #36565d}
+.log-map-company-admin>h3{font-size:15px;margin:0 0 12px}
+.log-trailer-table td small,.log-exchange-table td small,.log-trailer-model{display:block;color:#9fb7c4;font-size:11px;line-height:1.45;margin-top:4px}
