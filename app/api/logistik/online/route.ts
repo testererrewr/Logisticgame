@@ -110,6 +110,8 @@ export async function adjustAdminCompanyCash(actor:User,body:{worldId:string;use
 }
 const settling=new Map<string,Promise<World>>();
 const behind=new Set<string>();
+const viewSettleAttempt=new Map<string,number>();
+async function settleForView(id:string){const world=await readMarketWorld(id),now=Date.now();if(world.status!=='running'||now-world.last_tick<30000)return;const last=viewSettleAttempt.get(id)||0;if(now-last<20000)return;viewSettleAttempt.set(id,now);if(viewSettleAttempt.size>200)for(const [key,at] of viewSettleAttempt)if(now-at>60000)viewSettleAttempt.delete(key);waitUntil(settleWorld(id).catch(e=>logError('online:view-settle',e,{world:id},'warn')));}
 export function settleWorld(id:string,budgetMs=1500):Promise<World>{{const hs=hostedWorlds();if(hs&&!hs.has(id))return Promise.reject(Error('Diese Welt läuft auf einem anderen Server.'));}const running=settling.get(id);if(running){if(budgetMs>=10000)return running;return readWorld(id).then(w=>{if(!w)throw Error('Diese Welt existiert nicht.');return w;});}const job=settleWorldNow(id,budgetMs).finally(()=>{settling.delete(id);behind.delete(id);});settling.set(id,job);return job;}
 const SETTLE_INTERVAL_MS=4000;
 export function catchUpHours(world:World,now=Date.now()){return Math.max(0,(clockTarget(world,now)-world.day)*24);}
@@ -286,8 +288,8 @@ export async function GET(req:NextRequest){const ctx:Record<string,unknown>={},t
   return reply({lobbyBanner:siteCfg.lobbyBanner&&(!siteCfg.lobbyBanner.until||siteCfg.lobbyBanner.until>Date.now())?siteCfg.lobbyBanner:null,ordersEnabled:!!siteCfg.ordersEnabled,user:u.name,worlds:rows.results.filter(w=>{const st=parseSettings(w.settings);if(st.private&&!['owner','admin'].includes(u.role)&&st.ownerId!==u.id&&!(st.members||[]).includes(u.id)&&!w.joined)return false;return ['owner','admin'].includes(u.role)||w.status!=='draft'||st.ownerId===u.id;}).map(w=>({...w,external:!hostedHere(w.id,(w as any).host_url,new URL(req.url).origin)?(w as any).host_url||null:null,testWorld:isTestWorld(w.settings),mine:mine.get(w.id)||null,settings:settingsSummary(parseSettings(w.settings)),day:clockTarget(w,Date.now())})),singleplayerEnabled:false,isAdmin:['owner','admin'].includes(u.role)});
  }
  void referralActivity(u.id);
- {const as=viewAsTarget(req,u,id);if(as){await settleWorld(id);const t=await db().prepare('SELECT id,name FROM users WHERE id=?').bind(as).first<{id:string;name:string}>();if(!t||!await readCompany(id,as))return reply({error:'Diese Spedition gibt es in der Welt nicht.'},404);const out=await snapshot({id:t.id,name:t.name,status:'active',role:'user'},id,(req.nextUrl.searchParams.get('geo')||'').slice(0,60));return reply({...out,viewAs:{id:t.id,name:t.name}});}}
- await settleWorld(id);if(!await readCompany(id,u.id))return reply({error:'Bitte zuerst dieser Welt beitreten.'},403);
+ {const as=viewAsTarget(req,u,id);if(as){await settleForView(id);const t=await db().prepare('SELECT id,name FROM users WHERE id=?').bind(as).first<{id:string;name:string}>();if(!t||!await readCompany(id,as))return reply({error:'Diese Spedition gibt es in der Welt nicht.'},404);const out=await snapshot({id:t.id,name:t.name,status:'active',role:'user'},id,(req.nextUrl.searchParams.get('geo')||'').slice(0,60));return reply({...out,viewAs:{id:t.id,name:t.name}});}}
+ await settleForView(id);if(!await readCompany(id,u.id))return reply({error:'Bitte zuerst dieser Welt beitreten.'},403);
  const out=await snapshot(u,id,(req.nextUrl.searchParams.get('geo')||'').slice(0,60));slow('online-GET',t0,ctx);return reply(out);
  }catch(e:any){await logError('online:GET',e,{...ctx,url:req.nextUrl.search});return reply({error:e.message||'Welt nicht erreichbar.'},503);}}
 

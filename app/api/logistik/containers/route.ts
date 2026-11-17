@@ -5,34 +5,35 @@ import {worldSettings} from '../../../../lib/logistics/world-region-server';
 import {allowedCountries} from '../../../../lib/logistics/world-settings';
 import {NextRequest,NextResponse} from 'next/server';
 import {env,waitUntil} from 'cloudflare:workers';
-import {currentUser,settleWorld,readMarketWorld} from '../online/route';
+import {currentUser,readMarketWorld} from '../online/route';
 import {readPartnerRules} from '../../../../lib/logistics/partner-rules-store';
 import {registryByIds} from '../../../../lib/logistics/partner-registry';
 import {ensureHolidayOrders} from '../../../../lib/logistics/world-projects';
 import {ensureContainerDay,ensureRegionalOrders,ensureOfferGoodColumn,generation,sampleRegistry,orderPeriodDay,ORDER_PERIOD_DAYS,type ContainerOffer} from '../../../../lib/logistics/container-market';
 const cityCache=new Map<string,{until:number;value:Promise<{name:string}[][]>}>();
-const refreshes=new Map<string,{key:string;at:number;running:boolean;error?:string;regional?:{businesses:number;generated:number;busy?:boolean}}>();
+type Refresh={key:string;at:number;running:boolean;error?:string;regional?:{businesses:number;generated:number;busy?:boolean};pending?:{key:string;points:{lat:number;lon:number;radius:number}[]}};
+const refreshes=new Map<string,Refresh>();
 function refreshMarket(worldId:string,points:{lat:number;lon:number;radius:number}[]){
  const key=points.map(p=>[p.lat.toFixed(3),p.lon.toFixed(3),p.radius].join(':')).join('|'),previous=refreshes.get(worldId);
- if(previous?.running||previous?.key===key&&Date.now()-previous.at<30000)return previous;
- const entry:{key:string;at:number;running:boolean;error?:string;regional?:{businesses:number;generated:number;busy?:boolean}}={key,at:Date.now(),running:true};
+ if(previous?.running){if(key&&previous.key!==key)previous.pending={key,points};return previous;}
+ if(previous?.key===key&&Date.now()-previous.at<30000)return previous;
+ const entry:Refresh={key,at:Date.now(),running:true};
  refreshes.set(worldId,entry);
  if(refreshes.size>100)for(const [id,item] of refreshes)if(!item.running&&Date.now()-item.at>60000)refreshes.delete(id);
  waitUntil((async()=>{
   try{
-   let world=await readMarketWorld(worldId);const rules=await readPartnerRules();
+   const world=await readMarketWorld(worldId);const rules=await readPartnerRules();
    for(const point of points)entry.regional=await ensureRegionalOrders(worldId,world.day,point.lat,point.lon,point.radius,rules);
-   world=await settleWorld(worldId);
    await ensureContainerDay(worldId,world.day,rules,1,800);
    await backfillDistances(worldId,world.day);
    await ensureHolidayOrders(worldId,world.day,orderPeriodDay(world.day),await generation(worldId),(seed,count,inside)=>sampleRegistry(seed,count,inside,rules));
   }catch(e:any){entry.error=e.message;await logError('container-refresh',e,{world:worldId},'warn');}
-  finally{entry.running=false;entry.at=Date.now();cityCache.clear();}
+  finally{entry.running=false;entry.at=Date.now();cityCache.clear();if(entry.pending)refreshMarket(worldId,entry.pending.points);}
  })());
  return entry;
 }
 async function backfillDistances(worldId:string,period:number){const rows=(await env.DB!.prepare("SELECT o.id,a.lat AS alat,a.lon AS alon,b.lat AS blat,b.lon AS blon FROM logistics_container_offers o JOIN logistics_partner_registry a ON a.id=o.source_id JOIN logistics_partner_registry b ON b.id=o.destination_id WHERE o.world_id=? AND o.day<=? AND o.day>? AND (o.distance_km IS NULL OR o.distance_km<=0) LIMIT 5000").bind(worldId,period,period-ORDER_PERIOD_DAYS).all<{id:string;alat:number;alon:number;blat:number;blon:number}>()).results;if(!rows.length)return;const list=rows.map(r=>({id:r.id,km:Math.round(kmBetween([r.alat,r.alon],[r.blat,r.blon])*10)/10}));for(let i=0;i<list.length;i+=300)await env.DB!.prepare("UPDATE logistics_container_offers SET distance_km=(SELECT json_extract(value,'$.km') FROM json_each(?) WHERE json_extract(value,'$.id')=logistics_container_offers.id) WHERE id IN (SELECT json_extract(value,'$.id') FROM json_each(?))").bind(JSON.stringify(list.slice(i,i+300)),JSON.stringify(list.slice(i,i+300))).run();}
-export async function GET(req:NextRequest){try{
+export async function GET(req:NextRequest){const started=Date.now();try{
  const u=await currentUser(req);if(!u||u.status!=='active')return NextResponse.json({error:'Bitte anmelden.'},{status:401});
  const params=req.nextUrl.searchParams,worldId=params.get('world')||'',siteId=params.get('site')||'';
  if(!worldId||worldId.length>100||siteId.length>100)throw Error('Welt und Betrieb auswählen.');
@@ -43,7 +44,7 @@ export async function GET(req:NextRequest){try{
  if(minDays>maxDays)throw Error('Ungültiger Bereich für die Restzeit.');
  if(minQty>maxQty)throw Error('Ungültiger Mengenbereich.');
  if(minKm>maxKm)throw Error('Die minimale Entfernung darf nicht über der maximalen Entfernung liegen.');
- const where=["o.world_id=?","((o.day<=? AND o.day>? AND o.status='open' AND o.accepted_by IS NULL) OR (?=1 AND o.status='accepted' AND o.deadline>=?))"],args:(string|number)[]=[worldId,world.day,world.day-ORDER_PERIOD_DAYS,siteId?1:0,world.day];
+ const where=["o.world_id=?",siteId?"((o.day<=? AND o.day>? AND o.status='open' AND o.accepted_by IS NULL) OR (o.status='accepted' AND o.deadline>=?))":"o.day<=? AND o.day>? AND o.status='open' AND o.accepted_by IS NULL"],args:(string|number)[]=siteId?[worldId,world.day,world.day-ORDER_PERIOD_DAYS,world.day]:[worldId,world.day,world.day-ORDER_PERIOD_DAYS];
  if(siteId){where.push('o.source_id=?');args.push(siteId);}
  const regionAllowed=allowedCountries(await worldSettings(worldId));{const allowed=regionAllowed;if(allowed){const list=JSON.stringify([...allowed]);where.push('o.source_country IN (SELECT value FROM json_each(?))','o.destination_country IN (SELECT value FROM json_each(?))');args.push(list,list);}}
  if(params.get('rush')==='1')where.push('o.rush=1');if(params.get('special')==='1')where.push('o.special IS NOT NULL');const goodFilter=text('good');if(goodFilter&&goodFilter!=='all'){if(goodFilter==='containers'){where.push("o.good='containers'");}else if(goodFilter==='goods'){where.push("o.good<>'containers'");}else if(goodFilter.startsWith('type:')){const ids=GOODS.filter(g=>g.type===goodFilter.slice(5)&&g.id!=='containers').map(g=>g.id);where.push('o.good IN (SELECT value FROM json_each(?))');args.push(JSON.stringify(ids));}else{where.push('o.good=?');args.push(goodFilter);}}
@@ -53,7 +54,7 @@ export async function GET(req:NextRequest){try{
    WHERE world_id=? AND ((day<=? AND day>? AND status='open') OR (?=1 AND status='accepted' AND deadline>=? AND source_id=?))
    AND ${side}_city<>'' AND (?='' OR ${side}_country=?) ORDER BY name`
  ).bind(worldId,world.day,world.day-ORDER_PERIOD_DAYS,siteId?1:0,world.day,siteId,country,country);
- const needsCities=!siteId||!!q||!!sourceCity||!!destinationCity;
+ const needsCities=!!q||!!sourceCity||!!destinationCity;
  const cityKey=JSON.stringify([worldId,Math.floor(world.day*1440),siteId,sourceCountry,destinationCountry]);
  let cached=cityCache.get(cityKey);
  if(needsCities&&(!cached||cached.until<Date.now())){
@@ -97,8 +98,6 @@ export async function GET(req:NextRequest){try{
  ]);
  if(center)radiusFilter('a',center,radiusKm);
  if(destCenter)radiusFilter('b',destCenter,destRadiusKm);
- const refresh=refreshMarket(worldId,[...(center?[{...center,radius:radiusKm}]:[]),...(destCenter?[{...destCenter,radius:destRadiusKm}]:[])]);
- const marketUpdating=refresh.running;
  for(const [column,value] of [['source_country',sourceCountry],['destination_country',destinationCountry]] as const){
   if(value){where.push(`o.${column}=? COLLATE NOCASE`);args.push(value);}
  }
@@ -120,5 +119,7 @@ export async function GET(req:NextRequest){try{
   destinationCities:(destinationCity?destinationMatches:destinationNames).slice(0,500)};
  }
  let genStatus:any=null;try{const {containerGenerationStatus,lastGenError}=await import('../../../../lib/logistics/container-market');genStatus={...await containerGenerationStatus(worldId,world.day),error:lastGenError.get(worldId)?.message||null};}catch{}
- return NextResponse.json({marketUpdating,marketError:refresh.error,regionalStatus:refresh.regional,genStatus,day:Math.floor(world.day),periodDay:orderPeriodDay(world.day),periodDays:ORDER_PERIOD_DAYS,nextRefreshDay:orderPeriodDay(world.day)+ORDER_PERIOD_DAYS,offers:rows.filter(r=>lookup.has(r.source_id)&&lookup.has(r.destination_id)).map(r=>({...r,km:Math.round(kmBetween([r.sourceLat,r.sourceLon],[r.destinationLat,r.destinationLon])*10)/10,sourceName:lookup.get(r.source_id)!.name,destinationName:lookup.get(r.destination_id)!.name,mine:r.accepted_by===u.id})),sites:partners,totalOffers:total?.n||0,offset,hasMore:offset+rows.length<(total?.n||0),facets},{headers:{'Cache-Control':'no-store'}});
+ const elapsed=Date.now()-started;if(elapsed>6000)waitUntil(logError('perf:container-search',new Error(`Auftragssuche dauerte ${(elapsed/1000).toFixed(1)} s`),{world:worldId,filters:{city:!!sourceCity||!!destinationCity,region:!!center||!!destCenter,query:!!q},offset},'warn'));
+ const refresh=refreshMarket(worldId,[...(center?[{...center,radius:radiusKm}]:[]),...(destCenter?[{...destCenter,radius:destRadiusKm}]:[])]);
+ return NextResponse.json({marketUpdating:refresh.running,marketError:refresh.error,regionalStatus:refresh.regional,genStatus,day:Math.floor(world.day),periodDay:orderPeriodDay(world.day),periodDays:ORDER_PERIOD_DAYS,nextRefreshDay:orderPeriodDay(world.day)+ORDER_PERIOD_DAYS,offers:rows.filter(r=>lookup.has(r.source_id)&&lookup.has(r.destination_id)).map(r=>({...r,km:Math.round(kmBetween([r.sourceLat,r.sourceLon],[r.destinationLat,r.destinationLon])*10)/10,sourceName:lookup.get(r.source_id)!.name,destinationName:lookup.get(r.destination_id)!.name,mine:r.accepted_by===u.id})),sites:partners,totalOffers:total?.n||0,offset,hasMore:offset+rows.length<(total?.n||0),facets},{headers:{'Cache-Control':'no-store'}});
  }catch(e:any){await logError('api:containers',e,{url:req.url});return NextResponse.json({error:e.message},{status:422});}}

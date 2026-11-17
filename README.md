@@ -1,5 +1,14 @@
 # Weltverbund Logistik
 
+## Update 73
+
+Vollständiger Quellcode einschließlich Update 72 und aller früheren Änderungen. Dieses Paket enthält keine Sicherung der Live-Spielstände.
+
+- Die Auftragssuche wartet bis zu 30 statt 12 Sekunden auf eine Antwort. Ohne Stadtbezug entfallen zwei teure Stadtlistenabfragen; die Suche liest ihre Ergebnisse, bevor sie neue Aufträge im Hintergrund erzeugt. Sie startet keine Weltabrechnung mehr. Unterschiedliche regionale Suchgebiete werden nacheinander aktualisiert.
+- Die Online-Anzeige fragt im Normalfall alle 12 statt alle 4 Sekunden nach. Einzelne Verbindungsfehler werden erneut versucht, ohne sofort eine Störung anzuzeigen. Bei wiederholten Fehlern steigt der Abstand zwischen den Versuchen; nach der Wiederverbindung erscheint eine Meldung.
+- Eine reine Online-Abfrage rechnet die Welt nicht mehr bei jedem Aufruf ab. Der Server-Timer erledigt die Abrechnung weiterhin; falls er aussetzt, stößt die Online-Abfrage frühestens nach 30 Sekunden einen begrenzten Hintergrundversuch an.
+- Langsame Auftragssuchen ab sechs Sekunden werden im Server-Fehlerprotokoll mit Laufzeit und Filterart erfasst. Für eine Aussage zur tatsächlichen VPS-Auslastung sind weiterhin Serverwerte nötig.
+
 ## Update 72
 
 Vollständiger Quellcode einschließlich Update 71 und aller früheren Änderungen. Dieses Paket enthält keine Sicherung der Live-Spielstände.

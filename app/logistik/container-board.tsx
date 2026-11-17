@@ -30,12 +30,12 @@ export default function ContainerBoard({worldId,day,busy,onAccept,onSite,onSites
    if(initial)setLoading(true);
    try{
     const f=search.filters;const params=new URLSearchParams({world:worldId,q:f.query,sourceCountry:f.sourceCountry,destinationCountry:f.destinationCountry,sourceCity:f.sourceCity,radiusKm:f.radiusKm,destRadiusKm:f.destRadiusKm,destinationCity:f.destinationCity,minKm:f.minKm,maxKm:f.maxKm,minQty:f.minQty,maxQty:f.maxQty,minDays:f.minDays,maxDays:f.maxDays,minReward:f.minReward,sort:f.sort,good:f.good,rush:f.rush,special:f.special||'',offset:String(search.offset),...(f.nearLat?{nearLat:f.nearLat,nearLon:f.nearLon}:{}),...(f.destLat?{destLat:f.destLat,destLon:f.destLon}:{})});
-    const r=await fetch('/api/logistik/containers?'+params,{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(12000)])});
+    const r=await fetch('/api/logistik/containers?'+params,{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(30000)])});
     const txt=await r.text();let d:any;
     try{d=JSON.parse(txt);}catch{throw Error('Ungültige Serverantwort. Bitte erneut versuchen.');}
     if(!r.ok)throw Error(d.error);
     if(alive){setOffers(d.offers);setTotal(d.totalOffers??d.offers.length);setGen(d.genStatus||null);setMore(d.hasMore);if(d.facets)setFacets(d.facets);onSites(d.sites);setError(d.marketError?'Aktualisierung verzögert: '+d.marketError:'');setUpdating(!!d.marketUpdating);setRegional(d.regionalStatus||null);if(d.marketUpdating&&polls++<3)timer=setTimeout(()=>void load(),2500);}
-   }catch(e:any){if(alive){setError(e.name==='TimeoutError'?'Die Auftragssuche hat zu lange gedauert. Bitte erneut versuchen.':e.message);setUpdating(false);}}
+   }catch(e:any){if(alive){setError(e.name==='TimeoutError'?'Der Server hat innerhalb von 30 Sekunden nicht geantwortet. Bitte Suche erneut starten.':e.message);setUpdating(false);}}
    finally{if(alive)setLoading(false);}
   };
   timer=setTimeout(()=>void load(true),0);

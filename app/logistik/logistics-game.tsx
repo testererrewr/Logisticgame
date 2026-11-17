@@ -173,7 +173,26 @@ export default function LogisticsGame({worldId,initial,onLeave,onAdmin}:{worldId
    }).catch((error:any)=>{if(command.type==='track')railContinuation.current=null;setNotice(error.message||'Keine Online-Verbindung.');}).finally(()=>{pendingRef.current--;setOnlineBusy(pendingRef.current>0);});
  },[applyRemote,worldId,resync]);
  useEffect(()=>{applyRemote(initial);setAccountName(initial.user||'');},[]);
- useEffect(()=>{let polling=false,failures=0,last=0;const tick=()=>{if(pendingRef.current||polling)return;if(document.hidden&&Date.now()-last<60000)return;last=Date.now();polling=true;void fetch('/api/logistik/online?world='+encodeURIComponent(worldId)+'&geo='+encodeURIComponent(geoRef.current),{cache:'no-store',signal:AbortSignal.timeout(20000)}).then(r=>r.ok?readJson(r):Promise.reject(Error('Online-Verbindung unterbrochen.'))).then(data=>{applyRemote(data);if(failures>=3)setNotice('Online-Verbindung wiederhergestellt.');failures=0;}).catch(()=>{failures++;if(failures===3)setNotice('Online-Synchronisierung unterbrochen – das Spiel versucht es automatisch weiter.');}).finally(()=>{polling=false;});};const poll=setInterval(tick,4000),wake=()=>{if(!document.hidden)tick();};document.addEventListener('visibilitychange',wake);return()=>{clearInterval(poll);document.removeEventListener('visibilitychange',wake);};},[worldId,applyRemote]);
+ useEffect(()=>{
+  let stopped=false,polling=false,failures=0,timer:ReturnType<typeof setTimeout>|undefined,controller:AbortController|undefined;
+  const schedule=(ms:number)=>{if(stopped)return;if(timer)clearTimeout(timer);timer=setTimeout(()=>void tick(),ms);};
+  const tick=async()=>{
+   if(stopped)return;
+   if(polling||pendingRef.current){schedule(3000);return;}
+   if(document.hidden){schedule(60000);return;}
+   polling=true;controller=new AbortController();
+   try{
+    const r=await fetch('/api/logistik/online?world='+encodeURIComponent(worldId)+'&geo='+encodeURIComponent(geoRef.current),{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(30000)])});
+    if(!r.ok)throw Error('Online-Verbindung unterbrochen.');
+    const data=await readJson(r);if(stopped)return;applyRemote(data);
+    if(failures>=2)setNotice('Online-Verbindung wiederhergestellt.');failures=0;
+   }catch{if(!stopped){failures++;if(failures===2)setNotice('Online-Synchronisierung unterbrochen – das Spiel versucht es automatisch weiter.');}}
+   finally{polling=false;controller=undefined;schedule(failures?Math.min(30000,4000*2**Math.min(failures-1,3)):12000);}
+  };
+  const wake=()=>{if(!document.hidden)schedule(0);};
+  document.addEventListener('visibilitychange',wake);schedule(12000);
+  return()=>{stopped=true;if(timer)clearTimeout(timer);controller?.abort();document.removeEventListener('visibilitychange',wake);};
+ },[worldId,applyRemote]);
  useEffect(()=>{if(!notice)return;const timer=setTimeout(()=>setNotice(''),6000);return()=>clearTimeout(timer);},[notice]);
  const commit=useCallback((fn:(s:State)=>void,success?:string,command?:OnlineAction)=>{try{if(!command)throw Error('Serverbefehl erforderlich.');track('action',command.type);const next=structuredClone(stateRef.current);const ids=command.type==='supply'||command.type==='process'||command.type==='sale'?[command.siteId]:command.type==='line'||command.type==='updateLineStops'?command.stops.map(st=>st.siteId):[];mergeSites(next,registryRef.current.filter(p=>ids.includes(p.id)));fn(next);checkIntegrity(next);sendOnline(command,success);return true;}catch(error:any){setNotice(error?.message||'Aktion fehlgeschlagen.');return false;}},[sendOnline]);
  const fetchPartners=useCallback(async(center:Coords,radius=18000)=>{const sequence=++areaSequence.current;areaAbort.current?.abort();if(areaPoll.current)clearTimeout(areaPoll.current);const controller=new AbortController();areaAbort.current=controller;setLoading(true);setLoadError('');setImportStatus('');const url=`/api/logistik/partners?lat=${center[0]}&lon=${center[1]}&radius=${radius}&world=${encodeURIComponent(worldId)}`;
