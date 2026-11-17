@@ -1,5 +1,13 @@
 # Weltverbund Logistik
 
+## Update 74
+
+Vollständiger Quellcode einschließlich Update 73 und aller früheren Änderungen. Dieses Paket enthält keine Sicherung der Live-Spielstände.
+
+- Die Auftragssuche mit gewähltem Ortsmittelpunkt, etwa Linz + 50 km, scannt keine weltweiten Stadtlisten mehr. Ergebnislisten laden höchstens 101 Zeilen, statt alle passenden Aufträge für eine exakte Zählung nochmals vollständig zu durchsuchen. Länderlisten stammen aus den Welteinstellungen. Bei mehr als einer Seite zeigt die Oberfläche die Anzahl der sichtbaren Aufträge auf der aktuellen Seite.
+- Nach der ersten Suche prüft die Oberfläche eine kleine Statusantwort, während neue regionale Aufträge erzeugt werden. Erst nach Abschluss lädt sie die Ergebnisse einmal neu. Eine langsame Hintergrundaktualisierung überschreibt die erste Antwort nicht mehr mit einem Suchfehler.
+- Die Börse bleibt bei „Filter eingeben, dann Suchen“; Änderungen an Filtern starten keine Anfrage.
+
 ## Update 73
 
 Vollständiger Quellcode einschließlich Update 72 und aller früheren Änderungen. Dieses Paket enthält keine Sicherung der Live-Spielstände.
