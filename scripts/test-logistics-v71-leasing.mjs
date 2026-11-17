@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {newState,build,purchaseFleet,returnLease,vehicleEvent} from '../lib/logistics/engine.ts';
+import {leaseReturnOffer,buyUsedVehicle} from '../lib/logistics/vehicle-sales.ts';
+const s=newState();s.cash=1e9;s.driversOff=true;const depot=build(s,'depot',48.3,14.3);
+purchaseFleet(s,{modelId:'van',depotId:depot.id,count:1,lease:true});
+const v=s.vehicles[0];assert.ok(v.lease);v.odometerKm=42500;v.transportedEh=1234;v.completedTripsTotal=88;v.lastServiceKm=40000;
+const original=structuredClone(v),offer=leaseReturnOffer(v,'qa','lease-test-1234567890123456',s.day);
+assert.ok(offer);assert.deepEqual(v,original,'Angebotsvorbereitung verändert den aktiven Leasingvertrag nicht');
+const cash=s.cash,fee=returnLease(s,v.id);assert.equal(s.vehicles.length,0);assert.equal(s.cash,cash-fee);
+assert.equal(offer.vehicle.lease,undefined);assert.equal(offer.sellerName,'Leasinggesellschaft · Rückläufer');assert.equal(offer.vehicle.odometerKm,42500);
+const nobody=newState(),before=s.cash,bought=buyUsedVehicle(s,nobody,offer,'qa','buyer',depot.id);
+assert.equal(s.cash,before-offer.price);assert.equal(bought.lease,undefined);assert.equal(bought.odometerKm,42500);assert.equal(bought.completedTripsTotal,88);assert.equal(bought.lastServiceKm,40000);assert.equal(bought.transportedEh,1234);
+assert.throws(()=>buyUsedVehicle(s,nobody,offer,'qa','buyer',depot.id));assert.equal(leaseReturnOffer({...original,wrecked:true},'qa','wrecked-1234567890',s.day),null);
+console.log('PASS Leasingrückgabe, Markteintrag, einmaliger Kauf, Kilometer/Alter/Wartungsstand und Fahrtenzähler bleiben erhalten.');

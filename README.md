@@ -1,5 +1,18 @@
 # Weltverbund Logistik
 
+## Update 71
+
+Vollständiger Quellcode einschließlich Update 70 und aller früheren Änderungen. Dieses Paket enthält keine Sicherung der Live-Spielstände.
+
+- Die Auftragsbörse startet die Suche sofort. Regionale Aufträge werden für echte Betriebe im gewählten Gebiet ergänzt, statt nur eine kleine weltweite Stichprobe zu durchsuchen. Linz und Ortsnamen mit Akzenten lassen sich über die Ortssuche auswählen. Ortsvorschläge und Standortfilter stehen im Filterfenster.
+- Aktionen haben Vorrang vor der periodischen Weltabrechnung. Bei gleichzeitigem Zugriff wird eine gültige Aktion auf dem aktuellen Weltstand erneut geprüft. Wiederholte Anfragen mit derselben Kennung führen nicht zu doppelten Käufen. Die Straßenprüfung bei aufwendigen Aktionen läuft im Hintergrund; die Oberfläche zeigt währenddessen den Fortschritt.
+- „Fahrten insgesamt“ zählt abgeschlossene Fahrten dauerhaft, einschließlich Containeraufträgen. Ältere Zähler werden beim Laden übernommen.
+- Inselzuschläge werden anhand von Inselgeometrien statt pauschal nach Ländern berechnet. Grundlage sind die frei nutzbaren Landflächen von Natural Earth 1:10m (naturalearthdata.com).
+- Premiumspieler können in den Fahrzeugdetails jedem einzelnen Fahrzeug ein eigenes Bild geben oder es entfernen. Die bestehende Freigabe durch die Administration gilt auch für diese Bilder. Ohne Einzelbild wird weiterhin das Modellbild angezeigt.
+- Der Bericht beim ersten Besuch eines Tages wird für jede Spielwelt und jedes Konto getrennt geführt.
+- Stehen Fahrzeuge und ein Betrieb übereinander, bietet die Kartenauswahl auch den Betrieb an.
+- Zurückgegebene fahrbereite Leasingfahrzeuge erscheinen als gebrauchte Angebote der Leasinggesellschaft. Alter und Kilometerstand bleiben erhalten; der vorherige Spieler erhält keinen Verkaufserlös.
+
 ## Update 70
 
 Enthält auch alle Änderungen aus Update 69. Vollständiger Quellcode, keine Sicherung der Live-Spielstände.

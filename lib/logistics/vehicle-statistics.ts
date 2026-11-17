@@ -12,6 +12,9 @@ export function ensureVehicleStatistics(v:Vehicle,day:number,now=Date.now()){
  v.statisticsSince??=v.purchasedAt??now;
  if(v.odometerKm===undefined){v.odometerKm=0;v.legRecordedKm=legDistance(v,day);}
  v.transportedEh??=0;
+ // Legacy tripsTotal belongs to the assigned line. Preserve the known count
+ // once, before a line change can reset it; older erased trips are unknowable.
+ v.completedTripsTotal??=Math.max(v.tripsTotal||0,v.tripsToday||0);
 }
 export function recordVehicleDistance(v:Vehicle,day:number){
  const distance=legDistance(v,day);
@@ -20,4 +23,11 @@ export function recordVehicleDistance(v:Vehicle,day:number){
 }
 export function recordTransportedEh(v:Vehicle,quantity:number,origin:string|undefined,destination:string){
  if(quantity>0&&origin!==destination){v.transportedEh=Math.round(((v.transportedEh||0)+quantity)*1000000)/1000000;if(v.trailerUnit)v.trailerUnit.transportedEh=Math.round(((v.trailerUnit.transportedEh||0)+quantity)*1000000)/1000000;}
+}
+
+export function recordCompletedTrip(v:Vehicle,day:number){
+ ensureVehicleStatistics(v,day);
+ v.tripsToday=(v.tripsToday||0)+1;
+ v.tripsTotal=(v.tripsTotal||0)+1;
+ v.completedTripsTotal!++;
 }

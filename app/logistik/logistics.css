@@ -718,3 +718,12 @@ a.log-lang-switch{text-decoration:none;display:inline-block}
  .log-start-photo img { height: 180px; }
  .log-start-guide h2 { font-size: 24px; }
 }
+
+/* Selected geography stays beside its city input, including return searches. */
+.log-city-selection{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;margin-top:6px;line-height:1.4;color:var(--log-muted,#a8bdca)}
+.log-city-selection .log-link{font-size:inherit;padding:0;min-height:0}
+
+.log-vehicle-image-editor{margin:0 0 16px;border-bottom:1px solid #476077;padding:8px 0 12px}
+.log-vehicle-image-editor summary{cursor:pointer;font-size:14px}
+.log-vehicle-image-editor p,.log-vehicle-image-editor small{font-size:12px;line-height:1.5}
+.log-vehicle-image-editor input{max-width:100%;margin:8px 0}

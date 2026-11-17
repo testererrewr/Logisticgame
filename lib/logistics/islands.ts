@@ -1,4 +1,36 @@
-import {ISLANDS} from './stamps-data';
-const EXTRA:[number,number,number,number][]=[[35.78,36.09,14.18,14.58],[34.55,35.72,32.2,34.65],[63.2,66.6,-24.6,-13.4],[-20.55,-19.95,57.3,57.82],[-4.8,-4.2,55.3,55.9],[-0.7,7.2,72.6,73.8],[14.8,17.3,-25.4,-22.6],[-12.5,-11.3,43.2,44.6],[-18.3,-16,177,180],[13.2,13.4,144.6,145],[18.9,22.3,-160.3,-154.7],[17.9,18.6,-67.3,-65.2],[17.6,18.6,-78.4,-76.1],[12.9,13.4,-59.7,-59.4],[32.2,32.4,-64.9,-64.6],[61.3,62.4,-7.7,-6.2],[59.7,60.9,-1.8,-0.7],[58.7,59.4,-3.5,-2.4],[56.9,57.8,-6.9,-5.6],[49.9,50.0,-6.4,-6.2],[54.0,54.45,-4.85,-4.3],[49.4,49.75,-2.7,-2.15],[38.6,39.15,1.15,1.65],[39.85,40.1,3.8,4.35],[37.9,38.3,12.3,12.6],[40.5,40.9,13.8,14.4],[36.3,36.6,25.3,25.5],[37.3,37.5,25.2,25.45],[39.3,39.9,19.6,20.2],[37.6,38.3,20.3,20.95],[35.8,36.5,27.6,28.3],[54.85,55.3,14.6,15.2],[53.5,53.75,6.6,7.9],[54.3,54.75,8.2,8.7],[54.35,54.7,13.0,13.8]];
-export const ISLAND_BOXES:[number,number,number,number][]=[...ISLANDS.map(i=>i.box),...EXTRA];
-export const onIsland=(lat:number,lon:number)=>ISLAND_BOXES.some(b=>lat>=b[0]&&lat<=b[1]&&lon>=b[2]&&lon<=b[3]);
+import data from '../../data/island-geometry.json';
+type Polygon={box:number[];rings:number[][][]};
+let cells:Map<string,Polygon[]>|undefined;
+function index(){
+ if(cells)return cells;
+ cells=new Map();
+ for(const [box,encoded] of data as [number[],number[][][]][]){
+  const polygon={box,rings:encoded.map(ring=>{let x=0,y=0;return ring.map(d=>{x+=d[0];y+=d[1];return [x/10000,y/10000];});})};
+  for(let y=Math.floor(box[1]-.002);y<=Math.floor(box[3]+.002);y++)for(let x=Math.floor(box[0]-.02);x<=Math.floor(box[2]+.02);x++){
+   const key=x+':'+y,list=cells.get(key);if(list)list.push(polygon);else cells.set(key,[polygon]);
+  }
+ }
+ return cells;
+}
+function inRing(x:number,y:number,r:number[][]){let inside=false;for(let i=0,j=r.length-1;i<r.length;j=i++){
+ const a=r[i],b=r[j];if((a[1]>y)!==(b[1]>y)&&x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])inside=!inside;
+ }return inside;}
+function nearCoast(x:number,y:number,ring:number[][]){
+ const k=Math.max(.05,Math.cos(y*Math.PI/180));
+ for(let i=1;i<ring.length;i++){
+  const ax=(ring[i-1][0]-x)*111*k,ay=(ring[i-1][1]-y)*111,bx=(ring[i][0]-x)*111*k,by=(ring[i][1]-y)*111;
+  const dx=bx-ax,dy=by-ay,t=Math.max(0,Math.min(1,-(ax*dx+ay*dy)/(dx*dx+dy*dy||1)));
+  if(Math.hypot(ax+t*dx,ay+t*dy)<=.15)return true;
+ }
+ return false;
+}
+export function onIsland(lat:number,longitude:number){
+ if(!Number.isFinite(lat)||!Number.isFinite(longitude)||Math.abs(lat)>90)return false;
+ const lon=((longitude+180)%360+360)%360-180;
+ for(const p of index().get(Math.floor(lon)+':'+Math.floor(lat))||[]){
+  const b=p.box;if(lat<b[1]-.002||lat>b[3]+.002||lon<b[0]-.02||lon>b[2]+.02)continue;
+  if(p.rings.slice(1).some(r=>inRing(lon,lat,r)))continue;
+  if(inRing(lon,lat,p.rings[0])||nearCoast(lon,lat,p.rings[0]))return true;
+ }
+ return false;
+}

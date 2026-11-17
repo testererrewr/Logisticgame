@@ -4,6 +4,7 @@ import {env} from 'cloudflare:workers';
 import {currentUser} from '../online/route';
 import {sameOrigin} from '../../../../lib/same-origin';
 import {ensureBrandingTables,hasEntitlement,isPremium,validImage,PREMIUM_FEATURES,PREMIUM_PERKS} from '../../../../lib/logistics/branding-server';
+import {decodeCompany} from '../../../../lib/logistics/company-codec';
 import {VEHICLES} from '../../../../lib/logistics/engine';
 const db=()=>env.DB!;
 const reply=(d:unknown,status=200)=>NextResponse.json(d,{status,headers:{'Cache-Control':'no-store'}});
@@ -34,7 +35,18 @@ export async function POST(req:NextRequest){try{
  else if(body.action==='logo')await upsert('logo=?',[validImage(body.image,120000)]);
  else if(body.action==='removeLogo')await upsert('logo=NULL',[]);
  else if(body.action==='badge'){if(!premium)throw Error('Das Abzeichen gehört zu Premium.');await upsert('show_badge=?',[body.show?1:0]);}
- else if(body.action==='vehicleImage'){if(!await hasEntitlement(u.id,'customVehicleImages'))throw Error('Eigene Fahrzeugbilder sind eine Premium-Funktion.');const model=String(body.model||'').slice(0,80);if(!VEHICLES.some(m=>m.id===model))throw Error('Fahrzeugmodell wählen.');const count=await db().prepare("SELECT count(*) AS n FROM logistics_vehicle_images WHERE world_id=? AND user_id=? AND status<>'declined' AND model_id<>?").bind(world,u.id,model).first<{n:number}>();if((count?.n||0)>=VEHICLES.length)throw Error('Für jedes Modell ist höchstens ein eigenes Bild möglich.');
+ else if(body.action==='individualVehicleImage'||body.action==='removeIndividualVehicleImage'){
+  const vehicleId=String(body.vehicleId||'');if(!/^[-a-zA-Z0-9_]{1,65}$/.test(vehicleId))throw Error('Fahrzeug auswählen.');
+  const row=await db().prepare('SELECT state FROM logistics_world_companies WHERE world_id=? AND user_id=?').bind(world,u.id).first<{state:string}>();
+  const state=row?await decodeCompany(row.state):null;
+  if(!state?.vehicles.some(v=>v.id===vehicleId))throw Error('Dieses Fahrzeug gehört nicht zu deiner Spedition in dieser Welt.');
+  const key='vehicle:'+vehicleId;
+  if(body.action==='removeIndividualVehicleImage')await db().prepare('DELETE FROM logistics_vehicle_images WHERE world_id=? AND user_id=? AND model_id=?').bind(world,u.id,key).run();
+  else{if(!premium)throw Error('Ein eigenes Bild je Fahrzeug gehört zu Premium.');
+   await db().prepare("INSERT OR REPLACE INTO logistics_vehicle_images(world_id,user_id,model_id,image,updated,status,reviewed_by,reviewed_at,note) VALUES(?,?,?,?,?,'pending',NULL,NULL,NULL)").bind(world,u.id,key,validImage(body.image,200000),now).run();
+  }
+ }
+ else if(body.action==='vehicleImage'){if(!await hasEntitlement(u.id,'customVehicleImages'))throw Error('Eigene Fahrzeugbilder sind eine Premium-Funktion.');const model=String(body.model||'').slice(0,80);if(!VEHICLES.some(m=>m.id===model))throw Error('Fahrzeugmodell wählen.');const count=await db().prepare("SELECT count(*) AS n FROM logistics_vehicle_images WHERE world_id=? AND user_id=? AND status<>'declined' AND model_id NOT LIKE 'vehicle:%' AND model_id<>?").bind(world,u.id,model).first<{n:number}>();if((count?.n||0)>=VEHICLES.length)throw Error('Für jedes Modell ist höchstens ein eigenes Bild möglich.');
 
   await db().prepare("INSERT OR REPLACE INTO logistics_vehicle_images(world_id,user_id,model_id,image,updated,status,reviewed_by,reviewed_at,note) VALUES(?,?,?,?,?,'pending',NULL,NULL,NULL)").bind(world,u.id,model,validImage(body.image,200000),now).run();}
  else if(body.action==='removeVehicleImage')await db().prepare('DELETE FROM logistics_vehicle_images WHERE world_id=? AND user_id=? AND model_id=?').bind(world,u.id,String(body.model||'')).run();

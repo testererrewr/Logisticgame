@@ -11,7 +11,7 @@ export function ensureBrandingTables(){return (readyDone?Promise.resolve(undefin
 })().catch(e=>{ready=undefined;throw e;})).then((v:any)=>{readyDone=true;return v;}));}
 
 export const PREMIUM_FEATURES:Record<string,string>={premium:'Premium: Fahrzeugbilder, Firmenauftritt, Allianzlogo & -farben, Abzeichen, automatische Fahrer',customVehicleImages:'Nur eigene Fahrzeugbilder'};
-export const PREMIUM_PERKS=['Eigene Fahrzeugbilder für jedes Modell','Firmenauftritt: Farben und Logo','Allianzlogo und Allianzfarben','Premium-Abzeichen in der Rangliste','Fahrer werden beim Fahrzeugkauf automatisch eingestellt und zugewiesen'];
+export const PREMIUM_PERKS=['Eigene Bilder für jedes Modell und jedes einzelne Fahrzeug','Firmenauftritt: Farben und Logo','Allianzlogo und Allianzfarben','Premium-Abzeichen in der Rangliste','Fahrer werden beim Fahrzeugkauf automatisch eingestellt und zugewiesen'];
 
 export async function hasEntitlement(userId:string,feature:string){await ensureBrandingTables();return !!await db().prepare("SELECT 1 FROM logistics_entitlements WHERE user_id=? AND feature IN (?,'premium')").bind(userId,feature).first();}
 export const isPremium=(userId:string)=>hasEntitlement(userId,'premium');

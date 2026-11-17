@@ -144,9 +144,16 @@ export default function LogisticsMap({brand=null,region=null,sites,selected,visi
   }
   const selectVehicle=(position:Coords,members:Vehicle[])=>{
    if(!onVehicle)return;
-   if(members.length===1){onVehicle(members[0].id);return;}
+   const point=map.latLngToLayerPoint(position),parked=new Set(members.filter(v=>v.status==='idle').map(v=>v.locationId));
+   const places=sites.filter(p=>!p.hidden&&!hiddenSiteIds.includes(p.id)&&(parked.has(p.id)||visible.includes(p.id)||p.owned||alwaysVisible.includes(p.id))).filter(p=>{
+    if(parked.has(p.id))return true;
+    const lon=p.lon+Math.round((position[1]-p.lon)/360)*360,q=map.latLngToLayerPoint([p.lat,lon]);
+    return Math.hypot(q.x-point.x,q.y-point.y)<=20;
+   }).slice(0,20);
+   if(members.length===1&&!places.length){onVehicle(members[0].id);return;}
    const box=document.createElement('div');box.className='log-site-chooser log-vehicle-chooser';
-   const heading=document.createElement('strong');heading.textContent=`${members.length} Fahrzeuge · Fahrzeug auswählen`;box.appendChild(heading);
+   const heading=document.createElement('strong');heading.textContent=`${members.length} ${members.length===1?'Fahrzeug':'Fahrzeuge'}${places.length?' · Standort auswählen':' · Fahrzeug auswählen'}`;box.appendChild(heading);
+   for(const place of places){const button=document.createElement('button');button.type='button';button.textContent=(kindIcon[place.kind]||'⌖')+' '+place.name;button.onclick=()=>{map.closePopup();onSelect(place.id);};box.appendChild(button);}
    for(const vehicle of members){
     const button=document.createElement('button');button.type='button';
     button.textContent=vehicle.name||VEHICLES.find(m=>m.id===vehicle.modelId)?.name||'Fahrzeug';
@@ -172,6 +179,6 @@ export default function LogisticsMap({brand=null,region=null,sites,selected,visi
     selectVehicle(position,members);
    });
   }
- },[vehicles,lines,sites,day,mapReady,mapEpoch,onVehicle]);
+ },[vehicles,lines,sites,day,mapReady,mapEpoch,onVehicle,onSelect,visible,hiddenSiteIds,alwaysVisible]);
  return <div ref={holder} className="log-leaflet" aria-label="Interaktive Weltkarte mit echten Unternehmen und eigener Infrastruktur"/>;
 }

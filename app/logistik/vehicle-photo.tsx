@@ -9,11 +9,12 @@ const gallery=galleryData as Record<string,Photo>;
 let preloaded=false;
 export function preloadVehiclePhotos(){if(preloaded||typeof window==='undefined')return;preloaded=true;const run=()=>{for(const p of Object.values(gallery))if(p?.path){const img=new Image();img.decoding='async';img.src=p.path;}};const idle=(window as unknown as {requestIdleCallback?:(cb:()=>void,o?:{timeout:number})=>void}).requestIdleCallback;if(idle)idle(run,{timeout:3000});else setTimeout(run,1000);}
 
-export default function VehiclePhoto({id,credits=false,owner,world}:{id:string;credits?:boolean;owner?:string;world?:string}){
- const [failedPath,setFailedPath]=useState(''),[foreignFailed,setForeignFailed]=useState(false);
+export default function VehiclePhoto({id,credits=false,owner,world,vehicleId}:{id:string;credits?:boolean;owner?:string;world?:string;vehicleId?:string}){
+ const [failedPath,setFailedPath]=useState(''),[failedCustom,setFailedCustom]=useState<string[]>([]);
  useEffect(()=>{preloadVehiclePhotos();},[]);
- const brand=useBranding(),custom=owner&&world?(foreignFailed?undefined:`/api/logistik/branding/image?world=${encodeURIComponent(world)}&user=${encodeURIComponent(owner)}&kind=vehicle&model=${encodeURIComponent(id)}`):brand?.images?.[id];
- if(custom)return <figure className="log-vehicle-photo"><img src={custom} alt="Eigenes Fahrzeugbild" loading="lazy" decoding="async" width="640" height="400" onError={()=>setForeignFailed(true)}/>{credits&&<figcaption>Eigenes Fahrzeugbild deiner Spedition</figcaption>}</figure>;
+ const brand=useBranding(),keys=[...(vehicleId?['vehicle:'+vehicleId]:[]),id];
+ const custom=keys.map(key=>owner&&world?`/api/logistik/branding/image?world=${encodeURIComponent(world)}&user=${encodeURIComponent(owner)}&kind=vehicle&model=${encodeURIComponent(key)}`:brand?.images?.[key]).find(url=>url&&!failedCustom.includes(url));
+ if(custom)return <figure className="log-vehicle-photo"><img src={custom} alt="Eigenes Fahrzeugbild" loading="lazy" decoding="async" width="640" height="400" onError={()=>setFailedCustom(old=>[...old,custom])}/>{credits&&<figcaption>Eigenes Fahrzeugbild deiner Spedition</figcaption>}</figure>;
  const p=gallery[id];
  const available=Boolean(p?.path&&p.path!==failedPath);
  return <figure className="log-vehicle-photo">{available?<>
