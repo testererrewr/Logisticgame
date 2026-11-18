@@ -1,5 +1,13 @@
 # Weltverbund Logistik
 
+## Update 78
+
+Vollständiger Quellcode einschließlich Update 77 und aller früheren Änderungen. Dieses Paket enthält keine Sicherung der Live-Spielstände.
+
+- Öffentliche Zug-, Schiffs- und Fluglinien sind jetzt spielbar. Der Betreiber veröffentlicht eine unbefristete Linie mit eigenem Fahrzeug, setzt den Preis pro EH und kann automatisch freigegebene, direkt angrenzende Gebäude einzeln privat stellen. Die möglichen Güter ergeben sich ausschließlich aus der tatsächlichen Fahrzeugausstattung.
+- Andere Speditionen können Ware oder eigene Auftragsfracht am Halt bereitstellen, das Fahrzeug wählen und eine Buchung auf mehrere Entladehalte aufteilen. Der Server prüft und reserviert Kapazität je Teilstück, speichert beide Speditionen gemeinsam und übergibt die Ware bei Ankunft in den Bestand des Kunden. Der Kunde kann vor Verladung stornieren; nach sieben Spieltagen ohne Verladung werden Ware und Preis zurückgebucht.
+- Ein Buchungszugang steht im Linienbereich und direkt an öffentlich freigegebenen Gebäuden. Die Kostenanzeige des Betreibers ist derzeit eine Schätzung; Autofähren bleiben ein Konzept.
+
 ## Update 77
 
 Vollständiger Quellcode einschließlich Update 76 und aller früheren Änderungen. Dieses Paket enthält keine Sicherung der Live-Spielstände.

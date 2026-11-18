@@ -1,6 +1,14 @@
 # Konzept: Autofähren und öffentliche Frachtlinien
 
-Stand: Update 77. Beide Systeme sind Planung und in diesem Update nicht spielbar.
+Stand: Update 78. Öffentliche Frachtlinien sind spielbar. Autofähren bleiben ein Konzept.
+
+## Spielstand von Update 78
+
+Eine bestehende unbefristete Zug-, Schiffs- oder Fluglinie mit mindestens zwei eigenen Stationen und einem zugewiesenen Fahrzeug kann in den Liniendetails veröffentlicht werden. Der Betreiber setzt den Preis pro EH; die ladbaren Güter ergeben sich aus dem tatsächlichen Fahrzeug, Auflieger oder Zugverband. Die Oberfläche zeigt die derzeit buchbare Kapazität und die Fahrplanregel. Das eigene Gebäude direkt neben einer Station ist zunächst öffentlich. Der Betreiber kann es in den Liniendetails einzeln privat stellen; bestätigte Buchungen werden dadurch nicht gelöscht.
+
+Kunden können an öffentlichen Stationen und direkt angrenzenden Gebäuden Ware abgeben oder sie per eigenem Fahrzeug beziehungsweise Nahumschlag dorthin bringen. Im Linienbereich oder direkt am öffentlichen Gebäude wählen sie Fahrzeug, Abfahrthalt, Ware und bis zu zehn Entladeziele. Auch Auftragsfracht mit eigener Charge kann gebucht werden. Der Server reserviert die Fahrzeugkapazität für jedes betroffene Teilstück und speichert beide Speditionen gemeinsam. Der Fahrpreis wird bei der Buchung vom Kunden reserviert und erst beim tatsächlichen Verladen dem Betreiber gutgeschrieben. Bis zur Verladung kann der Kunde stornieren; nach sieben Spieltagen ohne Verladung gibt das Spiel Ware und Fahrpreis automatisch zurück. Am Zielhalt landet die Fracht im Bestand des Kunden und kann weitertransportiert werden.
+
+Die Kostenangabe in den Liniendetails ist derzeit eine Schätzung aus Fahrzeugbetrieb und Energie. Personal, Gebühren und tatsächliche Auslastung können den Wert verändern. Ein exakter künftiger Abfahrts- und Ankunftszeitpunkt für jeden Halt ist noch nicht berechnet; Fahrplanregel und laufende Fahrzeugankunft werden angezeigt. Buchungen auf einer Linie mit Fahrzeugausfall warten auf die Wiederaufnahme oder laufen nach sieben Spieltagen aus.
 
 ## 1. Autofähren
 
@@ -71,15 +79,15 @@ Beispiel für wechselnde Garnituren: Um 06:00 fährt ein Kühlzug, um 12:00 ein 
 
 ### Abrechnung und Schutz vor Fehlern
 
-- Der Kunde sieht vor der Buchung den Preis für jede Teilmenge und alle Zielhalte sowie die Wirkung auf seine Lieferfrist. Die Zahlung erfolgt beim tatsächlichen Verladen. Der Betreiber erhält den Fahrpreis für beförderte EH.
+- Der Kunde sieht vor der Buchung den Preis für jede Teilmenge und alle Zielhalte. Der Fahrpreis wird bei der Buchung reserviert. Der Betreiber erhält ihn erst beim Verladen; bei Stornierung oder Ablauf erhält der Kunde Ware und Fahrpreis zurück.
 - Bestätigte Buchungen belegen Kapazität auf allen betroffenen Abschnitten. Eigene geplante Fracht ist vorher bereits berücksichtigt. Die verfügbare Menge wird nicht doppelt verkauft.
 - Ändert der Betreiber die Garnitur, darf eine bestätigte Buchung nicht stillschweigend unverladbar werden. Das Spiel muss eine passende Folgeabfahrt anbieten oder die Buchung lösen und die Fracht am Ausgangshalt belassen.
 - Fällt ein Fahrzeug aus, bleibt jede Ladung einem Spieler und einem Halt zugeordnet. Eine Neubuchung oder Rückerstattung ist sichtbar. Eine Linie mit fremder Fracht an Bord oder offenen Buchungen kann nicht sofort gelöscht oder privat gestellt werden.
 - Verkauf, Lagerung und Auftragserfüllung werden getrennt gebucht, damit weder Betreiber noch Kunde denselben Transport doppelt vergütet bekommen.
 
-## Vorgeschlagene spätere Reihenfolge
+## Weitere Ausbauschritte
 
-1. Neutrale Autofähren mit ausgewählten Hafenpaaren, Fahrplan, Kapazität und Einbindung in Straßenrouten.
-2. Öffentliche Linien mit zwei Halten, automatisch passenden Frachtarten und angrenzenden öffentlichen Gebäuden.
-3. Mehrere Halte mit Teilmengen, unterschiedlichen Entladezielen und wechselnden Garnituren.
-4. Spielerbetriebene Autofähren, falls der neutrale Dienst im Spiel gut funktioniert.
+1. Für öffentliche Linien genaue Kosten pro EH einschließlich Personal und Gebühren sowie eine belastbare Ankunftsprognose für jeden Halt anzeigen.
+2. Bei einem länger ausgefallenen Fahrzeug aktiv eine andere passende Abfahrt anbieten.
+3. Neutrale Autofähren mit ausgewählten Hafenpaaren, Fahrplan, Kapazität und Einbindung in Straßenrouten bauen.
+4. Spielerbetriebene Autofähren erwägen, falls der neutrale Dienst im Spiel gut funktioniert.
