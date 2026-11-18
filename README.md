@@ -1,5 +1,13 @@
 # Weltverbund Logistik
 
+## Update 79
+
+Vollständiger Quellcode einschließlich Update 78 und aller früheren Änderungen. Dieses Paket enthält keine Sicherung der Live-Spielstände.
+
+- Fremde Gebäude werden auf der Karte erst ab Zoomstufe 16 gezeichnet. Ihre ausgegrauten Symbole sind 20 statt 32 Pixel groß. Bei weiter Ansicht erscheinen weder Symbol noch Punkt oder Gebäudeumriss.
+- Die Gebäudeübersicht wird nur für die nahe Kartenansicht angefragt und liefert höchstens 500 Gebäude aus dem Umfeld. Der Server erfasst fehlende Gebäudeindizes in kleineren Schritten, damit ein Kartenaufruf weniger Arbeit auslöst.
+- Der Browser begrenzt zwischengespeicherte Betriebe und Kartenbereiche. Wetter und Projekte werden beim Verschieben der Karte nicht unnötig neu aufgebaut. Diese Änderungen reduzieren bekannte Belastungen der Weltansicht; die Ursache gelegentlicher Hänger auf dem Live-Server erfordert dessen Laufzeitprotokolle.
+
 ## Update 78
 
 Vollständiger Quellcode einschließlich Update 77 und aller früheren Änderungen. Dieses Paket enthält keine Sicherung der Live-Spielstände.

@@ -24,19 +24,19 @@ export default function LogisticsMap({brand=null,region=null,sites,foreignBuildi
   for(const c of weatherAt(day)){const w=WEATHER[c.kind as keyof typeof WEATHER];for(const shift of [-360,0,360]){const center=[c.lat,c.lon+shift];
    L.circle(center,{radius:c.radiusKm*1000,pane:'log-weather',interactive:false,stroke:true,weight:1,color:w.color,opacity:.45,fillColor:w.color,fillOpacity:.08+.05*c.strength}).addTo(layer);
    L.marker(center,{interactive:true,keyboard:false,icon:L.divIcon({className:'log-weather-icon',html:'<span>'+w.icon+'</span>',iconSize:[28,28],iconAnchor:[14,14]})}).addTo(layer).bindTooltip(htmlText(w.name+' · Stärke '+c.strength+'/3 · noch ca. '+hours(c)+' Std.')+'<br>'+htmlText(w.text),{direction:'top'});}}
-  return()=>{weatherLayer.current?.remove();weatherLayer.current=null;};},[mapReady,mapEpoch,slot,showWeather]);
+  return()=>{weatherLayer.current?.remove();weatherLayer.current=null;};},[mapReady,slot,showWeather]);
  const animLayer=useRef<any>(null);
  useEffect(()=>{const L=LRef.current,map=mapRef.current;if(!mapReady||!L||!map)return;if(typeof window!=='undefined'&&window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
   const own=sites.filter(p=>p.owned&&['port','inlandPort','shipDepot','airport','regionalAirport','airDepot'].includes(p.kind));if(!own.length)return;
   const draw=()=>{animLayer.current?.remove();animLayer.current=null;if(map.getZoom()<12)return;const b=map.getBounds(),vis=own.filter(p=>b.contains([p.lat,p.lon])).slice(0,20);if(!vis.length)return;const g=L.layerGroup().addTo(map);
    for(const p of vis){const air=['airport','regionalAirport','airDepot'].includes(p.kind);L.marker([p.lat,p.lon],{interactive:false,keyboard:false,icon:L.divIcon({className:'log-anim-marker',html:air?'<span class="log-anim-plane">✈️</span>':'<span class="log-anim-crane">🏗️</span>',iconSize:[40,40],iconAnchor:air?[-6,34]:[-4,30]})}).addTo(g);}
    animLayer.current=g;};
-  draw();map.on('zoomend moveend',draw);return()=>{map.off('zoomend moveend',draw);animLayer.current?.remove();animLayer.current=null;};},[mapReady,mapEpoch,sites]);
+  draw();map.on('zoomend moveend',draw);return()=>{map.off('zoomend moveend',draw);animLayer.current?.remove();animLayer.current=null;};},[mapReady,sites]);
  const projects=useProjects(),projectLayer=useRef<any>(null);
  useEffect(()=>{const L=LRef.current,map=mapRef.current;projectLayer.current?.remove();projectLayer.current=null;if(!mapReady||!L||!map)return;const list=projects.filter((p:any)=>p.kind!=='holiday'&&(p.status==='active'||p.status==='done'));if(!list.length)return;const g=L.layerGroup().addTo(map);
   for(const p of list){const done=p.status==='done',color=p.kind==='rescue'?'#ef4444':'#d4af37';if(!done)L.circle([p.lat,p.lon],{radius:p.radiusKm*1000,interactive:false,color,weight:1,dashArray:'6 6',fillOpacity:.04}).addTo(g);
    L.marker([p.lat,p.lon],{icon:L.divIcon({className:'log-project-marker',html:'<span>'+(p.kind==='rescue'?'🆘':done?'🏛️':'🏗️')+'</span>',iconSize:[34,34],iconAnchor:[17,17]})}).addTo(g).bindTooltip(htmlText(p.name)+'<br>'+(done?'Fertiggestellt'+(p.top?.length?' · Dank an '+htmlText(p.top.map((t:any)=>t.name).join(', ')):''):'Lieferradius '+p.radiusKm+' km · Details in der Auftragsbörse'),{direction:'top'});}
-  projectLayer.current=g;return()=>{g.remove();};},[mapReady,mapEpoch,projects]);
+  projectLayer.current=g;return()=>{g.remove();};},[mapReady,projects]);
  const [dayNight,setDayNight]=useState(()=>{try{return localStorage.getItem('log-daynight')!=='0';}catch{return true;}});
 
  useEffect(()=>{const on=()=>{try{setDayNight(localStorage.getItem('log-daynight')!=='0');setShowWeather(localStorage.getItem('log-weather')!=='0');}catch{}};window.addEventListener('log-display-change',on);return()=>window.removeEventListener('log-display-change',on);},[]);
@@ -75,7 +75,7 @@ export default function LogisticsMap({brand=null,region=null,sites,foreignBuildi
    map.on('log-build-change',drawGrid);
    map.on('click',(e:any)=>cb.current.onGroundClick([e.latlng.lat,e.latlng.lng]));
    map.on('mousemove',(e:any)=>{
-    const c=cb.current,layer=hoverLayer.current;layer.clearLayers();if(!c.buildMode||c.pendingGrid)return;
+    const c=cb.current;if(!c.buildMode||c.pendingGrid)return;const layer=hoverLayer.current;layer.clearLayers();
     const point:Coords=[e.latlng.lat,e.latlng.lng];
     if(c.buildMode==='rail'){if(c.trackStart)L.polyline([c.trackStart,point],{color:'#5ff2bc',weight:5,dashArray:'8 5',interactive:false}).addTo(layer);return;}
     try{const plan=placement(point,c.buildMode as any,0),blocked=c.sites.some(x=>x.owned&&x.grid&&gridOverlaps(plan.grid,x.grid));
@@ -104,10 +104,9 @@ export default function LogisticsMap({brand=null,region=null,sites,foreignBuildi
   for(const c of clusters){if(c.count===1){L.circleMarker([c.lat,c.lon],{radius:4,color:'#16857b',fillColor:'#2ed4b3',fillOpacity:.85,bubblingMouseEvents:false}).addTo(layer).bindTooltip('Ein gespeicherter Betrieb · zum Vergrößern klicken').on('click',()=>onCluster?.([c.lat,c.lon]));continue;}const icon=L.divIcon({className:'log-marker-wrap',html:`<span class="log-cluster-marker">${c.count.toLocaleString('de-DE')}</span>`,iconSize:[32,32],iconAnchor:[16,16]});L.marker([c.lat,c.lon],{icon}).addTo(layer).bindTooltip('Gespeicherte Betriebe · klicken zum Vergrößern').on('click',()=>onCluster?.([c.lat,c.lon]));}
   const selectSite=(site:Site)=>{if(cb.current.buildMode){cb.current.onGroundClick([site.lat,site.lon]);return;}const pt=map.latLngToContainerPoint([site.lat,site.lon]);const nearby=sites.filter(p=>!p.hidden&&!hidden.has(p.id)&&(p.owned?showOwned||related.has(p.id):show.has(p.id))&&(!routeEligible||routeEligible.includes(p.id)||related.has(p.id))&&map.latLngToContainerPoint([p.lat,p.lon]).distanceTo(pt)<(p.owned&&site.owned?26:8));if(nearby.length<2){cb.current.onSelect(site.id);return;}const box=document.createElement('div');box.className='log-site-chooser';const heading=document.createElement('strong');heading.textContent='Standort auswählen';box.appendChild(heading);const choices=[site,...nearby.filter(p=>p.id!==site.id).sort((a,b)=>Number(!!b.owned)-Number(!!a.owned))].slice(0,35);for(const p of choices){const button=document.createElement('button');button.type='button';button.textContent=p.name;button.onclick=()=>{map.closePopup();cb.current.onSelect(p.id);};box.appendChild(button);}L.DomEvent.disableClickPropagation(box);L.popup({maxWidth:280,maxHeight:280}).setLatLng([site.lat,site.lon]).setContent(box).openOn(map);};
   const viewport=map.getBounds().pad(.15);
-  for(const site of foreignBuildings){if(lookup.has(site.id)||!viewport.contains([site.lat,site.lon])&&!(site.grid&&viewport.intersects(L.latLngBounds(gridBounds(site.grid)))))continue;
-   if(site.grid&&map.getZoom()>=12)L.rectangle(gridBounds(site.grid),{color:'#87949e',weight:1,fillColor:'#aeb8bf',fillOpacity:.17,interactive:false}).addTo(layer);
-   if(map.getZoom()<11){L.circleMarker([site.lat,site.lon],{radius:3,weight:1,color:'#71808b',fillColor:'#aeb8bf',fillOpacity:.85,interactive:false}).addTo(layer);continue;}
-   const icon=L.divIcon({className:'log-marker-wrap',html:`<span class="log-marker log-marker-foreign" title="${htmlText(site.name)} · ${htmlText(site.ownerName)}">${kindIcon[site.kind as keyof typeof kindIcon]||'⌂'}</span>`,iconSize:[32,32],iconAnchor:[16,16]});
+  if(map.getZoom()>=16)for(const site of foreignBuildings){if(lookup.has(site.id)||!viewport.contains([site.lat,site.lon])&&!(site.grid&&viewport.intersects(L.latLngBounds(gridBounds(site.grid)))))continue;
+   if(site.grid)L.rectangle(gridBounds(site.grid),{color:'#87949e',weight:1,fillColor:'#aeb8bf',fillOpacity:.17,interactive:false}).addTo(layer);
+   const icon=L.divIcon({className:'log-marker-wrap',html:`<span class="log-marker log-marker-foreign" title="${htmlText(site.name)} · ${htmlText(site.ownerName)}">${kindIcon[site.kind as keyof typeof kindIcon]||'⌂'}</span>`,iconSize:[20,20],iconAnchor:[10,10]});
    L.marker([site.lat,site.lon],{icon,interactive:false,keyboard:false,zIndexOffset:-150}).addTo(layer);
   }
   for(const site of sites){if(!viewport.contains([site.lat,site.lon])&&!(site.owned&&site.grid&&viewport.intersects(L.latLngBounds(gridBounds(site.grid)))))continue;if(hidden.has(site.id)||site.hidden||(site.owned?!showOwned&&!related.has(site.id):!show.has(site.id)))continue;if(routeEligible&&!routeEligible.includes(site.id)&&!related.has(site.id))continue;
